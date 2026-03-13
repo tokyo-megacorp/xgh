@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PASS=0
+FAIL=0
+
+assert_eq() {
+  if [ "$1" = "$2" ]; then
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL: expected '$2', got '$1'"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+assert_file_exists() {
+  if [ -f "$1" ]; then PASS=$((PASS + 1)); else echo "FAIL: $1 missing"; FAIL=$((FAIL + 1)); fi
+}
+
+assert_dir_exists() {
+  if [ -d "$1" ]; then PASS=$((PASS + 1)); else echo "FAIL: dir $1 missing"; FAIL=$((FAIL + 1)); fi
+}
+
+assert_contains() {
+  if grep -q "$2" "$1" 2>/dev/null; then PASS=$((PASS + 1)); else echo "FAIL: $1 missing '$2'"; FAIL=$((FAIL + 1)); fi
+}
+
+assert_executable() {
+  if [ -x "$1" ]; then PASS=$((PASS + 1)); else echo "FAIL: $1 not executable"; FAIL=$((FAIL + 1)); fi
+}
+
+# Setup temp project dir
+TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
+cd "$TMPDIR"
+git init --quiet
+
+# Run install in dry-run mode (skips brew/ollama, uses local files)
+export XGH_DRY_RUN=1
+export XGH_TEAM="test-team"
+export XGH_CONTEXT_PATH=".xgh/context-tree"
+export XGH_LOCAL_PACK="$(cd - >/dev/null && pwd)"
+
+bash "${XGH_LOCAL_PACK}/install.sh"
+
+# Verify .claude directory structure
+assert_dir_exists ".claude"
+assert_dir_exists ".claude/hooks"
+assert_dir_exists ".claude/skills"
+assert_dir_exists ".claude/commands"
+assert_dir_exists ".claude/agents"
+
+# Verify MCP config
+assert_file_exists ".claude/.mcp.json"
+assert_contains ".claude/.mcp.json" "cipher"
+assert_contains ".claude/.mcp.json" "@byterover/cipher"
+
+# Verify hooks installed
+assert_file_exists ".claude/hooks/xgh-session-start.sh"
+assert_file_exists ".claude/hooks/xgh-prompt-submit.sh"
+assert_executable ".claude/hooks/xgh-session-start.sh"
+assert_executable ".claude/hooks/xgh-prompt-submit.sh"
+
+# Verify settings
+assert_file_exists ".claude/settings.local.json"
+assert_contains ".claude/settings.local.json" "SessionStart"
+
+# Verify context tree initialized
+assert_dir_exists ".xgh/context-tree"
+assert_file_exists ".xgh/context-tree/_manifest.json"
+assert_contains ".xgh/context-tree/_manifest.json" "test-team"
+
+# Verify CLAUDE.local.md
+assert_file_exists "CLAUDE.local.md"
+assert_contains "CLAUDE.local.md" "xgh"
+assert_contains "CLAUDE.local.md" "test-team"
+
+# Verify .gitignore updated
+assert_file_exists ".gitignore"
+assert_contains ".gitignore" ".xgh/local/"
+
+echo ""
+echo "Install test: $PASS passed, $FAIL failed"
+[ "$FAIL" -eq 0 ] || exit 1

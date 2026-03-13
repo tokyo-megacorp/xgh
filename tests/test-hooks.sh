@@ -22,6 +22,16 @@ assert_not_contains() {
   fi
 }
 
+assert_eq() {
+  local label="$1" actual="$2" expected="$3"
+  if [[ "$actual" == "$expected" ]]; then
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL: $label — expected '$expected', got '$actual'"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
 assert_json_output() {
   local output
   output=$(bash "$1")
@@ -49,6 +59,7 @@ assert_output_contains() {
   fi
 }
 
+# ── Basic file existence ──────────────────────────────────
 assert_file_exists "hooks/session-start.sh"
 assert_file_exists "hooks/prompt-submit.sh"
 
@@ -56,11 +67,201 @@ assert_not_contains "hooks/session-start.sh" "placeholder"
 assert_not_contains "hooks/prompt-submit.sh" "placeholder"
 assert_not_contains "hooks/session-start.sh" "not yet implemented"
 
-assert_json_output "hooks/session-start.sh"
-assert_json_output "hooks/prompt-submit.sh"
+# ── session-start: structured JSON output ─────────────────
+# Create a temp context tree with mock .md files
+TMPDIR_CT=$(mktemp -d)
+trap "rm -rf $TMPDIR_CT" EXIT
 
-assert_output_contains "hooks/prompt-submit.sh" "cipher_memory_search"
-assert_output_contains "hooks/prompt-submit.sh" "cipher_extract_and_operate_memory"
+mkdir -p "$TMPDIR_CT/backend/auth"
+mkdir -p "$TMPDIR_CT/frontend"
+mkdir -p "$TMPDIR_CT/_archived"
+
+cat > "$TMPDIR_CT/backend/auth/jwt-patterns.md" << 'MDEOF'
+---
+title: JWT Patterns
+importance: 92
+maturity: core
+---
+Use short-lived access tokens.
+Rotate refresh tokens on each use.
+Store tokens in httpOnly cookies.
+MDEOF
+
+cat > "$TMPDIR_CT/frontend/state-management.md" << 'MDEOF'
+---
+title: State Management
+importance: 80
+maturity: validated
+---
+Prefer server state over client state.
+Use React Query for server data.
+Keep local state minimal.
+MDEOF
+
+cat > "$TMPDIR_CT/_archived/old-stuff.md" << 'MDEOF'
+---
+title: Old Stuff
+importance: 99
+maturity: core
+---
+Should be excluded from results.
+MDEOF
+
+cat > "$TMPDIR_CT/_index.md" << 'MDEOF'
+---
+title: Index
+importance: 100
+maturity: core
+---
+Should be excluded.
+MDEOF
+
+# Run session-start with the temp context tree
+SS_OUTPUT=$(XGH_CONTEXT_TREE="$TMPDIR_CT" XGH_BRIEFING="off" bash hooks/session-start.sh)
+
+# Validate JSON and keys
+SS_VALID=$(python3 -c "
+import json, sys
+try:
+    d = json.loads(sys.argv[1])
+    keys = set(d.keys())
+    required = {'result', 'contextFiles', 'decisionTable', 'briefingTrigger'}
+    if required.issubset(keys):
+        print('yes')
+    else:
+        print('no:missing:' + str(required - keys))
+except Exception as e:
+    print('no:' + str(e))
+" "$SS_OUTPUT")
+assert_eq "session-start has required keys" "$SS_VALID" "yes"
+
+# Validate contextFiles is array of objects with correct keys
+SS_CF_VALID=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+files = d.get('contextFiles', [])
+if not isinstance(files, list) or len(files) == 0:
+    print('no:empty-or-not-list')
+    sys.exit(0)
+required_keys = {'path', 'title', 'importance', 'maturity', 'excerpt'}
+for f in files:
+    if not required_keys.issubset(set(f.keys())):
+        print('no:missing-keys:' + str(required_keys - set(f.keys())))
+        sys.exit(0)
+print('yes')
+" "$SS_OUTPUT")
+assert_eq "contextFiles has correct structure" "$SS_CF_VALID" "yes"
+
+# Validate decisionTable is array of strings
+SS_DT_VALID=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+dt = d.get('decisionTable', [])
+if isinstance(dt, list) and len(dt) > 0 and all(isinstance(s, str) for s in dt):
+    print('yes')
+else:
+    print('no')
+" "$SS_OUTPUT")
+assert_eq "decisionTable is array of strings" "$SS_DT_VALID" "yes"
+
+# Validate briefingTrigger reflects env var
+SS_BT=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+print(d.get('briefingTrigger', ''))
+" "$SS_OUTPUT")
+assert_eq "briefingTrigger is off" "$SS_BT" "off"
+
+# Validate _archived and _index.md are excluded
+SS_NO_ARCHIVED=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+paths = [f['path'] for f in d.get('contextFiles', [])]
+has_bad = any('_archived' in p or '_index.md' in p for p in paths)
+print('yes' if not has_bad else 'no')
+" "$SS_OUTPUT")
+assert_eq "excluded _archived and _index.md" "$SS_NO_ARCHIVED" "yes"
+
+# Validate briefingTrigger with XGH_BRIEFING=compact
+SS_COMPACT=$(XGH_CONTEXT_TREE="$TMPDIR_CT" XGH_BRIEFING="compact" bash hooks/session-start.sh)
+SS_BT_COMPACT=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+print(d.get('briefingTrigger', ''))
+" "$SS_COMPACT")
+assert_eq "briefingTrigger compact" "$SS_BT_COMPACT" "compact"
+
+# Validate briefingTrigger with XGH_BRIEFING=auto (maps to full)
+SS_AUTO=$(XGH_CONTEXT_TREE="$TMPDIR_CT" XGH_BRIEFING="auto" bash hooks/session-start.sh)
+SS_BT_AUTO=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+print(d.get('briefingTrigger', ''))
+" "$SS_AUTO")
+assert_eq "briefingTrigger auto->full" "$SS_BT_AUTO" "full"
+
+# ── prompt-submit: structured JSON output ─────────────────
+PS_OUTPUT=$(PROMPT="implement a new login feature" bash hooks/prompt-submit.sh)
+
+PS_VALID=$(python3 -c "
+import json, sys
+try:
+    d = json.loads(sys.argv[1])
+    keys = set(d.keys())
+    required = {'result', 'promptIntent', 'requiredActions', 'toolHints'}
+    if required.issubset(keys):
+        print('yes')
+    else:
+        print('no:missing:' + str(required - keys))
+except Exception as e:
+    print('no:' + str(e))
+" "$PS_OUTPUT")
+assert_eq "prompt-submit has required keys" "$PS_VALID" "yes"
+
+# Validate code-change intent
+PS_INTENT=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+print(d.get('promptIntent', ''))
+" "$PS_OUTPUT")
+assert_eq "promptIntent is code-change" "$PS_INTENT" "code-change"
+
+# Validate general intent
+PS_GENERAL=$(PROMPT="what time is it?" bash hooks/prompt-submit.sh)
+PS_INTENT_G=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+print(d.get('promptIntent', ''))
+" "$PS_GENERAL")
+assert_eq "promptIntent is general" "$PS_INTENT_G" "general"
+
+# Validate toolHints is array of strings
+PS_TH=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+th = d.get('toolHints', [])
+if isinstance(th, list) and len(th) > 0 and all(isinstance(s, str) for s in th):
+    print('yes')
+else:
+    print('no')
+" "$PS_OUTPUT")
+assert_eq "toolHints is array of strings" "$PS_TH" "yes"
+
+# Validate requiredActions is array of strings
+PS_RA=$(python3 -c "
+import json, sys
+d = json.loads(sys.argv[1])
+ra = d.get('requiredActions', [])
+if isinstance(ra, list) and len(ra) > 0 and all(isinstance(s, str) for s in ra):
+    print('yes')
+else:
+    print('no')
+" "$PS_OUTPUT")
+assert_eq "requiredActions is array of strings" "$PS_RA" "yes"
+
+# Both hooks exit 0
+bash hooks/session-start.sh > /dev/null 2>&1 && PASS=$((PASS + 1)) || { echo "FAIL: session-start.sh non-zero exit"; FAIL=$((FAIL + 1)); }
+bash hooks/prompt-submit.sh > /dev/null 2>&1 && PASS=$((PASS + 1)) || { echo "FAIL: prompt-submit.sh non-zero exit"; FAIL=$((FAIL + 1)); }
 
 echo ""
 echo "Hooks test: $PASS passed, $FAIL failed"

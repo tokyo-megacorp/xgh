@@ -1,0 +1,65 @@
+# Workflow: plan-review
+# Pattern: Agent A plans → Agent B reviews → Agent A implements
+# Use case: Architecture decisions, feature design, implementation plans
+
+name: plan-review
+description: "Two-agent workflow where one agent creates a plan and another reviews it before implementation begins."
+min_agents: 2
+max_agents: 2
+
+roles:
+  planner:
+    description: "Creates the plan, incorporates review feedback, then implements"
+    required_capabilities:
+      - planning
+      - implementation
+    default_agent: claude-code
+  reviewer:
+    description: "Reviews the plan, provides structured feedback"
+    required_capabilities:
+      - review
+    default_agent: codex
+
+steps:
+  - id: create-plan
+    role: planner
+    action: "Create a detailed implementation plan for the given task"
+    message:
+      type: plan
+      status: pending
+      for_agent: reviewer
+    output: "Store plan in Cipher workspace with type=plan"
+
+  - id: review-plan
+    role: reviewer
+    action: "Review the plan, check for gaps, suggest improvements"
+    depends_on: create-plan
+    message:
+      type: review
+      status: pending
+      for_agent: planner
+    output: "Store review in Cipher workspace with type=review"
+
+  - id: incorporate-feedback
+    role: planner
+    action: "Read review feedback, update plan if needed"
+    depends_on: review-plan
+    message:
+      type: decision
+      status: pending
+      for_agent: "*"
+    output: "Store final plan with type=decision, status=completed"
+
+  - id: implement
+    role: planner
+    action: "Implement the reviewed and approved plan"
+    depends_on: incorporate-feedback
+    message:
+      type: result
+      status: pending
+      for_agent: "*"
+    output: "Store implementation result with type=result, status=completed"
+
+completion:
+  condition: "All steps have status=completed"
+  summary: "Store workflow summary in Cipher with thread_id for future reference"

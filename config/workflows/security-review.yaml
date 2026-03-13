@@ -1,0 +1,82 @@
+# Workflow: security-review
+# Pattern: Agent A implements → Agent B security reviews → Agent A fixes → Agent B re-reviews
+# Use case: Security-sensitive code, auth flows, data handling, API endpoints
+
+name: security-review
+description: "Security-focused review chain where implementation is reviewed for vulnerabilities, fixed, and re-reviewed until secure."
+min_agents: 2
+max_agents: 2
+
+roles:
+  implementer:
+    description: "Implements the solution and addresses security findings"
+    required_capabilities:
+      - implementation
+    default_agent: claude-code
+  security-reviewer:
+    description: "Reviews code for security vulnerabilities, injection risks, auth issues"
+    required_capabilities:
+      - review
+    default_agent: codex
+
+steps:
+  - id: implement
+    role: implementer
+    action: "Implement the solution for the given task"
+    message:
+      type: result
+      status: pending
+      for_agent: security-reviewer
+    output: "Store implementation in Cipher with type=result"
+
+  - id: security-review
+    role: security-reviewer
+    action: >
+      Review the implementation for security vulnerabilities. Check for:
+      injection (SQL, XSS, command), authentication/authorization gaps,
+      data exposure, insecure defaults, missing input validation,
+      secrets in code, CSRF, path traversal, and dependency risks.
+    depends_on: implement
+    message:
+      type: feedback
+      status: pending
+      for_agent: implementer
+    output: "Store security review with type=feedback, including severity ratings"
+
+  - id: fix-findings
+    role: implementer
+    action: "Address all security findings from the review"
+    depends_on: security-review
+    condition: "security review has findings with severity >= medium"
+    message:
+      type: result
+      status: pending
+      for_agent: security-reviewer
+    output: "Store fixes in Cipher with type=result, reference original findings"
+
+  - id: re-review
+    role: security-reviewer
+    action: "Re-review the fixes to confirm all security findings are addressed"
+    depends_on: fix-findings
+    message:
+      type: review
+      status: pending
+      for_agent: implementer
+    output: "Store re-review with type=review"
+    loop_to: fix-findings
+    max_iterations: 2
+
+  - id: approve
+    role: security-reviewer
+    action: "Confirm all security findings are resolved"
+    depends_on: security-review
+    condition: "no findings with severity >= medium"
+    message:
+      type: decision
+      status: completed
+      for_agent: "*"
+    output: "Store security approval with type=decision, status=completed"
+
+completion:
+  condition: "Security reviewer approves or max_iterations reached"
+  summary: "Store workflow summary with findings count, severity breakdown, and resolution status"

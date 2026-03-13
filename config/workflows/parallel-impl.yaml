@@ -1,0 +1,68 @@
+# Workflow: parallel-impl
+# Pattern: Agent A splits work → Agents B,C,D implement in parallel → Agent A merges
+# Use case: Large features with independent subtasks
+
+name: parallel-impl
+description: "Multi-agent parallel implementation where a coordinator splits work across agents who implement concurrently, then the coordinator merges and reviews."
+min_agents: 2
+max_agents: 8
+
+roles:
+  coordinator:
+    description: "Splits the task, assigns work to implementers, merges results"
+    required_capabilities:
+      - architecture
+      - planning
+      - review
+    default_agent: claude-code
+  implementer:
+    description: "Implements an assigned subtask independently"
+    required_capabilities:
+      - implementation
+    default_agent: codex
+    allow_multiple: true
+
+steps:
+  - id: split-tasks
+    role: coordinator
+    action: "Analyze the task and split into independent subtasks, one per implementer"
+    message:
+      type: plan
+      status: pending
+      for_agent: "*"
+    output: "Store task breakdown in Cipher with type=plan, one message per subtask"
+
+  - id: implement-subtasks
+    role: implementer
+    action: "Implement the assigned subtask"
+    depends_on: split-tasks
+    parallel: true
+    message:
+      type: result
+      status: pending
+      for_agent: coordinator
+    output: "Each implementer stores result with type=result"
+
+  - id: merge-review
+    role: coordinator
+    action: "Collect all implementation results, resolve conflicts, merge, and review"
+    depends_on: implement-subtasks
+    message:
+      type: review
+      status: pending
+      for_agent: "*"
+    output: "Store merged result and review with type=review"
+
+  - id: finalize
+    role: coordinator
+    action: "Final integration check, commit, and store completion summary"
+    depends_on: merge-review
+    message:
+      type: result
+      status: completed
+      for_agent: "*"
+    output: "Store final result with type=result, status=completed"
+
+completion:
+  condition: "All subtask results received and merge-review completed"
+  summary: "Store workflow summary with count of subtasks and agents used"

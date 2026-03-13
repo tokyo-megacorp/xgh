@@ -1,0 +1,68 @@
+# Workflow: validation
+# Pattern: Agent A implements → Agent B validates → feedback loop until pass
+# Use case: Quality assurance, test verification, code correctness
+
+name: validation
+description: "Two-agent validation loop where one agent implements and another validates, iterating until the validator approves."
+min_agents: 2
+max_agents: 2
+
+roles:
+  implementer:
+    description: "Implements the solution, addresses validation feedback"
+    required_capabilities:
+      - implementation
+    default_agent: claude-code
+  validator:
+    description: "Validates the implementation against requirements, runs tests"
+    required_capabilities:
+      - review
+    default_agent: codex
+
+steps:
+  - id: implement
+    role: implementer
+    action: "Implement the solution for the given task"
+    message:
+      type: result
+      status: pending
+      for_agent: validator
+    output: "Store implementation in Cipher with type=result"
+
+  - id: validate
+    role: validator
+    action: "Validate the implementation — run tests, check requirements, review code"
+    depends_on: implement
+    message:
+      type: feedback
+      status: pending
+      for_agent: implementer
+    output: "Store validation result with type=feedback (pass or fail with details)"
+
+  - id: fix
+    role: implementer
+    action: "Address validation feedback and re-submit"
+    depends_on: validate
+    condition: "validation feedback indicates failure"
+    message:
+      type: result
+      status: pending
+      for_agent: validator
+    output: "Store fix in Cipher with type=result"
+    loop_to: validate
+    max_iterations: 3
+
+  - id: approve
+    role: validator
+    action: "Confirm implementation passes all checks"
+    depends_on: validate
+    condition: "validation feedback indicates pass"
+    message:
+      type: decision
+      status: completed
+      for_agent: "*"
+    output: "Store approval with type=decision, status=completed"
+
+completion:
+  condition: "Validator approves or max_iterations reached"
+  summary: "Store workflow summary with iteration count and final status"

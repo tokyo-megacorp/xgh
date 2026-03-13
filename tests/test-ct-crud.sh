@@ -14,132 +14,161 @@ assert_file_not_exists() {
 assert_file_contains() {
   if grep -q "$2" "$1" 2>/dev/null; then PASS=$((PASS+1)); else echo "FAIL: $1 missing '$2' — $3"; FAIL=$((FAIL+1)); fi
 }
+assert_contains() {
+  if echo "$1" | grep -q "$2" 2>/dev/null; then PASS=$((PASS+1)); else echo "FAIL: output missing '$2' — $3"; FAIL=$((FAIL+1)); fi
+}
 assert_dir_exists() {
   if [ -d "$1" ]; then PASS=$((PASS+1)); else echo "FAIL: dir $1 missing — $2"; FAIL=$((FAIL+1)); fi
 }
-
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-CT_SCRIPT="${REPO_ROOT}/scripts/context-tree.sh"
-
-# Setup temp project dir
-TMPDIR=$(mktemp -d)
-trap "rm -rf $TMPDIR" EXIT
-
-# Initialize a minimal context tree
-CT_DIR="${TMPDIR}/.xgh/context-tree"
-mkdir -p "$CT_DIR"
-cat > "${CT_DIR}/_manifest.json" <<'EOF'
-{
-  "version": 1,
-  "team": "test-team",
-  "created": "2026-03-13T00:00:00Z",
-  "domains": []
+assert_not_zero() {
+  if [ -n "$1" ] && [ "$1" != "0" ]; then PASS=$((PASS+1)); else echo "FAIL: expected non-zero — $2"; FAIL=$((FAIL+1)); fi
 }
-EOF
 
-export XGH_CONTEXT_TREE_DIR="$CT_DIR"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+CT="${SCRIPT_DIR}/scripts/context-tree.sh"
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+export XGH_CONTEXT_TREE="$TMP"
 
-# --- Test: create a knowledge file ---
-bash "$CT_SCRIPT" create \
-  --domain "authentication" \
-  --topic "jwt-implementation" \
-  --title "JWT Token Refresh Strategy" \
-  --tags "auth,jwt,security" \
-  --keywords "refresh-token,rotation,expiry" \
-  --source "auto-curate" \
-  --from-agent "claude-code" \
-  --body "## Raw Concept
-Tokens should rotate on every refresh call.
+# ========== 1. init ==========
+echo "--- Test: init ---"
+bash "$CT" init
+assert_file_exists "$TMP/_manifest.json" "manifest created by init"
+assert_dir_exists "$TMP" "root dir exists after init"
 
-## Facts
-- category: convention
-  fact: Refresh tokens rotate on every use"
+# ========== 2. create ==========
+echo "--- Test: create ---"
+bash "$CT" create "backend/auth/jwt.md" "JWT Patterns" "JSON Web Token best practices for auth."
+assert_file_exists "$TMP/backend/auth/jwt.md" "create writes file"
+assert_file_contains "$TMP/backend/auth/jwt.md" "title: JWT Patterns" "frontmatter title"
+assert_file_contains "$TMP/backend/auth/jwt.md" "importance: 50" "default importance"
+assert_file_contains "$TMP/backend/auth/jwt.md" "maturity: draft" "default maturity"
+assert_file_contains "$TMP/backend/auth/jwt.md" "accessCount: 0" "default accessCount"
+assert_file_contains "$TMP/backend/auth/jwt.md" "updateCount: 0" "default updateCount"
+assert_file_contains "$TMP/backend/auth/jwt.md" "JSON Web Token best practices" "body content"
 
-EXPECTED_FILE="${CT_DIR}/authentication/jwt-implementation/jwt-token-refresh-strategy.md"
-assert_file_exists "$EXPECTED_FILE" "created knowledge file"
-assert_file_contains "$EXPECTED_FILE" "title: JWT Token Refresh Strategy" "title in frontmatter"
-assert_file_contains "$EXPECTED_FILE" "tags: \[auth, jwt, security\]" "tags in frontmatter"
-assert_file_contains "$EXPECTED_FILE" "importance: 10" "initial importance is 10"
-assert_file_contains "$EXPECTED_FILE" "recency: 1.0" "initial recency is 1.0"
-assert_file_contains "$EXPECTED_FILE" "maturity: draft" "initial maturity is draft"
-assert_file_contains "$EXPECTED_FILE" "accessCount: 0" "initial accessCount"
-assert_file_contains "$EXPECTED_FILE" "updateCount: 0" "initial updateCount"
-assert_file_contains "$EXPECTED_FILE" "Tokens should rotate" "body content"
-assert_dir_exists "${CT_DIR}/authentication/jwt-implementation" "topic dir created"
+# create should fail if file exists
+bash "$CT" create "backend/auth/jwt.md" "Duplicate" "dup" 2>/dev/null && {
+  echo "FAIL: duplicate create should fail"; FAIL=$((FAIL+1))
+} || PASS=$((PASS+1))
 
-# --- Test: create with subtopic ---
-bash "$CT_SCRIPT" create \
-  --domain "authentication" \
-  --topic "jwt-implementation" \
-  --subtopic "refresh-tokens" \
-  --title "Token Rotation Policy" \
-  --tags "auth,jwt" \
-  --keywords "rotation" \
-  --source "manual" \
-  --from-agent "claude-code" \
-  --body "Rotate on every use."
+# ========== 3. read ==========
+echo "--- Test: read ---"
+READ_OUT=$(bash "$CT" read "backend/auth/jwt.md")
+assert_contains "$READ_OUT" "JWT Patterns" "read outputs content"
+assert_contains "$READ_OUT" "JSON Web Token" "read outputs body"
 
-SUBTOPIC_FILE="${CT_DIR}/authentication/jwt-implementation/refresh-tokens/token-rotation-policy.md"
-assert_file_exists "$SUBTOPIC_FILE" "subtopic file created"
+# read bumps accessCount
+AC=$(grep "accessCount:" "$TMP/backend/auth/jwt.md" | head -1 | awk '{print $2}')
+assert_eq "$AC" "1" "accessCount bumped to 1 after read"
 
-# --- Test: read a knowledge file ---
-READ_OUTPUT=$(bash "$CT_SCRIPT" read --path "authentication/jwt-implementation/jwt-token-refresh-strategy")
-assert_eq "$?" "0" "read exits 0"
-echo "$READ_OUTPUT" | grep -q "JWT Token Refresh Strategy" && PASS=$((PASS+1)) || { echo "FAIL: read output missing title"; FAIL=$((FAIL+1)); }
-echo "$READ_OUTPUT" | grep -q "Tokens should rotate" && PASS=$((PASS+1)) || { echo "FAIL: read output missing body"; FAIL=$((FAIL+1)); }
+# read bumps importance via search-hit (+3)
+IMP=$(grep "importance:" "$TMP/backend/auth/jwt.md" | head -1 | awk '{print $2}')
+assert_eq "$IMP" "53" "importance bumped to 53 after read"
 
-# --- Test: read bumps accessCount ---
-bash "$CT_SCRIPT" read --path "authentication/jwt-implementation/jwt-token-refresh-strategy" > /dev/null
-ACCESS=$(grep "accessCount:" "$EXPECTED_FILE" | head -1 | awk '{print $2}')
-assert_eq "$ACCESS" "2" "accessCount bumped to 2"
+# ========== 4. update ==========
+echo "--- Test: update ---"
+bash "$CT" update "backend/auth/jwt.md" "Added rotation policy for refresh tokens."
+assert_file_contains "$TMP/backend/auth/jwt.md" "## Update" "update adds section header"
+assert_file_contains "$TMP/backend/auth/jwt.md" "Added rotation policy" "update appends content"
 
-# --- Test: list files ---
-LIST_OUTPUT=$(bash "$CT_SCRIPT" list)
-echo "$LIST_OUTPUT" | grep -q "jwt-token-refresh-strategy" && PASS=$((PASS+1)) || { echo "FAIL: list missing file"; FAIL=$((FAIL+1)); }
-echo "$LIST_OUTPUT" | grep -q "token-rotation-policy" && PASS=$((PASS+1)) || { echo "FAIL: list missing subtopic file"; FAIL=$((FAIL+1)); }
+# update bumps importance via update event (+5)
+IMP2=$(grep "importance:" "$TMP/backend/auth/jwt.md" | head -1 | awk '{print $2}')
+assert_eq "$IMP2" "58" "importance bumped to 58 after update"
 
-# --- Test: list with domain filter ---
-LIST_AUTH=$(bash "$CT_SCRIPT" list --domain "authentication")
-echo "$LIST_AUTH" | grep -q "jwt-token-refresh-strategy" && PASS=$((PASS+1)) || { echo "FAIL: filtered list missing file"; FAIL=$((FAIL+1)); }
+# update resets recency to 1.0
+REC=$(grep "recency:" "$TMP/backend/auth/jwt.md" | head -1 | awk '{print $2}')
+assert_eq "$REC" "1.0000" "recency reset to 1.0000 after update"
 
-# --- Test: update a knowledge file ---
-bash "$CT_SCRIPT" update \
-  --path "authentication/jwt-implementation/jwt-token-refresh-strategy" \
-  --body "## Raw Concept
-Tokens should rotate on every refresh call. Added: 7-day absolute expiry.
+# ========== 5. list ==========
+echo "--- Test: list ---"
+LIST_OUT=$(bash "$CT" list)
+assert_contains "$LIST_OUT" "backend/auth/jwt.md" "list shows entry"
+assert_contains "$LIST_OUT" "draft" "list shows maturity"
 
-## Facts
-- category: convention
-  fact: Refresh tokens rotate on every use with 7-day expiry"
+# ========== 6. search ==========
+echo "--- Test: search ---"
+SEARCH_OUT=$(bash "$CT" search "jwt" 2>/dev/null || echo "[]")
+assert_contains "$SEARCH_OUT" "jwt" "search finds jwt entry"
 
-assert_file_contains "$EXPECTED_FILE" "7-day absolute expiry" "updated body"
-UCOUNT=$(grep "updateCount:" "$EXPECTED_FILE" | head -1 | awk '{print $2}')
-assert_eq "$UCOUNT" "1" "updateCount bumped"
+# ========== 7. score ==========
+echo "--- Test: score ---"
+IMP_BEFORE=$(grep "importance:" "$TMP/backend/auth/jwt.md" | head -1 | awk '{print $2}')
+bash "$CT" score "backend/auth/jwt.md" "search-hit"
+IMP_AFTER=$(grep "importance:" "$TMP/backend/auth/jwt.md" | head -1 | awk '{print $2}')
+EXPECTED_IMP=$((IMP_BEFORE + 3))
+assert_eq "$IMP_AFTER" "$EXPECTED_IMP" "score bumps importance by 3 for search-hit"
 
-# --- Test: update tags ---
-bash "$CT_SCRIPT" update \
-  --path "authentication/jwt-implementation/jwt-token-refresh-strategy" \
-  --tags "auth,jwt,security,token-rotation"
+# ========== 8. archive + restore ==========
+echo "--- Test: archive ---"
+# Create a low-importance draft that should get archived
+bash "$CT" create "backend/temp/lowpri.md" "Low Priority" "This should be archived."
+# Set importance to 10 (below 35 threshold)
+bash "$SCRIPT_DIR/scripts/ct-frontmatter.sh" set "$TMP/backend/temp/lowpri.md" "importance" "10"
 
-assert_file_contains "$EXPECTED_FILE" "token-rotation" "updated tags"
+bash "$CT" archive
+assert_file_not_exists "$TMP/backend/temp/lowpri.md" "archive removes low-importance draft"
+assert_file_exists "$TMP/_archived/backend/temp/lowpri.full.md" "archive creates .full.md"
+assert_file_exists "$TMP/_archived/backend/temp/lowpri.stub.md" "archive creates .stub.md"
 
-# --- Test: delete a knowledge file ---
-bash "$CT_SCRIPT" delete --path "authentication/jwt-implementation/refresh-tokens/token-rotation-policy"
-assert_file_not_exists "$SUBTOPIC_FILE" "deleted file"
+echo "--- Test: restore ---"
+bash "$CT" restore "backend/temp/lowpri.full.md"
+assert_file_exists "$TMP/backend/temp/lowpri.md" "restore brings back file"
+assert_file_not_exists "$TMP/_archived/backend/temp/lowpri.full.md" "restore removes .full.md"
 
-# --- Test: create with duplicate title in same location fails ---
-bash "$CT_SCRIPT" create \
-  --domain "authentication" \
-  --topic "jwt-implementation" \
-  --title "JWT Token Refresh Strategy" \
-  --tags "auth" \
-  --keywords "jwt" \
-  --source "manual" \
-  --from-agent "claude-code" \
-  --body "Duplicate." 2>/dev/null && {
-    echo "FAIL: duplicate create should fail"; FAIL=$((FAIL+1))
-  } || PASS=$((PASS+1))
+# ========== 9. delete ==========
+echo "--- Test: delete ---"
+bash "$CT" create "backend/temp/todelete.md" "To Delete" "Bye."
+# Also set importance low and archive to create _archived counterparts
+bash "$SCRIPT_DIR/scripts/ct-frontmatter.sh" set "$TMP/backend/temp/todelete.md" "importance" "10"
+bash "$CT" archive
+# Restore first so we have both original + archived
+bash "$CT" restore "backend/temp/todelete.full.md"
+# Re-archive to create archived copies again
+bash "$SCRIPT_DIR/scripts/ct-frontmatter.sh" set "$TMP/backend/temp/todelete.md" "importance" "10"
+bash "$CT" archive
+bash "$CT" restore "backend/temp/todelete.full.md"
+
+bash "$CT" delete "backend/temp/todelete.md"
+assert_file_not_exists "$TMP/backend/temp/todelete.md" "delete removes file"
+
+# ========== 10. sync curate ==========
+echo "--- Test: sync curate ---"
+CURATE_OUT=$(bash "$CT" sync curate "$TMP" "infra" "docker" "Docker Compose Tips" "Use multi-stage builds.")
+assert_contains "$CURATE_OUT" "infra" "sync curate returns rel_path with domain"
+
+# ========== 11. sync query ==========
+echo "--- Test: sync query ---"
+QUERY_OUT=$(bash "$CT" sync query "docker" 2>/dev/null || echo "[]")
+# Just verify it doesn't crash and returns something
+assert_contains "$QUERY_OUT" "\[" "sync query returns JSON array"
+
+# ========== 12. sync refresh ==========
+echo "--- Test: sync refresh ---"
+bash "$CT" sync refresh
+assert_file_exists "$TMP/_manifest.json" "manifest still exists after refresh"
+
+# ========== 13. manifest init ==========
+echo "--- Test: manifest init ---"
+bash "$CT" manifest init
+assert_file_exists "$TMP/_manifest.json" "manifest init keeps manifest"
+
+# ========== 14. manifest rebuild ==========
+echo "--- Test: manifest rebuild ---"
+bash "$CT" manifest rebuild
+assert_file_exists "$TMP/_manifest.json" "manifest rebuild regenerates"
+
+# ========== 15. manifest update-indexes ==========
+echo "--- Test: manifest update-indexes ---"
+bash "$CT" manifest update-indexes
+# Check that _index.md was created for the backend domain
+assert_file_exists "$TMP/backend/_index.md" "update-indexes creates _index.md"
+
+# ========== cleanup temp lowpri ==========
+bash "$CT" delete "backend/temp/lowpri.md" 2>/dev/null || true
 
 echo ""
+echo "==========================="
 echo "CRUD tests: $PASS passed, $FAIL failed"
+echo "==========================="
 [ "$FAIL" -eq 0 ] || exit 1

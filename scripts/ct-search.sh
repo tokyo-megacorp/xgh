@@ -1,60 +1,67 @@
 #!/usr/bin/env bash
-# ct-search.sh — BM25 search + optional merge with Cipher results
-# Sourced by context-tree.sh
+# ct-search.sh — dual-mode BM25+Cipher search library
+# Sourceable library providing ct_search_run and ct_search_with_cipher functions.
 
-cmd_search() {
-  local query="" limit=10 cipher_results=""
+_CT_SEARCH_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-  while [ $# -gt 0 ]; do
-    case "$1" in
-      --query)          query="$2"; shift 2 ;;
-      --limit)          limit="$2"; shift 2 ;;
-      --cipher-results) cipher_results="$2"; shift 2 ;;
-      *) echo "Unknown option: $1" >&2; return 1 ;;
-    esac
-  done
+# ct_search_run <root> <query> [top]
+# BM25-only search with scoring formula:
+#   final_score = (0.6 × bm25 + 0.2 × importance/100 + 0.2 × recency) × maturityBoost
+# Outputs JSON array sorted by final_score descending.
+ct_search_run() {
+  local root="$1" query="$2" top="${3:-10}"
 
   if [ -z "$query" ]; then
-    echo "Error: --query is required" >&2; return 1
+    echo "[]"
+    return 0
   fi
 
-  local ct_dir="${XGH_CONTEXT_TREE_DIR:-${PWD}/.xgh/context-tree}"
-  local script_dir
-  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
   local bm25_json
-  bm25_json=$(python3 "${script_dir}/bm25.py" "$ct_dir" "$query" "$limit")
+  bm25_json=$(python3 "${_CT_SEARCH_SCRIPT_DIR}/bm25.py" "$root" "$query" "$top")
 
-  if [ -z "$cipher_results" ]; then
-    echo "$bm25_json" | python3 -c "
+  echo "$bm25_json" | python3 -c "
 import json, sys
 
 bm25 = json.load(sys.stdin)
-limit = int('$limit')
+limit = int('$top')
 
 results = []
 for r in bm25:
     imp_norm = r['importance'] / 100.0
     rec = r['recency']
     bm25_s = r['bm25_score']
-    maturity_boost = 1.15 if r['maturity'] == 'core' else 1.0
+    maturity_boost = 1.15 if r.get('maturity', 'draft') == 'core' else 1.0
 
     score = (0.6 * bm25_s + 0.2 * imp_norm + 0.2 * rec) * maturity_boost
     r['final_score'] = round(score, 4)
     results.append(r)
 
 results.sort(key=lambda x: x['final_score'], reverse=True)
-for r in results[:limit]:
-    mat_tag = f'[{r[\"maturity\"]}]'
-    print(f'{r[\"final_score\"]:.3f}  {mat_tag:12s}  {r[\"path\"]:60s}  {r[\"title\"]}')
+print(json.dumps(results[:limit], indent=2))
 "
-  else
-    echo "$bm25_json" | python3 -c "
+}
+
+# ct_search_with_cipher <root> <query> <cipher_json> [top]
+# BM25+Cipher merged search with scoring formula:
+#   final_score = (0.5 × cipher + 0.3 × bm25 + 0.1 × importance/100 + 0.1 × recency) × maturityBoost
+# Outputs JSON array sorted by final_score descending.
+ct_search_with_cipher() {
+  local root="$1" query="$2" cipher_json="$3" top="${4:-10}"
+
+  if [ -z "$query" ]; then
+    echo "[]"
+    return 0
+  fi
+
+  local bm25_json
+  bm25_json=$(python3 "${_CT_SEARCH_SCRIPT_DIR}/bm25.py" "$root" "$query" "$top")
+
+  python3 -c "
 import json, sys
 
-bm25 = json.load(sys.stdin)
-limit = int('$limit')
-cipher = json.loads('''$cipher_results''')
+bm25 = json.loads(sys.argv[1])
+cipher = json.loads(sys.argv[2])
+limit = int(sys.argv[3])
 
 cipher_map = {}
 for c in cipher:
@@ -62,36 +69,37 @@ for c in cipher:
     cipher_map[key] = c.get('similarity', 0)
 
 results = []
+bm25_paths = set()
 for r in bm25:
+    bm25_paths.add(r['path'])
     cipher_sim = cipher_map.get(r['path'], 0)
     imp_norm = r['importance'] / 100.0
     rec = r['recency']
     bm25_s = r['bm25_score']
-    maturity_boost = 1.15 if r['maturity'] == 'core' else 1.0
+    maturity_boost = 1.15 if r.get('maturity', 'draft') == 'core' else 1.0
 
     score = (0.5 * cipher_sim + 0.3 * bm25_s + 0.1 * imp_norm + 0.1 * rec) * maturity_boost
     r['cipher_similarity'] = cipher_sim
     r['final_score'] = round(score, 4)
     results.append(r)
 
-bm25_paths = {r['path'] for r in bm25}
 for c in cipher:
     path = c.get('path', '')
     if path and path not in bm25_paths:
-        score = (0.5 * c.get('similarity', 0)) * 1.0
+        sim = c.get('similarity', 0)
+        score = (0.5 * sim) * 1.0
         results.append({
             'path': path,
             'title': c.get('title', ''),
-            'cipher_similarity': c.get('similarity', 0),
+            'cipher_similarity': sim,
             'bm25_score': 0,
             'final_score': round(score, 4),
             'maturity': 'unknown',
+            'importance': 0,
+            'recency': 0,
         })
 
 results.sort(key=lambda x: x['final_score'], reverse=True)
-for r in results[:limit]:
-    mat_tag = f'[{r.get(\"maturity\", \"?\")}]'
-    print(f'{r[\"final_score\"]:.3f}  {mat_tag:12s}  {r[\"path\"]:60s}  {r.get(\"title\", \"\")}')
-"
-  fi
+print(json.dumps(results[:limit], indent=2))
+" "$bm25_json" "$cipher_json" "$top"
 }

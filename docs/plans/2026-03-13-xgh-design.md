@@ -10,13 +10,15 @@
 
 ## 1. Problem Statement
 
-Engineering teams at TradeRepublic use AI coding agents (primarily Claude Code) daily. Each session starts from zero — agents have no memory of past decisions, conventions, or learnings. Knowledge is trapped in individual sessions and lost when they end.
+Engineering teams use AI coding agents (primarily Claude Code) daily. Each session starts from zero — agents have no memory of past decisions, conventions, or learnings. Knowledge is trapped in individual sessions and lost when they end.
 
-ByteRover solves this commercially, but TR needs:
-- An internal solution with no external SaaS dependency
+ByteRover solves this commercially, but teams need:
+- An open, self-hosted solution with no external SaaS dependency
 - Team-wide knowledge sharing across repos
-- Plug-and-play setup via MCS (zero manual configuration)
+- Plug-and-play setup (zero manual configuration)
+- **Bring Your Own Providers** — use any LLM, any embedding model, any vector store
 - Multi-agent support (Claude Code preferred, but any MCP-compatible agent works)
+- Works for any team, any stack, any org size
 
 ## 2. Architecture Overview
 
@@ -42,9 +44,13 @@ ByteRover solves this commercially, but TR needs:
 │         ┌───────────────┼───────────────┐                  │
 │         ▼               ▼               ▼                  │
 │  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
-│  │  Qdrant    │  │  SQLite    │  │  Ollama    │           │
-│  │  (vectors) │  │  (sessions)│  │  (LLM+emb) │           │
-│  └────────────┘  └────────────┘  └────────────┘           │
+│  │  Vector DB  │  │  SQLite    │  │  LLM+Emb   │           │
+│  │  (BYOP)    │  │  (sessions)│  │  (BYOP)    │           │
+│  │ qdrant/    │  └────────────┘  │ ollama/    │           │
+│  │ milvus/    │                  │ openai/    │           │
+│  │ in-memory  │                  │ anthropic/ │           │
+│  └────────────┘                  │ openrouter │           │
+│                                  └────────────┘           │
 │                         │                                  │
 │                         ▼                                  │
 │  ┌─────────────────────────────────────────────────────┐   │
@@ -91,6 +97,43 @@ On **query**:
 1. Cipher semantic search runs in parallel with context tree BM25
 2. Results are merged and ranked: `score = (0.5 × cipher_similarity + 0.3 × bm25_score + 0.1 × importance + 0.1 × recency) × maturityBoost`
 3. Core maturity files get ×1.15 boost (adopted from ByteRover)
+
+### Bring Your Own Providers (BYOP)
+
+xgh is provider-agnostic. Cipher supports 18+ LLM providers and multiple vector stores. Users configure what they have:
+
+```yaml
+# .xgh/config.yaml (or env vars)
+providers:
+  llm:
+    provider: ollama              # ollama | openai | anthropic | openrouter | bedrock | azure | qwen
+    model: llama3.2:3b            # any model the provider supports
+    api_key: ${OPENAI_API_KEY}    # only needed for cloud providers
+  embeddings:
+    provider: ollama              # ollama | openai | openrouter
+    model: nomic-embed-text       # any embedding model
+  vector_store:
+    type: qdrant                  # qdrant | milvus | in-memory
+    url: http://localhost:6333    # only for qdrant/milvus
+```
+
+**Preset configurations for quick start:**
+
+| Preset | LLM | Embeddings | Vector Store | Cost |
+|--------|-----|------------|-------------|------|
+| `local` (default) | Ollama llama3.2:3b | Ollama nomic-embed-text | Qdrant (local) | Free |
+| `local-light` | Ollama llama3.2:3b | Ollama nomic-embed-text | In-memory | Free, no persistence |
+| `openai` | GPT-4o-mini | text-embedding-3-small | Qdrant (local) | ~$0.01/session |
+| `anthropic` | Claude Haiku | Ollama nomic-embed-text | Qdrant (local) | ~$0.01/session |
+| `cloud` | OpenRouter (auto) | OpenAI embeddings | Qdrant Cloud | ~$0.02/session |
+
+```bash
+# Install with a preset
+XGH_PRESET=local curl -fsSL https://raw.githubusercontent.com/xgh-dev/xgh/main/install.sh | bash
+
+# Or configure individually
+XGH_LLM_PROVIDER=openai XGH_LLM_MODEL=gpt-4o-mini XGH_OPENAI_API_KEY=sk-... curl -fsSL .../install.sh | bash
+```
 
 ## 3. Context Tree Structure
 
@@ -365,7 +408,7 @@ Inspired by ByteRover's BRV Hub and the MCS tech pack ecosystem.
 ### Hub Structure
 
 xgh bundles are shareable packages of:
-- **Context bundles** — pre-curated knowledge for specific domains (e.g., "TR iOS conventions", "TR backend patterns")
+- **Context bundles** — pre-curated knowledge for specific domains (e.g., "React conventions", "Go backend patterns", "iOS architecture")
 - **Workflow templates** — multi-agent collaboration patterns
 - **Custom skills** — domain-specific xgh skills
 
@@ -383,7 +426,7 @@ schemaVersion: 1
 identifier: xgh
 displayName: "xgh (extreme-go-horsebot)"
 description: "Self-learning memory layer with team sharing, inspired by ByteRover"
-author: "TradeRepublic"
+author: "xgh-dev"
 
 components:
   # Infrastructure (plug-and-play)
@@ -524,7 +567,7 @@ prompts:
   - key: TEAM_NAME
     type: input
     label: "Team name (for workspace memory)"
-    default: "tr-engineering"
+    default: "my-team"
 
   - key: CONTEXT_TREE_PATH
     type: input
@@ -608,36 +651,59 @@ When developer A finishes a feature and developer B picks up related work:
 Each team's context tree has a `_shared/` directory. Items curated there auto-promote to Cipher workspace with `scope: org`. Other teams' hooks query org-scoped memories alongside their own.
 
 ```
-iOS discovers:                         Backend benefits:
-"Argon2id for passcode, bcrypt    →   "iOS expects Argon2id. Don't
- has 72-byte truncation"               change the hashing algo."
+Frontend discovers:                    Backend benefits:
+"Form validation expects ISO      →   "Frontend expects ISO dates.
+ dates, not unix timestamps"           Don't change the format."
 
-Backend decides:                       iOS benefits:
-"LoginResponse.codeType is        →   "Handle nil codeType for
- optional for backward compat"         backward compat with old BE"
+Backend decides:                       Frontend benefits:
+"UserResponse.role is optional    →   "Handle nil role for
+ for backward compat with v1"          backward compat with old API"
+
+Platform team ships:                   All teams benefit:
+"New shared auth middleware       →   "Use shared middleware,
+ supports OAuth2 + API keys"           don't roll your own"
 ```
 
-### `xgh:async-pair-programming` — TDD across two developers
+### `xgh:subagent-pair-programming` — Local TDD via two subagents
+
+Inspired by pair programming, but happening locally: Claude dispatches two subagents that coordinate through Cipher memory. One writes tests, one implements — true TDD enforced by architecture.
 
 ```
-┌─ Developer A (tests) ────────┐  ┌─ Developer B (impl) ──────────┐
-│                               │  │                                │
-│  Writes failing test...       │  │  Queries thread for test spec  │
-│  Stores in thread: feat-789   │  │  Implements to make test pass  │
-│  type: test-spec              │  │  Stores: type: implementation  │
-│  status: red                  │  │  status: green                 │
-│                               │  │                                │
-│  Pulls impl, runs tests...   │  │  Queries for feedback...       │
-│  Stores: type: feedback       │  │  "Adding edge case X"          │
-│  "Pass, but edge case X"     │  │                                │
-│                               │  │                                │
-└───────────────────────────────┘  └────────────────────────────────┘
-                    │                              │
-                    └──── Cipher Workspace ────────┘
-                          thread: feat-789
+┌─ Claude (orchestrator) ─────────────────────────────────────┐
+│                                                              │
+│  /xgh pair-program "Add rate limiting to API endpoints"      │
+│                                                              │
+│  ┌─ Subagent A (Spec Writer) ──┐  ┌─ Subagent B (Impl) ───┐│
+│  │                              │  │                         ││
+│  │  1. Queries memory for       │  │  3. Queries thread for  ││
+│  │     related test patterns    │  │     test specs          ││
+│  │  2. Writes failing tests     │  │  4. Writes MINIMAL code ││
+│  │     Stores → thread:t-001   │  │     to make tests pass  ││
+│  │     type: test-spec          │  │     Stores → thread:t-001││
+│  │     status: RED              │  │     type: implementation ││
+│  │                              │  │     status: GREEN       ││
+│  │  5. Runs tests, verifies    │  │                         ││
+│  │     Stores edge cases...    │  │  6. Handles edge cases  ││
+│  │                              │  │                         ││
+│  └──────────────────────────────┘  └─────────────────────────┘│
+│                    │                            │              │
+│                    └──── Cipher Memory ─────────┘              │
+│                          thread: t-001                        │
+│                                                              │
+│  7. Orchestrator reviews both subagents' work                │
+│  8. Runs full test suite for verification                    │
+│  9. Curates learnings to context tree                        │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-Works across timezones — fully async, coordinated through shared memory.
+**Why this works better than single-agent TDD:**
+- **Separation of concerns**: spec writer can't cheat by peeking at implementation
+- **Fresh context per subagent**: no context pollution (Superpowers pattern)
+- **Memory as contract**: the test specs in Cipher ARE the interface between agents
+- **Learnings persist**: both agents' reasoning traces stored for future sessions
+
+This also works **cross-developer** for async pair programming across timezones — same pattern, different machines, shared Cipher workspace.
 
 ### `xgh:onboarding-accelerator` — Years of context in minutes
 
@@ -682,7 +748,7 @@ Step 10: Ready to use                   🐴
 ### Option B: One-Liner Install (no MCS required)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/traderepublic/xgh/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/xgh-dev/xgh/main/install.sh | bash
 ```
 
 The install script handles everything MCS would do, but standalone:
@@ -692,9 +758,9 @@ The install script handles everything MCS would do, but standalone:
 set -euo pipefail
 
 XGH_VERSION="${XGH_VERSION:-latest}"
-XGH_TEAM="${XGH_TEAM:-tr-engineering}"
+XGH_TEAM="${XGH_TEAM:-my-team}"
 XGH_CONTEXT_PATH="${XGH_CONTEXT_PATH:-.xgh/context-tree}"
-XGH_REPO="https://github.com/traderepublic/xgh"
+XGH_REPO="https://github.com/xgh-dev/xgh"
 
 echo "🐴 Installing xgh (extreme-go-horsebot) ${XGH_VERSION}..."
 
@@ -858,7 +924,7 @@ echo "  To customize: XGH_TEAM=my-team XGH_CONTEXT_PATH=.memory/tree bash instal
 ```
 $ claude
 
-  🐴 xgh active | team: tr-engineering | 47 memories | 12 core conventions
+  🐴 xgh active | team: my-team | 47 memories | 12 core conventions
 
   You: "Add a new API endpoint for user preferences"
 
@@ -897,7 +963,7 @@ $ claude
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `XGH_TEAM` | `tr-engineering` | Team name for workspace memory |
+| `XGH_TEAM` | `my-team` | Team name for workspace memory |
 | `XGH_CONTEXT_PATH` | `.xgh/context-tree` | Where the context tree lives |
 | `XGH_VERSION` | `latest` | Pin to a specific version |
 | `OLLAMA_HOST` | `http://localhost:11434` | Custom Ollama endpoint |
@@ -906,7 +972,7 @@ $ claude
 ### Uninstall
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/traderepublic/xgh/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/xgh-dev/xgh/main/uninstall.sh | bash
 ```
 
 Or manually:

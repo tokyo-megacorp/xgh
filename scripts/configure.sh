@@ -26,12 +26,32 @@ if [ ! -f "${MANIFEST}" ]; then
   "version": "1.0.0",
   "team": "${TEAM_NAME}",
   "created": "${CREATED_AT}",
-  "domains": []
+  "entries": []
 }
 EOF
   echo "  created:      ${MANIFEST}"
 else
-  echo "  exists:       ${MANIFEST} (unchanged)"
+  # Migrate domains[] to flat entries[] if needed
+  if python3 -c "
+import json, sys
+m = json.load(open('${MANIFEST}'))
+if 'domains' in m and 'entries' not in m:
+    flat = []
+    for d in m['domains']:
+        domain = d.get('name', '')
+        for t in d.get('topics', []):
+            t['domain'] = domain
+            flat.append(t)
+    m['entries'] = flat
+    del m['domains']
+    json.dump(m, open('${MANIFEST}', 'w'), indent=2)
+    sys.exit(0)
+sys.exit(1)
+" 2>/dev/null; then
+    echo "  migrated:     ${MANIFEST} (domains[] -> entries[])"
+  else
+    echo "  exists:       ${MANIFEST} (unchanged)"
+  fi
 fi
 
 echo "xgh configure: done"

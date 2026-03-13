@@ -532,9 +532,139 @@ prompts:
     default: ".xgh/context-tree"
 ```
 
-## 10. Plug-and-Play Setup Flow
+## 10. Team Collaboration Skills
 
-After `mcs pack add xgh && mcs sync`:
+These skills leverage the shared Cipher workspace as an async communication bus between teammates' agents. No real-time connection needed — it works like git: write context, others read it later.
+
+### `xgh:pr-context-bridge` — The "why" behind every PR
+
+Today PR reviewers see the diff but not the reasoning. The author's Claude spent hours exploring approaches and making tradeoffs — all lost when the session ends.
+
+```
+┌─ Developer A (Author) ──────────────────────────────────┐
+│                                                          │
+│  Claude works on feature...                              │
+│  Hook auto-curates to Cipher workspace:                  │
+│    thread: PR-456                                        │
+│    type: context                                         │
+│    ├── "Considered 3 approaches, chose B because..."     │
+│    ├── "Key tradeoff: latency vs consistency"            │
+│    ├── "This file was tricky because..."                 │
+│    └── "Related to decision from last sprint"            │
+│                                                          │
+│  `git push` → PR created                                │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+                         │
+                    Cipher Workspace
+                    (shared memory)
+                         │
+┌─ Developer B (Reviewer) ─────────────────────────────────┐
+│                                                          │
+│  Opens PR, starts review with Claude...                  │
+│  Hook auto-queries Cipher workspace:                     │
+│    "PR-456 context, decisions, tradeoffs"                │
+│                                                          │
+│  Claude now knows:                                       │
+│    ✓ WHY this approach was chosen                        │
+│    ✓ What alternatives were considered                   │
+│    ✓ Where the tricky parts are                          │
+│    ✓ Related past decisions                              │
+│                                                          │
+│  Review is deeper, faster, more informed.                │
+│  Stores review feedback back to thread.                  │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+### `xgh:knowledge-handoff` — Seamless context transfer
+
+When developer A finishes a feature and developer B picks up related work:
+
+- Developer A's Claude auto-curates: patterns discovered, gotchas, key files, "watch out for..."
+- Stored in context tree + Cipher workspace with `scope: handoff`
+- Developer B's Claude auto-queries when touching related files
+- Gets full context without meetings or Slack threads
+
+**Trigger**: On branch merge, the hook generates a structured "handoff summary" for the next developer touching that area.
+
+### `xgh:convention-guardian` — Team decisions enforced by memory
+
+```
+1. Team decides → /xgh curate "protocol+factory for new VCs.
+   Reason: 5+ consumers, need feature flag support."
+   → type: convention, scope: team, maturity: core
+
+2. Any developer starts new VC work...
+   → Hook queries conventions automatically
+   → Claude follows convention without being told
+
+3. Convention evolves? Update, don't delete.
+   → History preserved, rationale chain visible
+```
+
+### `xgh:cross-team-pollinator` — Breaking silos
+
+Each team's context tree has a `_shared/` directory. Items curated there auto-promote to Cipher workspace with `scope: org`. Other teams' hooks query org-scoped memories alongside their own.
+
+```
+iOS discovers:                         Backend benefits:
+"Argon2id for passcode, bcrypt    →   "iOS expects Argon2id. Don't
+ has 72-byte truncation"               change the hashing algo."
+
+Backend decides:                       iOS benefits:
+"LoginResponse.codeType is        →   "Handle nil codeType for
+ optional for backward compat"         backward compat with old BE"
+```
+
+### `xgh:async-pair-programming` — TDD across two developers
+
+```
+┌─ Developer A (tests) ────────┐  ┌─ Developer B (impl) ──────────┐
+│                               │  │                                │
+│  Writes failing test...       │  │  Queries thread for test spec  │
+│  Stores in thread: feat-789   │  │  Implements to make test pass  │
+│  type: test-spec              │  │  Stores: type: implementation  │
+│  status: red                  │  │  status: green                 │
+│                               │  │                                │
+│  Pulls impl, runs tests...   │  │  Queries for feedback...       │
+│  Stores: type: feedback       │  │  "Adding edge case X"          │
+│  "Pass, but edge case X"     │  │                                │
+│                               │  │                                │
+└───────────────────────────────┘  └────────────────────────────────┘
+                    │                              │
+                    └──── Cipher Workspace ────────┘
+                          thread: feat-789
+```
+
+Works across timezones — fully async, coordinated through shared memory.
+
+### `xgh:onboarding-accelerator` — Years of context in minutes
+
+```
+New developer joins → runs setup → first session:
+
+  "Welcome! Querying team knowledge base..."
+
+  → Architecture decisions (12 core entries)
+  → Coding conventions (8 entries)
+  → Known gotchas (15 entries)
+  → Recent incidents & fixes (5 entries)
+  → "Who owns what" map
+
+  Developer asks: "How does auth work?"
+  → Answer informed by months of team memory
+```
+
+## 11. Installation
+
+### Option A: MCS Tech Pack (recommended)
+
+```bash
+mcs pack add xgh && mcs sync
+```
+
+Handles everything automatically. See Section 9 for full tech pack manifest.
 
 ```
 Step 1: Install Ollama (brew)           ✓ auto
@@ -549,9 +679,247 @@ Step 9: Prompt for team name            ? one question
 Step 10: Ready to use                   🐴
 ```
 
-**Zero manual steps** beyond answering the team name prompt.
+### Option B: One-Liner Install (no MCS required)
 
-## 11. Key Influences & Attribution
+```bash
+curl -fsSL https://raw.githubusercontent.com/traderepublic/xgh/main/install.sh | bash
+```
+
+The install script handles everything MCS would do, but standalone:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+XGH_VERSION="${XGH_VERSION:-latest}"
+XGH_TEAM="${XGH_TEAM:-tr-engineering}"
+XGH_CONTEXT_PATH="${XGH_CONTEXT_PATH:-.xgh/context-tree}"
+XGH_REPO="https://github.com/traderepublic/xgh"
+
+echo "🐴 Installing xgh (extreme-go-horsebot) ${XGH_VERSION}..."
+
+# ── 1. Dependencies ──────────────────────────────────────
+echo "→ Checking dependencies..."
+
+if ! command -v brew &>/dev/null; then
+  echo "  Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+if ! command -v ollama &>/dev/null; then
+  echo "  Installing Ollama..."
+  brew install ollama
+fi
+
+if ! command -v qdrant &>/dev/null; then
+  echo "  Installing Qdrant..."
+  brew install qdrant
+fi
+
+# ── 2. Models ────────────────────────────────────────────
+echo "→ Pulling Ollama models..."
+ollama pull llama3.2:3b 2>/dev/null || true
+ollama pull nomic-embed-text 2>/dev/null || true
+
+# ── 3. Clone xgh ────────────────────────────────────────
+echo "→ Fetching xgh..."
+XGH_HOME="${HOME}/.xgh"
+mkdir -p "${XGH_HOME}"
+
+if [ -d "${XGH_HOME}/pack" ]; then
+  git -C "${XGH_HOME}/pack" pull --quiet
+else
+  git clone --quiet --depth 1 "${XGH_REPO}" "${XGH_HOME}/pack"
+fi
+
+# ── 4. Cipher MCP Server ────────────────────────────────
+echo "→ Configuring Cipher MCP server..."
+CLAUDE_DIR="${PWD}/.claude"
+mkdir -p "${CLAUDE_DIR}"
+
+# Project-scoped MCP config (shared via git)
+cat > "${CLAUDE_DIR}/.mcp.json" <<MCPEOF
+{
+  "mcpServers": {
+    "cipher": {
+      "command": "npx",
+      "args": ["-y", "@byterover/cipher"],
+      "env": {
+        "VECTOR_STORE_TYPE": "qdrant",
+        "VECTOR_STORE_URL": "http://localhost:6333",
+        "CIPHER_LOG_LEVEL": "info",
+        "SEARCH_MEMORY_TYPE": "both",
+        "USE_WORKSPACE_MEMORY": "true",
+        "XGH_TEAM": "${XGH_TEAM}"
+      }
+    }
+  }
+}
+MCPEOF
+
+# ── 5. Hooks ────────────────────────────────────────────
+echo "→ Installing hooks..."
+mkdir -p "${CLAUDE_DIR}/hooks"
+cp "${XGH_HOME}/pack/hooks/session-start.sh" "${CLAUDE_DIR}/hooks/xgh-session-start.sh"
+cp "${XGH_HOME}/pack/hooks/prompt-submit.sh" "${CLAUDE_DIR}/hooks/xgh-prompt-submit.sh"
+chmod +x "${CLAUDE_DIR}/hooks/"xgh-*.sh
+
+# Merge hook events into settings
+SETTINGS_FILE="${CLAUDE_DIR}/settings.local.json"
+if [ ! -f "${SETTINGS_FILE}" ]; then echo '{}' > "${SETTINGS_FILE}"; fi
+
+# Use node/npx to safely merge JSON (available via cipher dep)
+npx -y json-merger@latest \
+  "${SETTINGS_FILE}" \
+  "${XGH_HOME}/pack/config/hooks-settings.json" \
+  -o "${SETTINGS_FILE}" 2>/dev/null || {
+    # Fallback: copy hooks settings directly
+    cp "${XGH_HOME}/pack/config/settings.json" "${SETTINGS_FILE}"
+  }
+
+# ── 6. Skills + Commands + Agents ────────────────────────
+echo "→ Installing skills, commands, and agents..."
+mkdir -p "${CLAUDE_DIR}/skills" "${CLAUDE_DIR}/commands" "${CLAUDE_DIR}/agents"
+
+for skill_dir in "${XGH_HOME}/pack/skills/"*/; do
+  skill_name=$(basename "${skill_dir}")
+  cp -r "${skill_dir}" "${CLAUDE_DIR}/skills/xgh-${skill_name}"
+done
+
+for cmd in "${XGH_HOME}/pack/commands/"*.md; do
+  [ -f "${cmd}" ] && cp "${cmd}" "${CLAUDE_DIR}/commands/xgh-$(basename "${cmd}")"
+done
+
+for agent in "${XGH_HOME}/pack/agents/"*.md; do
+  [ -f "${agent}" ] && cp "${agent}" "${CLAUDE_DIR}/agents/xgh-$(basename "${agent}")"
+done
+
+# ── 7. Context Tree ─────────────────────────────────────
+echo "→ Initializing context tree..."
+mkdir -p "${PWD}/${XGH_CONTEXT_PATH}"
+cat > "${PWD}/${XGH_CONTEXT_PATH}/_manifest.json" <<MANIFESTEOF
+{
+  "version": 1,
+  "team": "${XGH_TEAM}",
+  "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "domains": []
+}
+MANIFESTEOF
+
+# ── 8. Gitignore ─────────────────────────────────────────
+echo "→ Updating .gitignore..."
+GITIGNORE="${PWD}/.gitignore"
+touch "${GITIGNORE}"
+for pattern in ".xgh/local/" "data/cipher-sessions.db*"; do
+  grep -qxF "${pattern}" "${GITIGNORE}" 2>/dev/null || echo "${pattern}" >> "${GITIGNORE}"
+done
+
+# ── 9. CLAUDE.local.md ──────────────────────────────────
+echo "→ Adding xgh instructions to CLAUDE.local.md..."
+if ! grep -q "mcs:begin xgh" "${PWD}/CLAUDE.local.md" 2>/dev/null; then
+  cat >> "${PWD}/CLAUDE.local.md" <<CLAUDEEOF
+
+<!-- mcs:begin xgh.instructions -->
+# xgh (extreme-go-horsebot) — Self-Learning Memory
+
+This project uses xgh for persistent team memory. Your hooks will
+automatically query memory before coding and curate learnings after.
+
+Key tools available via Cipher MCP:
+- cipher_memory_search: Search prior knowledge
+- cipher_extract_and_operate_memory: Store new knowledge
+- cipher_workspace_search: Search team-wide knowledge
+- cipher_workspace_store: Share knowledge with the team
+
+Context tree: ${XGH_CONTEXT_PATH}/
+Team: ${XGH_TEAM}
+<!-- mcs:end xgh.instructions -->
+CLAUDEEOF
+fi
+
+echo ""
+echo "🐴 xgh installed successfully!"
+echo ""
+echo "  Context tree: ${XGH_CONTEXT_PATH}/"
+echo "  Team:         ${XGH_TEAM}"
+echo "  Cipher MCP:   configured in .claude/.mcp.json"
+echo "  Hooks:        session-start + prompt-submit"
+echo ""
+echo "  Start Claude Code and your memory layer is active."
+echo "  Use /xgh-query and /xgh-curate for manual control."
+echo ""
+echo "  To customize: XGH_TEAM=my-team XGH_CONTEXT_PATH=.memory/tree bash install.sh"
+```
+
+### Usage After Installation (both methods)
+
+**It just works.** After installation, open Claude Code in your project:
+
+```
+$ claude
+
+  🐴 xgh active | team: tr-engineering | 47 memories | 12 core conventions
+
+  You: "Add a new API endpoint for user preferences"
+
+  [Hook fires: querying memory for API conventions...]
+  [Found: 3 relevant conventions, 2 related decisions]
+
+  Claude: "Based on your team's conventions, I'll use the
+  UseCase pattern with protocol+factory. I see the auth
+  team recently added Argon2id — I'll ensure the preferences
+  endpoint follows the same security patterns..."
+
+  [After implementation, hook fires: curating learnings...]
+  [Stored: 2 new knowledge entries, updated 1 existing]
+```
+
+**Manual commands:**
+
+```bash
+# Query memory
+/xgh-query "How does authentication work in this project?"
+
+# Curate knowledge explicitly
+/xgh-curate "Rate limiting uses token bucket with 100 req/min per user"
+
+# Curate from files
+/xgh-curate -f src/auth/middleware.ts "Auth middleware patterns"
+
+# Check status
+/xgh-status
+
+# Multi-agent collaboration
+/xgh-collaborate plan-review --agents "claude,codex" --thread feat-123
+```
+
+**Environment variables for customization:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `XGH_TEAM` | `tr-engineering` | Team name for workspace memory |
+| `XGH_CONTEXT_PATH` | `.xgh/context-tree` | Where the context tree lives |
+| `XGH_VERSION` | `latest` | Pin to a specific version |
+| `OLLAMA_HOST` | `http://localhost:11434` | Custom Ollama endpoint |
+| `VECTOR_STORE_URL` | `http://localhost:6333` | Custom Qdrant endpoint |
+
+### Uninstall
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/traderepublic/xgh/main/uninstall.sh | bash
+```
+
+Or manually:
+```bash
+rm -rf ~/.xgh
+rm -f .claude/hooks/xgh-*.sh
+rm -rf .claude/skills/xgh-*
+rm -rf .claude/commands/xgh-*
+rm -rf .claude/agents/xgh-*
+# Remove xgh section from CLAUDE.local.md and .claude/.mcp.json manually
+```
+
+## 12. Key Influences & Attribution
 
 | Source | What we adopted |
 |--------|----------------|

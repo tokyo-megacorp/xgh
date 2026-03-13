@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__cipher__cipher_memory_search",
+      "mcp__cipher__cipher_extract_and_operate_memory",
+      "mcp__cipher__cipher_store_reasoning_memory",
+      "mcp__cipher__cipher_search_reasoning_patterns",
+      "mcp__cipher__cipher_extract_reasoning_steps",
+      "mcp__cipher__cipher_evaluate_reasoning",
+      "mcp__cipher__cipher_bash"
+    ]
+  }
+}

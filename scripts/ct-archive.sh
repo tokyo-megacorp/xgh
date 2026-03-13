@@ -1,112 +1,120 @@
 #!/usr/bin/env bash
 # ct-archive.sh — Archive low-importance drafts, restore archived files
-# Sourced by context-tree.sh
+# Sourceable library: defines ct_archive_run, ct_archive_restore.
 
-archive_single() {
-  local ct_dir="$1" rel_path="$2"
-  local source_file="${ct_dir}/${rel_path}.md"
+_CT_ARCHIVE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${_CT_ARCHIVE_DIR}/ct-frontmatter.sh"
+source "${_CT_ARCHIVE_DIR}/ct-manifest.sh"
 
-  if [ ! -f "$source_file" ]; then
-    echo "Error: file not found: ${source_file}" >&2
-    return 1
-  fi
+ct_archive_run() {
+  local root="${1:?root required}"
+  local count=0
 
-  local archive_dir="${ct_dir}/_archived/$(dirname "$rel_path")"
-  mkdir -p "$archive_dir"
-
-  local basename
-  basename=$(basename "$rel_path")
-
-  cp "$source_file" "${archive_dir}/${basename}.full.md"
-
-  local stub_file="${ct_dir}/$(dirname "$rel_path")/${basename}.stub.md"
-
-  local title tags keywords importance maturity created_at
-  title=$(read_frontmatter_field "$source_file" "title")
-  tags=$(read_frontmatter_field "$source_file" "tags")
-  keywords=$(read_frontmatter_field "$source_file" "keywords")
-  importance=$(read_frontmatter_field "$source_file" "importance")
-  maturity=$(read_frontmatter_field "$source_file" "maturity")
-  created_at=$(read_frontmatter_field "$source_file" "createdAt")
-
-  local now
-  now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-  cat > "$stub_file" << STUBEOF
----
-title: ${title}
-tags: ${tags}
-keywords: ${keywords}
-importance: ${importance}
-maturity: ${maturity}
-archived: true
-archivedAt: ${now}
-archivePath: _archived/${rel_path}.full.md
-createdAt: ${created_at}
-updatedAt: ${now}
----
-
-**ARCHIVED** — This entry was archived due to low importance. Use \`context-tree.sh archive --restore "${rel_path}"\` to restore.
-STUBEOF
-
-  rm "$source_file"
-
-  echo "Archived: ${rel_path}"
-}
-
-archive_stale() {
-  local ct_dir="$1"
-  local threshold="${2:-35}"
-
-  find "$ct_dir" -name "*.md" \
-    ! -name "_index.md" \
-    ! -name "context.md" \
-    ! -name "*.stub.md" \
-    ! -path "*/_archived/*" \
-    -type f | while read -r file; do
+  while IFS= read -r file; do
+    [[ -z "$file" ]] && continue
 
     local maturity importance
-    maturity=$(read_frontmatter_field "$file" "maturity")
-    importance=$(read_frontmatter_field "$file" "importance")
+    maturity=$(ct_frontmatter_get "$file" "maturity" 2>/dev/null || echo "draft")
+    importance=$(ct_frontmatter_get "$file" "importance" 2>/dev/null || echo "0")
     maturity=${maturity:-draft}
     importance=${importance:-0}
 
-    if [ "$maturity" = "draft" ] && [ "$importance" -lt "$threshold" ]; then
-      local rel_path="${file#${ct_dir}/}"
-      rel_path="${rel_path%.md}"
-      archive_single "$ct_dir" "$rel_path"
+    if [[ "$maturity" == "draft" ]] && [[ "$importance" -lt 35 ]]; then
+      # Compute rel_path (strip root/ prefix and .md suffix)
+      local rel_path="${file#${root}/}"
+      local rel_no_ext="${rel_path%.md}"
+
+      # Create archive directory
+      local archive_dir="${root}/_archived/$(dirname "$rel_no_ext")"
+      mkdir -p "$archive_dir"
+
+      local basename_no_ext
+      basename_no_ext=$(basename "$rel_no_ext")
+
+      # 1. Copy original to .full.md
+      cp "$file" "${archive_dir}/${basename_no_ext}.full.md"
+
+      # 2. Create .stub.md with metadata pointer
+      local title
+      title=$(ct_frontmatter_get "$file" "title" 2>/dev/null || echo "")
+      local now
+      now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+      cat > "${archive_dir}/${basename_no_ext}.stub.md" << STUBEOF
+---
+title: ${title}
+originalPath: ${rel_path}
+archivedAt: ${now}
+archivePath: _archived/${rel_no_ext}.full.md
+---
+
+**ARCHIVED** — This entry was archived due to low importance.
+STUBEOF
+
+      # 3. Remove original file
+      rm "$file"
+
+      # 4. Remove from manifest
+      ct_manifest_remove "$root" "$rel_path"
+
+      # 5. Clean empty parent dirs up to root
+      local parent_dir
+      parent_dir=$(dirname "$file")
+      while [[ "$parent_dir" != "$root" ]] && [[ -d "$parent_dir" ]]; do
+        if [[ -z "$(ls -A "$parent_dir" 2>/dev/null)" ]]; then
+          rmdir "$parent_dir"
+          parent_dir=$(dirname "$parent_dir")
+        else
+          break
+        fi
+      done
+
+      count=$((count+1))
+      echo "Archived: ${rel_no_ext}"
     fi
-  done
+  done < <(find "$root" -name "*.md" \
+    ! -name "_index.md" \
+    ! -name "*.stub.md" \
+    ! -path "*/_archived/*" \
+    -type f 2>/dev/null)
+
+  echo "Archived ${count} entries"
 }
 
-restore_archived() {
-  local ct_dir="$1" rel_path="$2"
+ct_archive_restore() {
+  local root="${1:?root required}"
+  local archived_rel="${2:?archived-full path required}"
 
-  local basename
-  basename=$(basename "$rel_path")
-  local dir_part
-  dir_part=$(dirname "$rel_path")
+  # archived_rel is like "backend/auth/jwt-patterns.full.md"
+  local full_path="${root}/_archived/${archived_rel}"
 
-  local archive_file="${ct_dir}/_archived/${dir_part}/${basename}.full.md"
-  local stub_file="${ct_dir}/${dir_part}/${basename}.stub.md"
-  local target_file="${ct_dir}/${rel_path}.md"
-
-  if [ ! -f "$archive_file" ]; then
-    echo "Error: archive not found: ${archive_file}" >&2
+  if [[ ! -f "$full_path" ]]; then
+    echo "Error: archive not found: ${full_path}" >&2
     return 1
   fi
 
+  # Strip .full.md to get original rel path
+  local rel_no_ext="${archived_rel%.full.md}"
+  local original_rel="${rel_no_ext}.md"
+  local target_file="${root}/${original_rel}"
+
+  # 1. Copy .full.md back to original location
   mkdir -p "$(dirname "$target_file")"
+  cp "$full_path" "$target_file"
 
-  cp "$archive_file" "$target_file"
+  # 2. Re-register in manifest
+  ct_manifest_add "$root" "$original_rel"
 
-  [ -f "$stub_file" ] && rm "$stub_file"
-  rm "$archive_file"
+  # 3. Remove .full.md and .stub.md
+  rm "$full_path"
+  local stub_path="${root}/_archived/${rel_no_ext}.stub.md"
+  [[ -f "$stub_path" ]] && rm "$stub_path"
 
+  # 4. Clean empty parent dirs in _archived/
   local arch_dir
-  arch_dir=$(dirname "$archive_file")
-  while [ "$arch_dir" != "${ct_dir}/_archived" ] && [ -d "$arch_dir" ]; do
-    if [ -z "$(ls -A "$arch_dir" 2>/dev/null)" ]; then
+  arch_dir=$(dirname "$full_path")
+  while [[ "$arch_dir" != "${root}/_archived" ]] && [[ -d "$arch_dir" ]]; do
+    if [[ -z "$(ls -A "$arch_dir" 2>/dev/null)" ]]; then
       rmdir "$arch_dir"
       arch_dir=$(dirname "$arch_dir")
     else
@@ -114,24 +122,18 @@ restore_archived() {
     fi
   done
 
-  echo "Restored: ${rel_path}"
+  echo "Restored: ${rel_no_ext}"
 }
 
-cmd_archive() {
-  local ct_dir="${XGH_CONTEXT_TREE_DIR:-${PWD}/.xgh/context-tree}"
-  local action="stale" threshold=35 restore_path=""
-
-  while [ $# -gt 0 ]; do
-    case "$1" in
-      --stale)     action="stale"; shift ;;
-      --threshold) threshold="$2"; shift 2 ;;
-      --restore)   action="restore"; restore_path="$2"; shift 2 ;;
-      *) echo "Unknown option: $1" >&2; return 1 ;;
-    esac
-  done
-
-  case "$action" in
-    stale)   archive_stale "$ct_dir" "$threshold" ;;
-    restore) restore_archived "$ct_dir" "$restore_path" ;;
+# No-op when sourced; CLI dispatch when executed directly
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  cmd=${1:-}
+  case "$cmd" in
+    run) ct_archive_run "${2:?root required}" ;;
+    restore) ct_archive_restore "${2:?root required}" "${3:?archived-full required}" ;;
+    *)
+      echo "Usage: ct-archive.sh {run|restore} <root> [archived-full]" >&2
+      exit 1
+      ;;
   esac
-}
+fi

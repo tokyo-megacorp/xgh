@@ -1,4 +1,4 @@
-# xgh — eXtreme Go Horse 🐴
+# xgh — eXtreme Go Horse 🐴🤖
 
 > **Context-aware AI coding conventions powered by [Cipher](https://github.com/campfirein/cipher) memory and a living context tree.**
 > Persistent team knowledge that grows with every session — for productive engineering work, solo or within teams.

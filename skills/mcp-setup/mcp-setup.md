@@ -176,7 +176,7 @@ This skill is called BY other skills, never directly by the user (though `/xgh s
 When triggered manually, audit ALL MCP integrations:
 
 ```
-"🐴 xgh MCP Integration Status:
+"🐴🤖 xgh MCP Integration Status:
 
   ✅ Cipher        — configured (core memory)
   ❌ Slack         — not configured

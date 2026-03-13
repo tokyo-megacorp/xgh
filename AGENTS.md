@@ -1,4 +1,4 @@
-# AGENTS.md — xgh (eXtreme Go Horse) 🐴
+# AGENTS.md — xgh (eXtreme Go Horse) 🐴🤖
 
 > Canonical agent instructions for AI systems working on the **xgh** repository.
 > All platform-specific files (CLAUDE.md, .github/copilot-instructions.md, etc.) point here.
@@ -96,6 +96,7 @@ curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
 - YAML keys: `camelCase` (following MCS tech pack schema)
 - Markdown skills: one directory per skill, markdown file matches directory name
 - Slash commands: markdown files in `commands/`, filename is the command name
+- Emoji branding: always use the horse+robot combo 🐴🤖 (never 🐴 alone)
 
 ### Adding a new BYOP preset
 

@@ -10,7 +10,7 @@ info() { echo -e "${GREEN}→${NC} $*"; }
 warn() { echo -e "${YELLOW}⚠${NC} $*"; }
 
 echo ""
-echo "🐴 Uninstalling xgh..."
+echo "🐴🤖 Uninstalling xgh..."
 echo ""
 
 CLAUDE_DIR="${PWD}/.claude"
@@ -62,7 +62,7 @@ json.dump(s, open('${SETTINGS_FILE}', 'w'), indent=2)
 fi
 
 echo ""
-echo "🐴 xgh uninstalled."
+echo "🐴🤖 xgh uninstalled."
 echo ""
 echo "  Note: Context tree (.xgh/) and global pack (~/.xgh/) are preserved."
 echo "  To remove completely: rm -rf .xgh ~/.xgh"

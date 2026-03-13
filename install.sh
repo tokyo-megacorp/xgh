@@ -20,7 +20,7 @@ warn()  { echo -e "${YELLOW}⚠${NC} $*"; }
 error() { echo -e "${RED}✗${NC} $*" >&2; }
 
 echo ""
-echo "🐴 xgh (extreme-go-horsebot) installer"
+echo "🐴🤖 xgh (extreme-go-horsebot) installer"
 echo "   Team: ${XGH_TEAM} | Preset: ${XGH_PRESET}"
 echo ""
 
@@ -244,7 +244,7 @@ fi
 
 # ── Done ─────────────────────────────────────────────────
 echo ""
-echo "🐴 xgh installed successfully!"
+echo "🐴🤖 xgh installed successfully!"
 echo ""
 echo "  Team:         ${XGH_TEAM}"
 echo "  Preset:       ${XGH_PRESET}"

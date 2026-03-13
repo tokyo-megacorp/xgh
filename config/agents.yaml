@@ -1,0 +1,63 @@
+# xgh Agent Registry
+# Declares available agents and their capabilities for multi-agent collaboration.
+# See: docs/plans/2026-03-13-xgh-design.md § 5
+
+agents:
+  claude-code:
+    type: primary
+    description: "Primary AI coding agent — orchestrates workflows, holds full project context"
+    capabilities:
+      - architecture
+      - implementation
+      - planning
+      - review
+      - debugging
+      - refactoring
+    integration: hooks + skills + MCP
+    invocation:
+      method: native
+      notes: "Claude Code is the host agent — no external invocation needed"
+
+  codex:
+    type: secondary
+    description: "OpenAI Codex CLI agent — fast implementation and code review"
+    capabilities:
+      - fast-implementation
+      - code-review
+      - test-generation
+    integration: MCP + bash-invocation
+    invocation:
+      method: bash
+      command: "codex --quiet --approval-mode full-auto"
+      notes: "Requires OpenAI Codex CLI installed (npm i -g @openai/codex)"
+
+  cursor:
+    type: secondary
+    description: "Cursor IDE agent — IDE-integrated editing and refactoring"
+    capabilities:
+      - ide-editing
+      - refactoring
+      - inline-completion
+    integration: MCP
+    invocation:
+      method: mcp
+      notes: "Requires Cursor IDE with MCP support enabled"
+
+  custom:
+    type: extensible
+    description: "User-defined agent — extend xgh with any MCP-compatible agent"
+    capabilities:
+      - user-defined
+    integration: MCP
+    invocation:
+      method: mcp
+      notes: "Configure via environment variables or .xgh/config.yaml"
+
+# Message protocol metadata fields (used by all agents):
+#   type: plan | review | feedback | result | decision | question
+#   status: pending | in_progress | completed
+#   from_agent: <agent-id>
+#   for_agent: "*" | <agent-id>
+#   thread_id: <workflow-thread>
+#   priority: normal | high | urgent
+#   created_at: ISO 8601 timestamp

@@ -15,7 +15,7 @@ When the user invokes `/xgh-status`, follow this procedure exactly:
 
 ### Step 1: Read Context Tree Manifest
 
-1. Locate `_manifest.json` at `.xgh/context-tree/_manifest.json` (or `$XGH_CONTEXT_TREE_PATH/_manifest.json`)
+1. Locate `_manifest.json` at `.xgh/context-tree/_manifest.json` (or `$XGH_CONTEXT_TREE/_manifest.json`)
 2. Parse the manifest and collect statistics
 
 If the manifest does not exist:

@@ -3,7 +3,7 @@ set -euo pipefail
 
 XGH_VERSION="${XGH_VERSION:-latest}"
 XGH_TEAM="${XGH_TEAM:-my-team}"
-XGH_CONTEXT_PATH="${XGH_CONTEXT_PATH:-.xgh/context-tree}"
+XGH_CONTEXT_TREE="${XGH_CONTEXT_TREE:-.xgh/context-tree}"
 XGH_PRESET="${XGH_PRESET:-local}"
 XGH_DRY_RUN="${XGH_DRY_RUN:-0}"
 XGH_LOCAL_PACK="${XGH_LOCAL_PACK:-}"
@@ -198,15 +198,15 @@ done
 
 # ── 8. Context Tree ─────────────────────────────────────
 info "Initializing context tree..."
-mkdir -p "${PWD}/${XGH_CONTEXT_PATH}"
+mkdir -p "${PWD}/${XGH_CONTEXT_TREE}"
 
-if [ ! -f "${PWD}/${XGH_CONTEXT_PATH}/_manifest.json" ]; then
-  cat > "${PWD}/${XGH_CONTEXT_PATH}/_manifest.json" <<MANIFESTEOF
+if [ ! -f "${PWD}/${XGH_CONTEXT_TREE}/_manifest.json" ]; then
+  cat > "${PWD}/${XGH_CONTEXT_TREE}/_manifest.json" <<MANIFESTEOF
 {
   "version": 1,
   "team": "${XGH_TEAM}",
   "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "domains": []
+  "entries": []
 }
 MANIFESTEOF
 fi
@@ -228,7 +228,7 @@ if ! grep -q "mcs:begin xgh" "$CLAUDE_MD" 2>/dev/null; then
     {
       echo ""
       echo "<!-- mcs:begin xgh.instructions -->"
-      sed "s/__TEAM_NAME__/${XGH_TEAM}/g; s|__CONTEXT_TREE_PATH__|${XGH_CONTEXT_PATH}|g" "$TEMPLATE"
+      sed "s/__TEAM_NAME__/${XGH_TEAM}/g; s|__CONTEXT_TREE_PATH__|${XGH_CONTEXT_TREE}|g" "$TEMPLATE"
       echo "<!-- mcs:end xgh.instructions -->"
     } >> "$CLAUDE_MD"
   else
@@ -236,7 +236,7 @@ if ! grep -q "mcs:begin xgh" "$CLAUDE_MD" 2>/dev/null; then
 
 <!-- mcs:begin xgh.instructions -->
 # xgh (extreme-go-horsebot) — Self-Learning Memory
-Team: ${XGH_TEAM} | Context Tree: ${XGH_CONTEXT_PATH}/
+Team: ${XGH_TEAM} | Context Tree: ${XGH_CONTEXT_TREE}/
 <!-- mcs:end xgh.instructions -->
 CLAUDEEOF
   fi
@@ -303,7 +303,7 @@ echo "🐴 xgh installed successfully!"
 echo ""
 echo "  Team:         ${XGH_TEAM}"
 echo "  Preset:       ${XGH_PRESET}"
-echo "  Context tree: ${XGH_CONTEXT_PATH}/"
+echo "  Context tree: ${XGH_CONTEXT_TREE}/"
 echo "  Cipher MCP:   .claude/.mcp.json"
 echo "  Hooks:        .claude/hooks/xgh-*.sh"
 echo ""

@@ -1,0 +1,19 @@
+name: plan-review
+description: planner -> reviewer -> implementation readiness loop
+roles:
+  planner: claude-code
+  reviewer: codex
+  owner: claude-code
+steps:
+  - id: draft-plan
+    owner: planner
+    output: plan.md
+  - id: review-plan
+    owner: reviewer
+    output: review-notes.md
+  - id: finalize-plan
+    owner: owner
+    output: final-plan.md
+acceptance:
+  - plan has scoped tasks
+  - risks and mitigations documented

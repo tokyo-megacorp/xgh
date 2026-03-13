@@ -1,0 +1,28 @@
+version: 1
+registry:
+  - id: claude-code
+    role: orchestrator
+    strengths:
+      - planning
+      - architecture
+      - integration
+    transport: mcp
+  - id: codex
+    role: implementer
+    strengths:
+      - fast-implementation
+      - code-review
+      - shell-automation
+    transport: mcp
+  - id: cursor
+    role: refactorer
+    strengths:
+      - IDE-navigation
+      - refactoring
+      - diagnostics
+    transport: mcp
+  - id: custom
+    role: specialist
+    strengths:
+      - domain-specific
+    transport: mcp

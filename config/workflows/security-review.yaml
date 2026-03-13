@@ -1,0 +1,18 @@
+name: security-review
+description: implementation with dedicated security-review pass
+roles:
+  implementer: codex
+  reviewer: claude-code
+steps:
+  - id: implement-change
+    owner: implementer
+    output: patch.diff
+  - id: security-review
+    owner: reviewer
+    output: security-findings.md
+  - id: apply-fixes
+    owner: implementer
+    output: security-fixes.diff
+acceptance:
+  - no critical findings
+  - mitigations documented

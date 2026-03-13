@@ -1,0 +1,20 @@
+name: parallel-impl
+description: parallel-impl across independent workstreams with merge gate
+roles:
+  coordinator: claude-code
+  implementers:
+    - codex
+    - cursor
+steps:
+  - id: split-work
+    owner: coordinator
+    output: task-map.md
+  - id: parallel-implement
+    owner: implementers
+    output: patches/
+  - id: merge-and-validate
+    owner: coordinator
+    output: merged-result.md
+acceptance:
+  - all tasks merged
+  - tests green

@@ -11,7 +11,7 @@ Two parallel implementations of xgh Plans 1-7 exist:
 - **Copilot branch:** Better architecture — sourceable library pattern, flat manifest schema, structured JSON hook output, intent-detecting prompt-submit hook
 - **Our branch:** Better functionality — hysteresis scoring, dual BM25+Cipher search, field-weighted BM25, XGH_BRIEFING trigger, 13.9x more complete skills, all 540 tests passing
 
-This spec defines a clean rewrite of the ~8 script files that takes the best of both.
+This spec defines a clean rewrite of 7 shell scripts, 2 hooks, and 1 configure script that takes the best of both.
 
 ## Architecture
 
@@ -31,7 +31,8 @@ context-tree.sh (public API + CLI dispatcher)
 
 ### Environment
 
-- `XGH_CONTEXT_TREE` — context tree root (default: `.xgh/context-tree`). Used consistently across all scripts. No `CT_DIR` / `CT_ROOT` / `XGH_CONTEXT_TREE_DIR` / `XGH_CONTEXT_TREE_PATH` inconsistency.
+- `XGH_CONTEXT_TREE` — context tree root (default: `.xgh/context-tree`). Used consistently across all scripts. No `CT_DIR` / `CT_ROOT` / `XGH_CONTEXT_TREE_DIR` / `XGH_CONTEXT_TREE_PATH` / `XGH_CONTEXT_PATH` inconsistency.
+- Inside `context-tree.sh`, the resolved value is stored in `CT_ROOT`: `CT_ROOT=${XGH_CONTEXT_TREE:-.xgh/context-tree}`. All subcommand descriptions below reference `$CT_ROOT`.
 
 ## Public API
 
@@ -53,6 +54,20 @@ context-tree.sh manifest <init|rebuild|update-indexes>
 ```
 
 Sources all `ct-*.sh` libraries and dispatches to their functions.
+
+**Subcommand details:**
+- `init` — calls `ct_manifest_init "$CT_ROOT"` then `ct_manifest_update_indexes "$CT_ROOT"`. Creates `$CT_ROOT` dir if missing.
+- `create` — creates file at `$CT_ROOT/<rel-path>`, writes frontmatter (title, defaults), appends content. Calls `ct_score_recalculate` and `ct_manifest_add`. Fails if file exists.
+- `read` — cats file, increments accessCount via `ct_frontmatter_increment_int`, bumps importance +3 via `ct_score_apply_event <file> search-hit`.
+- `update` — appends `## Update <timestamp>` + content to file. Bumps importance +5 via `ct_score_apply_event <file> update`. Resets recency to 1.0.
+- `delete` — removes file. Also removes `_archived/<path>.stub.md` and `_archived/<path>.full.md` if they exist. Cleans empty parent dirs up to `$CT_ROOT`. Calls `ct_manifest_remove`.
+- `list` — `find` all `.md` files excluding `_index.md`, `_archived/`, `*.stub.md`, and `context.md`, print with maturity and importance.
+- `search` — delegates to `ct_search_run "$CT_ROOT" "$query" "${top:-10}"`.
+- `score` — delegates to `ct_score_apply_event "$CT_ROOT/$rel_path" "${event:-update}"`.
+- `archive` — delegates to `ct_archive_run "$CT_ROOT"`.
+- `restore` — delegates to `ct_archive_restore "$CT_ROOT" "$archived_full"`. The argument is a path relative to `$CT_ROOT/_archived/` (e.g., `backend/auth/jwt-patterns.full.md`).
+- `sync` — delegates to `ct_sync_*` functions.
+- `manifest` — delegates to `ct_manifest_init`, `ct_manifest_rebuild`, or `ct_manifest_update_indexes`.
 
 ### ct-frontmatter.sh (YAML frontmatter parser)
 
@@ -102,7 +117,7 @@ IMPORTANCE_MANUAL_CURATE=10
 ct_score_recency <updated_at>                # returns float 0.0-1.0 (exponential decay)
 ct_score_maturity <importance> <current_maturity>  # returns new maturity with hysteresis
 ct_score_recalculate <file>                  # recalculate recency + maturity from current fields
-ct_score_apply_event <file> <event>          # bump importance by event type, recalculate
+ct_score_apply_event <file> <event>          # bump importance by event type, recalculate maturity. Does NOT update updatedAt or recency — those only change on content writes (create/update), not on reads/searches.
 ```
 
 **Recency formula:** `e^(-ln(2) × days / HALF_LIFE_DAYS)`
@@ -169,8 +184,8 @@ Source: Our dual-mode scoring, Copilot's library pattern.
 
 **Functions:**
 ```bash
-ct_search_run <root> <query> [top]           # BM25-only mode
-ct_search_with_cipher <root> <query> <cipher_json> [top]  # merged mode
+ct_search_run <root> <query> [top]           # BM25-only mode (top defaults to 10)
+ct_search_with_cipher <root> <query> <cipher_json> [top]  # merged mode (top defaults to 10)
 ```
 
 **BM25-only formula:** `(0.6 × bm25 + 0.2 × importance/100 + 0.2 × recency) × maturityBoost`
@@ -192,11 +207,20 @@ Source: Copilot's sourceable pattern, our curate/query/score/archive actions.
 
 **Functions:**
 ```bash
-ct_sync_curate <root> <domain> <topic> <title> <content> [source]
-ct_sync_query <root> <query> [cipher_json] [top]
+ct_sync_curate <root> <domain> <topic> <title> <content> [tags] [keywords] [source] [from_agent]
+# Note: subtopic and related are intentionally dropped. Subtopic is expressed
+# in the filesystem path (domain/topic/subtopic/title.md). Related entries are
+# managed via tags/keywords rather than explicit links.
+ct_sync_query <root> <query> [cipher_json] [top]  # top defaults to 10
 ct_sync_refresh <root>                       # rebuild manifest + update indexes
 ct_sync_slugify <string>                     # kebab-case conversion
 ```
+
+### configure.sh (post-install manifest setup)
+
+Source: Rewritten to produce flat `entries[]` manifest schema.
+
+**Behavior:** Called by `install.sh` after context tree directory is created. Initializes `_manifest.json` with the flat schema (version, team, created, entries: []). If manifest already exists, validates and migrates from `domains[]` to `entries[]` if needed.
 
 ### mcp-detect.sh
 
@@ -230,7 +254,7 @@ Source: Copilot's pure-Python structured JSON output + our XGH_BRIEFING trigger.
 }
 ```
 
-**Implementation:** Single Python heredoc. Walks context tree directory directly (no manifest dependency for entry selection — reads files and scores by `maturity_rank × 100 + importance`). Reads `XGH_CONTEXT_TREE` env var with fallback walk-up. Reads `XGH_BRIEFING` env var (off|compact|auto|1).
+**Implementation:** Single Python heredoc. This is a full rewrite — the current manifest-dependent text-blob output is replaced entirely. The new version walks the context tree directory directly via `rglob("*.md")` (no manifest dependency for entry selection — reads frontmatter from each file and scores by `maturity_rank × 100 + importance`). Reads `XGH_CONTEXT_TREE` env var with fallback walk-up from `pwd`. Reads `XGH_BRIEFING` env var (off|compact|auto|1). Excludes `_index.md` and `_archived/` entries.
 
 ### prompt-submit.sh
 
@@ -248,20 +272,27 @@ Source: Copilot's intent-detecting implementation.
 
 **Implementation:** Python heredoc with regex intent detection (`implement|refactor|fix|build|code|write|change|feature|bug` → code-change).
 
+## Modified Files (light touch)
+
+These files require small, targeted updates but are NOT full rewrites:
+
+- **install.sh** — update manifest initialization to flat `entries[]` schema (replace `"domains": []` with `"entries": []`), rename `XGH_CONTEXT_PATH` to `XGH_CONTEXT_TREE`
+- **uninstall.sh** — update any `context-tree.sh` invocations to new API if needed
+- **commands/query.md** — rename `XGH_CONTEXT_TREE_PATH` → `XGH_CONTEXT_TREE`
+- **commands/status.md** — rename `XGH_CONTEXT_TREE_PATH` → `XGH_CONTEXT_TREE`
+
 ## Unchanged Files
 
 The following are NOT modified by this spec:
 
 - **All 17 skills/** — production-ready workflows
-- **All 9 commands/** — complete with usage examples
+- **All other commands/** — complete with usage examples
 - **config/agents.yaml** — agent registry
 - **config/workflows/*.yaml** — 4 workflow templates
 - **agents/collaboration-dispatcher.md** — multi-agent orchestrator
 - **scripts/mcp-detect.sh** — MCP capability detection
 - **scripts/bm25.py** — field-weighted BM25 engine
 - **techpack.yaml** — pack configuration
-- **install.sh** — update only `context-tree.sh` invocations if API changed
-- **uninstall.sh** — update only `context-tree.sh` invocations if API changed
 
 ## Test Strategy
 
@@ -279,6 +310,7 @@ These test the script API directly and must be rewritten for the new positional-
 | `test-ct-search.sh` | ~6 | Library functions, dual-mode |
 | `test-ct-sync.sh` | ~11 | Library functions |
 | `test-ct-integration.sh` | ~25 | End-to-end with new API, flat manifest |
+| `test-ct-core.sh` | ~6 | Merge into `test-ct-crud.sh` or delete (overlapping coverage) |
 
 ### Update (1 file)
 

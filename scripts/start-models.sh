@@ -8,7 +8,7 @@ XGH_LLM_MODEL="${XGH_LLM_MODEL:-mlx-community/Llama-3.2-3B-Instruct-4bit}"
 XGH_EMBED_MODEL="${XGH_EMBED_MODEL:-mlx-community/nomicai-modernbert-embed-base-8bit}"
 XGH_MODEL_PORT="${XGH_MODEL_PORT:-11434}"
 
-echo "🐴 Starting vllm-mlx model server..."
+echo "🐴🤖 Starting vllm-mlx model server..."
 echo "   LLM:        ${XGH_LLM_MODEL}"
 echo "   Embeddings: ${XGH_EMBED_MODEL}"
 echo "   Port:       ${XGH_MODEL_PORT}"

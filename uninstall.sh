@@ -4,41 +4,44 @@ set -euo pipefail
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+DIM='\033[2m'
 NC='\033[0m'
 
-info() { echo -e "${GREEN}→${NC} $*"; }
-warn() { echo -e "${YELLOW}⚠${NC} $*"; }
+info() { echo -e "  ${GREEN}▸${NC} $*"; }
+warn() { echo -e "  ${YELLOW}▸${NC} $*"; }
 
 echo ""
-echo "🐴 Uninstalling xgh..."
+echo -e "  ${BOLD}🐴🤖 xgh${NC} ${DIM}uninstaller${NC}"
 echo ""
 
 CLAUDE_DIR="${PWD}/.claude"
 
 # Remove hooks
-info "Removing hooks..."
+info "Removing hooks"
 rm -f "${CLAUDE_DIR}/hooks/"xgh-*.sh
 
 # Remove skills
-info "Removing skills..."
+info "Removing skills"
 rm -rf "${CLAUDE_DIR}/skills/"xgh-*
 
 # Remove commands
-info "Removing commands..."
+info "Removing commands"
 rm -f "${CLAUDE_DIR}/commands/"xgh-*.md
 
 # Remove agents
-info "Removing agents..."
+info "Removing agents"
 rm -f "${CLAUDE_DIR}/agents/"xgh-*.md
 
 # Remove MCP config
-info "Removing Cipher MCP config..."
+info "Removing Cipher MCP config"
 rm -f "${CLAUDE_DIR}/.mcp.json"
 
 # Remove xgh section from CLAUDE.local.md
 CLAUDE_MD="${PWD}/CLAUDE.local.md"
 if [ -f "$CLAUDE_MD" ] && grep -q "mcs:begin xgh" "$CLAUDE_MD"; then
-  info "Removing xgh section from CLAUDE.local.md..."
+  info "Cleaning CLAUDE.local.md"
   sed '/<!-- mcs:begin xgh/,/<!-- mcs:end xgh/d' "$CLAUDE_MD" > "${CLAUDE_MD}.tmp"
   mv "${CLAUDE_MD}.tmp" "$CLAUDE_MD"
 fi
@@ -46,7 +49,7 @@ fi
 # Remove hook events from settings (leave other settings intact)
 SETTINGS_FILE="${CLAUDE_DIR}/settings.local.json"
 if [ -f "$SETTINGS_FILE" ] && grep -q "xgh-session-start" "$SETTINGS_FILE"; then
-  info "Removing hook registrations from settings..."
+  info "Cleaning hook registrations"
   python3 -c "
 import json
 s = json.load(open('${SETTINGS_FILE}'))
@@ -64,14 +67,14 @@ fi
 # Optional: offer to uninstall plugins
 if command -v claude &>/dev/null; then
   echo ""
-  info "xgh recommended these optional plugins. They work independently — uninstall only if you no longer want them:"
-  echo "    claude plugin uninstall context-mode@context-mode"
-  echo "    claude plugin uninstall superpowers@superpowers"
+  info "These plugins work independently — uninstall only if you no longer want them:"
+  echo -e "    ${DIM}claude plugin uninstall context-mode@context-mode${NC}"
+  echo -e "    ${DIM}claude plugin uninstall superpowers@superpowers${NC}"
 fi
 
 echo ""
-echo "🐴 xgh uninstalled."
+echo -e "  ${BOLD}🐴🤖 xgh uninstalled.${NC} ${DIM}The horse has left the building.${NC}"
 echo ""
-echo "  Note: Context tree (.xgh/) and global pack (~/.xgh/) are preserved."
-echo "  To remove completely: rm -rf .xgh ~/.xgh"
+echo -e "  ${DIM}Context tree (.xgh/) and global pack (~/.xgh/) are preserved.${NC}"
+echo -e "  ${DIM}To remove completely: rm -rf .xgh ~/.xgh${NC}"
 echo ""

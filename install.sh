@@ -16,35 +16,39 @@ XGH_MODEL_PORT="${XGH_MODEL_PORT:-11434}"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+DIM='\033[2m'
 NC='\033[0m'
 
-info()  { echo -e "${GREEN}→${NC} $*"; }
-warn()  { echo -e "${YELLOW}⚠${NC} $*"; }
-error() { echo -e "${RED}✗${NC} $*" >&2; }
+info()  { echo -e "  ${GREEN}▸${NC} $*"; }
+warn()  { echo -e "  ${YELLOW}▸${NC} $*"; }
+error() { echo -e "  ${RED}▸${NC} $*" >&2; }
+lane()  { echo ""; echo -e "  ${CYAN}━━━${NC} ${BOLD}$*${NC}"; echo ""; }
 
 echo ""
-echo "🐴 xgh (extreme-go-horsebot) installer"
-echo "   Team: ${XGH_TEAM} | Preset: ${XGH_PRESET}"
+echo -e "  ${BOLD}🐴🤖 xgh${NC} ${DIM}(eXtreme Go Horse)${NC}"
+echo -e "  ${DIM}Team: ${XGH_TEAM} · Preset: ${XGH_PRESET}${NC}"
 echo ""
 
 # ── 1. Dependencies ──────────────────────────────────────
 if [ "$XGH_DRY_RUN" -eq 0 ]; then
-  info "Checking dependencies..."
+  lane "Saddling up dependencies 🏇"
 
   if ! command -v brew &>/dev/null; then
-    info "Installing Homebrew..."
+    info "Homebrew not found — installing"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
 
   # Install uv (Python package installer) if not present
   if ! command -v uv &>/dev/null; then
-    info "Installing uv..."
+    info "uv (Python installer)"
     brew install uv
   fi
 
   # Install vllm-mlx (local model server)
   if ! command -v vllm-mlx &>/dev/null; then
-    info "Installing vllm-mlx (local model server for Apple Silicon)..."
+    info "vllm-mlx (local model server for Apple Silicon)"
     uv tool install "git+https://github.com/waybarrios/vllm-mlx.git"
   fi
 
@@ -57,7 +61,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   fi
 
   # ── 2. Model Selection ─────────────────────────────────
-  # Curated model lists
+  lane "Picking brains 🧠"
   LLM_MODELS=(
     "mlx-community/Llama-3.2-3B-Instruct-4bit|Llama 3.2 3B (default, fast, 2GB)"
     "mlx-community/Llama-3.2-1B-Instruct-4bit|Llama 3.2 1B (tiny, 0.7GB)"
@@ -77,7 +81,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   # Interactive model picker (skip if env vars are set)
   if [ -z "$XGH_LLM_MODEL" ]; then
     echo ""
-    echo -e "  ${GREEN}Choose an LLM model${NC} (for Cipher reasoning):"
+    echo -e "  ${BOLD}Pick an LLM${NC} ${DIM}(Cipher's reasoning brain)${NC}"
     echo ""
     for i in "${!LLM_MODELS[@]}"; do
       IFS='|' read -r model_id model_desc <<< "${LLM_MODELS[$i]}"
@@ -89,7 +93,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     done
     echo "    c) Custom HuggingFace model ID"
     echo ""
-    read -r -p "  Pick [1]: " llm_choice
+    read -r -p "  🐴 Pick [1]: " llm_choice
     llm_choice="${llm_choice:-1}"
 
     if [ "$llm_choice" = "c" ] || [ "$llm_choice" = "C" ]; then
@@ -104,7 +108,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
 
   if [ -z "$XGH_EMBED_MODEL" ]; then
     echo ""
-    echo -e "  ${GREEN}Choose an embedding model${NC} (for semantic search):"
+    echo -e "  ${BOLD}Pick an embedding model${NC} ${DIM}(semantic search engine)${NC}"
     echo ""
     for i in "${!EMBED_MODELS[@]}"; do
       IFS='|' read -r model_id model_desc <<< "${EMBED_MODELS[$i]}"
@@ -116,7 +120,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     done
     echo "    c) Custom HuggingFace model ID"
     echo ""
-    read -r -p "  Pick [1]: " embed_choice
+    read -r -p "  🐴 Pick [1]: " embed_choice
     embed_choice="${embed_choice:-1}"
 
     if [ "$embed_choice" = "c" ] || [ "$embed_choice" = "C" ]; then
@@ -133,7 +137,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   info "Embedding model:  ${XGH_EMBED_MODEL}"
 
   # ── 3. Download models ─────────────────────────────────
-  info "Pre-downloading models (this may take a few minutes on first run)..."
+  lane "Downloading models (grab a coffee) ☕"
   uv run --with huggingface-hub python3 -c "
 from huggingface_hub import snapshot_download
 import sys
@@ -147,12 +151,12 @@ for model in sys.argv[1:]:
 " "$XGH_LLM_MODEL" "$XGH_EMBED_MODEL" || warn "Model pre-download failed — models will download on first use"
 
   # ── 3b. Cipher Infrastructure ──────────────────────────
-  info "Installing cipher infrastructure..."
+  lane "Wiring up the memory layer 🧬"
 
   # -- cipher-mcp wrapper (filters stdout pollution, injects --agent config, fixes encoding_format) --
   CIPHER_MCP_BIN="${HOME}/.local/bin/cipher-mcp"
   if [ ! -f "$CIPHER_MCP_BIN" ]; then
-    info "Installing cipher-mcp wrapper..."
+    info "Setting up cipher-mcp wrapper"
     mkdir -p "${HOME}/.local/bin"
     cat > "$CIPHER_MCP_BIN" <<'CIPHERMCPEOF'
 #!/usr/bin/env node
@@ -204,15 +208,15 @@ process.on('SIGTERM', () => child.kill('SIGTERM'));
 process.on('SIGINT', () => child.kill('SIGINT'));
 CIPHERMCPEOF
     chmod +x "$CIPHER_MCP_BIN"
-    info "cipher-mcp wrapper installed at ${CIPHER_MCP_BIN}"
+    info "cipher-mcp wrapper → ${CIPHER_MCP_BIN}"
   else
-    info "cipher-mcp wrapper already exists, skipping"
+    info "cipher-mcp wrapper already in place"
   fi
 
   # -- fix-openai-embeddings.js (patches OpenAI SDK encoding_format bug) --
   FIX_EMBED_JS="${HOME}/.local/lib/fix-openai-embeddings.js"
   if [ ! -f "$FIX_EMBED_JS" ]; then
-    info "Installing fix-openai-embeddings.js..."
+    info "Patching OpenAI SDK embedding compat"
     mkdir -p "${HOME}/.local/lib"
     cat > "$FIX_EMBED_JS" <<'FIXEMBEDEOF'
 // Patches OpenAI SDK's Embeddings.create() to inject encoding_format: "float"
@@ -268,15 +272,15 @@ if (OPENAI_ROOT) {
   process.stderr.write('[fix-openai-embeddings] OpenAI SDK not found in cipher node_modules\n');
 }
 FIXEMBEDEOF
-    info "fix-openai-embeddings.js installed at ${FIX_EMBED_JS}"
+    info "Embedding fix → ${FIX_EMBED_JS}"
   else
-    info "fix-openai-embeddings.js already exists, skipping"
+    info "Embedding fix already in place"
   fi
 
   # -- qdrant-store.js (direct Qdrant storage, bypasses cipher's LLM extraction) --
   QDRANT_STORE_JS="${HOME}/.local/lib/qdrant-store.js"
   if [ ! -f "$QDRANT_STORE_JS" ]; then
-    info "Installing qdrant-store.js..."
+    info "Setting up direct Qdrant storage helper"
     mkdir -p "${HOME}/.local/lib"
     cat > "$QDRANT_STORE_JS" <<'QDRANTSTOREEOF'
 #!/usr/bin/env node
@@ -405,15 +409,15 @@ if (require.main === module) {
 module.exports = { embed, search, store, storeWithDedup, getConfig };
 QDRANTSTOREEOF
     chmod +x "$QDRANT_STORE_JS"
-    info "qdrant-store.js installed at ${QDRANT_STORE_JS}"
+    info "qdrant-store → ${QDRANT_STORE_JS}"
   else
-    info "qdrant-store.js already exists, skipping"
+    info "qdrant-store already in place"
   fi
 
   # -- cipher.yml (cipher agent config with correct models and endpoints) --
   CIPHER_YML="${HOME}/.cipher/cipher.yml"
   if [ ! -f "$CIPHER_YML" ]; then
-    info "Generating cipher.yml..."
+    info "Generating cipher.yml"
     mkdir -p "${HOME}/.cipher"
     cat > "$CIPHER_YML" <<CIPHERYMLEOF
 mcpServers: {}
@@ -442,9 +446,9 @@ systemPrompt:
     - Explaining complex technical concepts
     - Reasoning through programming challenges
 CIPHERYMLEOF
-    info "cipher.yml generated at ${CIPHER_YML}"
+    info "cipher.yml → ${CIPHER_YML}"
   else
-    info "cipher.yml already exists, skipping (won't overwrite custom config)"
+    info "cipher.yml already exists — respecting your config"
   fi
 
   # -- Qdrant collections (768-dim Cosine vectors) --
@@ -474,18 +478,19 @@ CIPHERYMLEOF
   ensure_qdrant_collections
 
 else
-  info "[DRY RUN] Skipping dependency installation"
+  info "Dry run — skipping the heavy lifting 🏋️"
   XGH_LLM_MODEL="${XGH_LLM_MODEL:-mlx-community/Llama-3.2-3B-Instruct-4bit}"
   XGH_EMBED_MODEL="${XGH_EMBED_MODEL:-mlx-community/nomicai-modernbert-embed-base-8bit}"
 fi
 
 # ── 3. Fetch xgh pack ───────────────────────────────────
+lane "Fetching the tech pack 📦"
 if [ -n "$XGH_LOCAL_PACK" ]; then
   PACK_DIR="$XGH_LOCAL_PACK"
   info "Using local pack: ${PACK_DIR}"
 else
   PACK_DIR="${HOME}/.xgh/pack"
-  info "Fetching xgh..."
+  info "Pulling from the ranch..."
   mkdir -p "$(dirname "$PACK_DIR")"
 
   if [ -d "$PACK_DIR" ]; then
@@ -496,7 +501,7 @@ else
 fi
 
 # ── 4. Cipher MCP Server ────────────────────────────────
-info "Configuring Cipher MCP server..."
+lane "Configuring Cipher MCP 🔮"
 CLAUDE_DIR="${PWD}/.claude"
 mkdir -p "${CLAUDE_DIR}"
 
@@ -549,12 +554,12 @@ XGH_HOOKS_SCOPE="${XGH_HOOKS_SCOPE:-}"
 
 if [ -z "$XGH_HOOKS_SCOPE" ] && [ "$XGH_DRY_RUN" -eq 0 ]; then
   echo ""
-  echo -e "  ${GREEN}Install hooks to:${NC}"
+  echo -e "  ${BOLD}Where should the horse roam?${NC}"
   echo ""
-  echo "    1) Global (~/.claude) — recommended, works in all projects"
-  echo "    2) Project (.claude)  — only this project"
+  echo "    1) ${GREEN}Global${NC} (~/.claude) — works in all projects ${DIM}(recommended)${NC}"
+  echo "    2) Project (.claude) — only this project"
   echo ""
-  read -r -p "  Choice [1]: " hooks_choice
+  read -r -p "  🐴 Pick [1]: " hooks_choice
   hooks_choice="${hooks_choice:-1}"
   if [ "$hooks_choice" = "2" ]; then
     XGH_HOOKS_SCOPE="project"
@@ -565,16 +570,17 @@ elif [ -z "$XGH_HOOKS_SCOPE" ]; then
   XGH_HOOKS_SCOPE="global"
 fi
 
+lane "Hooking into Claude Code 🪝"
 if [ "$XGH_HOOKS_SCOPE" = "global" ]; then
   HOOKS_DIR="${HOME}/.claude/hooks"
   SETTINGS_FILE="${HOME}/.claude/settings.json"
   HOOKS_CMD_PREFIX="~/.claude/hooks"
-  info "Installing hooks globally (~/.claude/hooks)..."
+  info "Hooks → global (~/.claude/hooks)"
 else
   HOOKS_DIR="${CLAUDE_DIR}/hooks"
   SETTINGS_FILE="${CLAUDE_DIR}/settings.local.json"
   HOOKS_CMD_PREFIX=".claude/hooks"
-  info "Installing hooks to project (.claude/hooks)..."
+  info "Hooks → project (.claude/hooks)"
 fi
 
 mkdir -p "${HOOKS_DIR}"
@@ -597,7 +603,7 @@ HOOKEOF
 done
 
 # -- Cipher Pre/PostToolUse hooks (detect extraction failures, suggest direct storage) --
-info "Installing cipher Pre/PostToolUse hooks..."
+info "Adding cipher safety nets..."
 
 cat > "${HOOKS_DIR}/cipher-pre-hook.sh" <<'PREHOOKEOF'
 #!/bin/bash
@@ -747,7 +753,7 @@ POSTHOOKEOF
 chmod +x "${HOOKS_DIR}/cipher-post-hook.sh"
 
 # ── 6. Settings ─────────────────────────────────────────
-info "Configuring Claude Code settings..."
+lane "Tuning permissions ⚙️"
 # SETTINGS_FILE was set in section 5 based on scope
 
 HOOKS_SETTINGS="${PACK_DIR}/config/hooks-settings.json"
@@ -837,12 +843,13 @@ json.dump(settings, open('${SETTINGS_FILE}', 'w'), indent=2)
 
 # ── 7. Skills + Commands + Agents ────────────────────────
 # Respect the same scope choice as hooks (global vs project)
+lane "Teaching the horse new tricks 🎓"
 if [ "$XGH_HOOKS_SCOPE" = "global" ]; then
   INSTALL_DIR="${HOME}/.claude"
-  info "Installing skills, commands, and agents globally (~/.claude)..."
+  info "Skills, commands, agents → global (~/.claude)"
 else
   INSTALL_DIR="${CLAUDE_DIR}"
-  info "Installing skills, commands, and agents to project (.claude)..."
+  info "Skills, commands, agents → project (.claude)"
 fi
 
 mkdir -p "${INSTALL_DIR}/skills" "${INSTALL_DIR}/commands" "${INSTALL_DIR}/agents"
@@ -865,7 +872,7 @@ for agent in "${PACK_DIR}/agents/"*.md; do
 done
 
 # -- store-memory skill (global, for direct Qdrant storage bypassing cipher extraction) --
-info "Installing store-memory skill..."
+info "Setting up store-memory skill"
 STORE_MEMORY_DIR="${HOME}/.claude/skills/store-memory"
 if [ ! -d "$STORE_MEMORY_DIR" ]; then
   mkdir -p "$STORE_MEMORY_DIR"
@@ -945,13 +952,13 @@ console.log(JSON.stringify(result));
 - **Missing `encoding_format: 'float'`** — causes 192-dim zeros (the fix-openai-embeddings.js preload handles this for cipher, but direct HTTP calls need it explicit)
 - **Not verifying** — always search after storing to confirm retrieval
 SKILLEOF
-  info "store-memory skill installed at ${STORE_MEMORY_DIR}"
+  info "store-memory → ${STORE_MEMORY_DIR}"
 else
-  info "store-memory skill already exists, skipping"
+  info "store-memory already in place"
 fi
 
 # ── 8. Context Tree ─────────────────────────────────────
-info "Initializing context tree..."
+lane "Planting the knowledge tree 🌳"
 mkdir -p "${PWD}/${XGH_CONTEXT_TREE}"
 
 if [ ! -f "${PWD}/${XGH_CONTEXT_TREE}/_manifest.json" ]; then
@@ -966,7 +973,7 @@ MANIFESTEOF
 fi
 
 # ── 9. Gitignore ─────────────────────────────────────────
-info "Updating .gitignore..."
+info "Updating .gitignore"
 GITIGNORE="${PWD}/.gitignore"
 touch "$GITIGNORE"
 for pattern in ".xgh/local/" "data/cipher-sessions.db*" ".claude/settings.local.json"; do
@@ -974,7 +981,7 @@ for pattern in ".xgh/local/" "data/cipher-sessions.db*" ".claude/settings.local.
 done
 
 # ── 10. CLAUDE.local.md ─────────────────────────────────
-info "Adding xgh instructions to CLAUDE.local.md..."
+info "Injecting xgh instructions into CLAUDE.local.md"
 CLAUDE_MD="${PWD}/CLAUDE.local.md"
 if ! grep -q "mcs:begin xgh" "$CLAUDE_MD" 2>/dev/null; then
   TEMPLATE="${PACK_DIR}/templates/instructions.md"
@@ -1002,13 +1009,13 @@ XGH_INSTALL_PLUGINS="${XGH_INSTALL_PLUGINS:-ask}"
 install_plugin() {
   local marketplace="$1" plugin="$2" label="$3"
   if command -v claude &>/dev/null; then
-    info "Installing ${label}..."
+    info "${label}"
     claude plugin marketplace add "$marketplace" 2>/dev/null || true
     claude plugin install "${plugin}" 2>/dev/null || {
       warn "Could not install ${label} — you can install it manually later"
       return 1
     }
-    info "${label} installed"
+    info "${label} ✓"
   else
     warn "Claude CLI not found — install ${label} manually:"
     echo "    claude plugin marketplace add ${marketplace}"
@@ -1017,19 +1024,17 @@ install_plugin() {
 }
 
 if [ "$XGH_DRY_RUN" -eq 0 ] && [ "$XGH_INSTALL_PLUGINS" != "skip" ]; then
-  echo ""
-  info "Optional plugins enhance xgh with session optimization and development superpowers."
-  echo ""
+  lane "Optional superpowers 🦸"
 
   # ── context-mode ────────────────────────────────────────
   INSTALL_CONTEXT_MODE="n"
   if [ "$XGH_INSTALL_PLUGINS" = "all" ]; then
     INSTALL_CONTEXT_MODE="y"
   elif [ "$XGH_INSTALL_PLUGINS" = "ask" ]; then
-    echo -e "  ${GREEN}context-mode${NC} — Session runtime optimizer (98% context savings, sandboxed execution,"
-    echo "                  compaction recovery, FTS5 search). By mksglu. https://github.com/mksglu/context-mode"
+    echo -e "  ${BOLD}context-mode${NC} ${DIM}by mksglu${NC}"
+    echo -e "  ${DIM}Session optimizer — 98% context savings, sandboxed execution, FTS5 search${NC}"
     echo ""
-    read -r -p "  Install context-mode? [y/N] " INSTALL_CONTEXT_MODE
+    read -r -p "  🤖 Install? [y/N] " INSTALL_CONTEXT_MODE
   fi
   if [[ "${INSTALL_CONTEXT_MODE,,}" =~ ^y ]]; then
     install_plugin "mksglu/context-mode" "context-mode@context-mode" "context-mode"
@@ -1041,10 +1046,10 @@ if [ "$XGH_DRY_RUN" -eq 0 ] && [ "$XGH_INSTALL_PLUGINS" != "skip" ]; then
     INSTALL_SUPERPOWERS="y"
   elif [ "$XGH_INSTALL_PLUGINS" = "ask" ]; then
     echo ""
-    echo -e "  ${GREEN}superpowers${NC} — Development methodology (TDD, brainstorming, plan writing/execution,"
-    echo "                 subagent-driven development, code review). By obra. https://github.com/obra/superpowers"
+    echo -e "  ${BOLD}superpowers${NC} ${DIM}by obra${NC}"
+    echo -e "  ${DIM}TDD, brainstorming, plan writing, subagent dev, code review${NC}"
     echo ""
-    read -r -p "  Install superpowers? [y/N] " INSTALL_SUPERPOWERS
+    read -r -p "  🤖 Install? [y/N] " INSTALL_SUPERPOWERS
   fi
   if [[ "${INSTALL_SUPERPOWERS,,}" =~ ^y ]]; then
     install_plugin "claude-plugins-official/superpowers" "superpowers@superpowers" "superpowers"
@@ -1052,7 +1057,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ] && [ "$XGH_INSTALL_PLUGINS" != "skip" ]; then
 fi
 
 # ── 12. Start script ─────────────────────────────────────
-info "Creating model server start script..."
+info "Creating model server start script"
 SCRIPTS_DIR="${PACK_DIR}/scripts"
 mkdir -p "$SCRIPTS_DIR"
 
@@ -1067,7 +1072,7 @@ XGH_LLM_MODEL="\${XGH_LLM_MODEL:-${XGH_LLM_MODEL}}"
 XGH_EMBED_MODEL="\${XGH_EMBED_MODEL:-${XGH_EMBED_MODEL}}"
 XGH_MODEL_PORT="\${XGH_MODEL_PORT:-${XGH_MODEL_PORT}}"
 
-echo "🐴 Starting vllm-mlx model server..."
+echo "🐴🤖 Starting vllm-mlx model server..."
 echo "   LLM:        \${XGH_LLM_MODEL}"
 echo "   Embeddings: \${XGH_EMBED_MODEL}"
 echo "   Port:       \${XGH_MODEL_PORT}"
@@ -1082,7 +1087,7 @@ chmod +x "${SCRIPTS_DIR}/start-models.sh"
 
 # ── xgh-ingest setup ──────────────────────────────────────
 if [ "$XGH_DRY_RUN" -eq 0 ]; then
-  info "Setting up xgh-ingest directories and helpers..."
+  lane "Setting up the ingest pipeline 📡"
 
   mkdir -p "$HOME/.xgh/inbox/processed"
   mkdir -p "$HOME/.xgh/logs"
@@ -1109,32 +1114,29 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   cp "${PACK_DIR}/scripts/ingest-schedule.sh" "$HOME/.xgh/lib/"
   chmod +x "$HOME/.xgh/lib/ingest-schedule.sh"
 
-  info "Run 'xgh-doctor' to validate the pipeline, or '~/.xgh/lib/ingest-schedule.sh install' to start the scheduler"
+  info "Run /xgh-doctor to validate, or ~/.xgh/lib/ingest-schedule.sh install to start the scheduler"
 fi
 
 # ── Done ─────────────────────────────────────────────────
 echo ""
-echo "🐴 xgh installed successfully!"
+echo -e "  ${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo "  Team:         ${XGH_TEAM}"
-echo "  Preset:       ${XGH_PRESET}"
-echo "  LLM:          ${XGH_LLM_MODEL}"
-echo "  Embeddings:   ${XGH_EMBED_MODEL}"
-echo "  Context tree: ${XGH_CONTEXT_TREE}/"
-echo "  Cipher MCP:   .claude/.mcp.json (using cipher-mcp wrapper)"
-echo "  Hooks:        ${HOOKS_DIR}/xgh-*.sh + cipher-{pre,post}-hook.sh (${XGH_HOOKS_SCOPE})"
-echo "  Commands:     ${INSTALL_DIR}/commands/xgh-*.md (${XGH_HOOKS_SCOPE})"
-echo "  Skills:       ${INSTALL_DIR}/skills/xgh-* (${XGH_HOOKS_SCOPE})"
-echo "  Skill:        ~/.claude/skills/store-memory/"
+echo -e "  ${BOLD}🐴🤖 xgh is ready to ride!${NC}"
 echo ""
-echo "  To start the model server:"
-echo "    bash ${SCRIPTS_DIR}/start-models.sh"
+echo -e "  ${DIM}Team${NC}         ${XGH_TEAM}"
+echo -e "  ${DIM}Preset${NC}       ${XGH_PRESET}"
+echo -e "  ${DIM}LLM${NC}          ${XGH_LLM_MODEL}"
+echo -e "  ${DIM}Embeddings${NC}   ${XGH_EMBED_MODEL}"
+echo -e "  ${DIM}Context tree${NC} ${XGH_CONTEXT_TREE}/"
+echo -e "  ${DIM}Scope${NC}        ${XGH_HOOKS_SCOPE}"
 echo ""
-echo "  Then start Claude Code — your memory layer is active."
+echo -e "  ${BOLD}Next steps:${NC}"
 echo ""
-echo "  Customize: XGH_TEAM=my-team XGH_PRESET=openai ./install.sh"
-echo "  Skip models: XGH_LLM_MODEL=... XGH_EMBED_MODEL=... ./install.sh"
-echo "  Hooks scope:  XGH_HOOKS_SCOPE=global ./install.sh  (or =project)"
-echo "  Skip plugins: XGH_INSTALL_PLUGINS=skip ./install.sh"
-echo "  Install all:  XGH_INSTALL_PLUGINS=all ./install.sh"
+echo -e "  ${GREEN}1.${NC} Start models    ${DIM}bash ${SCRIPTS_DIR}/start-models.sh${NC}"
+echo -e "  ${GREEN}2.${NC} Launch Claude    ${DIM}claude${NC}"
+echo -e "  ${GREEN}3.${NC} Run briefing     ${DIM}/xgh-briefing${NC}"
+echo ""
+echo -e "  ${DIM}Your AI now remembers. Ship it. 🐴${NC}"
+echo ""
+echo -e "  ${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""

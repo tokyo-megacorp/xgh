@@ -1,0 +1,152 @@
+# config/ingest-template.yaml
+# Copied to ~/.xgh/ingest.yaml on install. Edit profile and run /xgh-track to add projects.
+
+profile:
+  name: YOUR_NAME
+  slack_id: UXXXXXXXXX
+  role: engineer
+  squad: your-team
+  platforms: [your_platform]
+  also_monitor: []
+
+urgency:
+  keywords:
+    critical: [hotfix, "go live", go-live, golive, "production issue", "prod issue",
+               "release blocker", P0, p0, rollback, revert]
+    deadline: ["release date", "code freeze", EOD, "end of day", deadline,
+               "ship date", "launch date", cutoff]
+    scope: ["requirement changed", "spec updated", "new approach", "scope change",
+            pivot, "change of plans"]
+    infra: ["5xx", "502", pods, outage, incident, "broken in prod"]
+  relevance:
+    my_platform: 2.0
+    my_squad: 1.5
+    also_monitor: 1.0
+    other_platform: 0.3
+    other_squad: 0.5
+  thresholds:
+    log: 0
+    digest: 31
+    high: 56
+    critical: 80
+
+schedule:
+  retriever: "*/5 * * * *"
+  analyzer: "*/30 * * * *"
+  quiet_hours: "22:00-07:00"
+  quiet_days: [saturday, sunday]
+
+models:
+  retriever: haiku
+  analyzer: sonnet
+  urgency: haiku
+  indexer: sonnet
+
+budget:
+  retriever_max_turns: 3
+  analyzer_max_turns: 10
+  indexer_max_turns: 20
+  retriever_timeout: 60s
+  analyzer_timeout: 300s
+  indexer_timeout: 600s
+  daily_token_cap: 2000000
+  warn_at_percent: 80
+  cost_tracking: true
+  pause_on_cap: true
+
+retriever:
+  max_messages_per_channel: 100
+  max_links_to_follow: 20
+  link_depth: 1
+  stale_cursor_reset: 7d
+  backoff_on_rate_limit: true
+  max_retries: 3
+
+analyzer:
+  max_inbox_items: 50
+  dedup_threshold: 0.85
+  min_urgency_to_store: 10
+  max_memories_per_run: 30
+  promote_after_references: 2
+
+notifications:
+  dm_cooldown: 15m
+  dm_batch: true
+  digest_time: "08:30"
+  digest_channel: null
+
+retention:
+  inbox_processed: 7d
+  digests: 30d
+  logs: 10MB
+  log_retention: 7d
+  decayed_memories: 90d
+
+cipher:
+  workspace_mode: shared
+  workspace_collection: xgh-workspace
+  knowledge_collection: xgh-memory
+  embedding_batch_size: 10
+  search_top_k: 5
+  similarity_threshold: 0.3
+
+content_types:
+  decision:
+    description: "Locked-in choice (approach, architecture, scope)"
+    ttl: null
+    promote_to: workspace
+  spec_change:
+    description: "Requirement or spec modification"
+    ttl: null
+    promote_to: workspace
+  p0:
+    description: "Critical priority — blocking release or production"
+    ttl: null
+    promote_to: workspace
+    urgency_floor: 90
+  p1:
+    description: "High priority — must address this sprint"
+    ttl: null
+    promote_to: workspace
+    urgency_floor: 65
+  wip:
+    description: "Actively being worked on"
+    ttl: null
+    promote_to: workspace
+  awaiting_my_reply:
+    description: "Someone needs something from me"
+    ttl: 7d
+    promote_to: personal
+    urgency: aging
+  awaiting_their_reply:
+    description: "I'm blocked waiting on someone else"
+    ttl: 14d
+    promote_to: personal
+    urgency: aging
+  informal_request:
+    description: "Ask in Slack not yet ticketed"
+    ttl: 7d
+    promote_to: personal
+  qa_feedback:
+    description: "Bug report or issue from QA in chat"
+    ttl: 14d
+    promote_to: personal
+  known_issue:
+    description: "Acknowledged problem, not yet prioritized"
+    ttl: 30d
+    promote_to: workspace
+  status_update:
+    description: "Progress, deploy, merge notifications"
+    ttl: 3d
+    promote_to: workspace
+
+calibration:
+  sample_size: 50
+  auto_update: false
+  auto_confidence_threshold: 0.9
+  schedule: monthly
+  last_run: null
+  last_threshold: null
+
+projects: {}
+# Populated via /xgh-track

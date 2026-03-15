@@ -1,0 +1,3 @@
+.xgh/local/
+data/cipher-sessions.db*
+.claude/settings.local.json

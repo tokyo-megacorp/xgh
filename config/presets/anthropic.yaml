@@ -1,12 +1,15 @@
 # xgh BYOP preset: anthropic
 # ~$0.01/session, requires ANTHROPIC_API_KEY
+# Embeddings served by vllm-mlx: bash scripts/start-models.sh
 llm:
   provider: anthropic
   model: claude-haiku-4-5-20251001
   api_key: ${ANTHROPIC_API_KEY}
 embeddings:
-  provider: ollama
-  model: nomic-embed-text
+  provider: openai
+  model: mlx-community/nomicai-modernbert-embed-base-4bit
+  baseUrl: http://localhost:11434/v1
+  apiKey: placeholder
 vector_store:
   type: qdrant
   url: http://localhost:6333

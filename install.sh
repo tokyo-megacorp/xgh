@@ -8,6 +8,9 @@ XGH_PRESET="${XGH_PRESET:-local}"
 XGH_DRY_RUN="${XGH_DRY_RUN:-0}"
 XGH_LOCAL_PACK="${XGH_LOCAL_PACK:-}"
 XGH_REPO="https://github.com/xgh-dev/xgh"
+XGH_LLM_MODEL="${XGH_LLM_MODEL:-}"
+XGH_EMBED_MODEL="${XGH_EMBED_MODEL:-}"
+XGH_MODEL_PORT="${XGH_MODEL_PORT:-11434}"
 
 # ── Colors ────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -33,9 +36,16 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
 
-  if ! command -v ollama &>/dev/null; then
-    info "Installing Ollama..."
-    brew install ollama
+  # Install uv (Python package installer) if not present
+  if ! command -v uv &>/dev/null; then
+    info "Installing uv..."
+    brew install uv
+  fi
+
+  # Install vllm-mlx (local model server)
+  if ! command -v vllm-mlx &>/dev/null; then
+    info "Installing vllm-mlx (local model server for Apple Silicon)..."
+    uv tool install "git+https://github.com/waybarrios/vllm-mlx.git"
   fi
 
   # Only install Qdrant for presets that need it
@@ -46,12 +56,427 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     fi
   fi
 
-  # ── 2. Models ──────────────────────────────────────────
-  info "Pulling Ollama models (this may take a few minutes on first run)..."
-  ollama pull llama3.2:3b 2>/dev/null || warn "Could not pull llama3.2:3b — you may need to start Ollama first"
-  ollama pull nomic-embed-text 2>/dev/null || warn "Could not pull nomic-embed-text"
+  # ── 2. Model Selection ─────────────────────────────────
+  # Curated model lists
+  LLM_MODELS=(
+    "mlx-community/Llama-3.2-3B-Instruct-4bit|Llama 3.2 3B (default, fast, 2GB)"
+    "mlx-community/Llama-3.2-1B-Instruct-4bit|Llama 3.2 1B (tiny, 0.7GB)"
+    "mlx-community/Mistral-7B-Instruct-v0.3-4bit|Mistral 7B (powerful, 4GB)"
+    "mlx-community/Qwen3-4B-4bit|Qwen3 4B (balanced, 2.5GB)"
+    "mlx-community/Qwen3-8B-4bit|Qwen3 8B (strong reasoning, 5GB)"
+  )
+  EMBED_MODELS=(
+    "mlx-community/nomicai-modernbert-embed-base-8bit|ModernBERT Embed 8-bit (default, 768 dims, best quality)"
+    "mlx-community/nomicai-modernbert-embed-base-4bit|ModernBERT Embed 4-bit (smaller, 768 dims)"
+    "mlx-community/all-MiniLM-L6-v2-4bit|MiniLM L6 (fast, 384 dims)"
+  )
+
+  DEFAULT_LLM="mlx-community/Llama-3.2-3B-Instruct-4bit"
+  DEFAULT_EMBED="mlx-community/nomicai-modernbert-embed-base-8bit"
+
+  # Interactive model picker (skip if env vars are set)
+  if [ -z "$XGH_LLM_MODEL" ]; then
+    echo ""
+    echo -e "  ${GREEN}Choose an LLM model${NC} (for Cipher reasoning):"
+    echo ""
+    for i in "${!LLM_MODELS[@]}"; do
+      IFS='|' read -r model_id model_desc <<< "${LLM_MODELS[$i]}"
+      if [ "$model_id" = "$DEFAULT_LLM" ]; then
+        echo -e "    ${GREEN}$((i+1)))${NC} ${model_desc}"
+      else
+        echo "    $((i+1))) ${model_desc}"
+      fi
+    done
+    echo "    c) Custom HuggingFace model ID"
+    echo ""
+    read -r -p "  Pick [1]: " llm_choice
+    llm_choice="${llm_choice:-1}"
+
+    if [ "$llm_choice" = "c" ] || [ "$llm_choice" = "C" ]; then
+      read -r -p "  Enter HuggingFace model ID: " XGH_LLM_MODEL
+    elif [ "$llm_choice" -ge 1 ] 2>/dev/null && [ "$llm_choice" -le "${#LLM_MODELS[@]}" ]; then
+      IFS='|' read -r XGH_LLM_MODEL _ <<< "${LLM_MODELS[$((llm_choice-1))]}"
+    else
+      XGH_LLM_MODEL="$DEFAULT_LLM"
+    fi
+  fi
+  XGH_LLM_MODEL="${XGH_LLM_MODEL:-$DEFAULT_LLM}"
+
+  if [ -z "$XGH_EMBED_MODEL" ]; then
+    echo ""
+    echo -e "  ${GREEN}Choose an embedding model${NC} (for semantic search):"
+    echo ""
+    for i in "${!EMBED_MODELS[@]}"; do
+      IFS='|' read -r model_id model_desc <<< "${EMBED_MODELS[$i]}"
+      if [ "$model_id" = "$DEFAULT_EMBED" ]; then
+        echo -e "    ${GREEN}$((i+1)))${NC} ${model_desc}"
+      else
+        echo "    $((i+1))) ${model_desc}"
+      fi
+    done
+    echo "    c) Custom HuggingFace model ID"
+    echo ""
+    read -r -p "  Pick [1]: " embed_choice
+    embed_choice="${embed_choice:-1}"
+
+    if [ "$embed_choice" = "c" ] || [ "$embed_choice" = "C" ]; then
+      read -r -p "  Enter HuggingFace model ID: " XGH_EMBED_MODEL
+    elif [ "$embed_choice" -ge 1 ] 2>/dev/null && [ "$embed_choice" -le "${#EMBED_MODELS[@]}" ]; then
+      IFS='|' read -r XGH_EMBED_MODEL _ <<< "${EMBED_MODELS[$((embed_choice-1))]}"
+    else
+      XGH_EMBED_MODEL="$DEFAULT_EMBED"
+    fi
+  fi
+  XGH_EMBED_MODEL="${XGH_EMBED_MODEL:-$DEFAULT_EMBED}"
+
+  info "LLM model:       ${XGH_LLM_MODEL}"
+  info "Embedding model:  ${XGH_EMBED_MODEL}"
+
+  # ── 3. Download models ─────────────────────────────────
+  info "Pre-downloading models (this may take a few minutes on first run)..."
+  uv run --with huggingface-hub python3 -c "
+from huggingface_hub import snapshot_download
+import sys
+for model in sys.argv[1:]:
+    print(f'  Downloading {model}...')
+    try:
+        snapshot_download(model)
+        print(f'  ✓ {model}')
+    except Exception as e:
+        print(f'  ⚠ Could not download {model}: {e}')
+" "$XGH_LLM_MODEL" "$XGH_EMBED_MODEL" || warn "Model pre-download failed — models will download on first use"
+
+  # ── 3b. Cipher Infrastructure ──────────────────────────
+  info "Installing cipher infrastructure..."
+
+  # -- cipher-mcp wrapper (filters stdout pollution, injects --agent config, fixes encoding_format) --
+  CIPHER_MCP_BIN="${HOME}/.local/bin/cipher-mcp"
+  if [ ! -f "$CIPHER_MCP_BIN" ]; then
+    info "Installing cipher-mcp wrapper..."
+    mkdir -p "${HOME}/.local/bin"
+    cat > "$CIPHER_MCP_BIN" <<'CIPHERMCPEOF'
+#!/usr/bin/env node
+// Wrapper for cipher MCP that:
+// 1. Filters stray non-JSON stdout lines (cipher v0.3.0 prints "storeType qdrant")
+// 2. Points to user config (~/.cipher/cipher.yml) with correct local embedding model
+// 3. Injects HTTP-level fix for OpenAI SDK base64 encoding_format issue via NODE_OPTIONS
+const { spawn } = require('child_process');
+const path = require('path');
+
+const userConfig = path.join(process.env.HOME, '.cipher', 'cipher.yml');
+const httpFix = path.join(process.env.HOME, '.local', 'lib', 'fix-openai-embeddings.js');
+
+const child = spawn('cipher', ['--mode', 'mcp', '--agent', userConfig], {
+  stdio: ['pipe', 'pipe', 'inherit'],
+  env: {
+    ...process.env,
+    NODE_OPTIONS: [
+      process.env.NODE_OPTIONS || '',
+      `--require ${httpFix}`
+    ].filter(Boolean).join(' ')
+  }
+});
+
+// Forward stdin to child
+process.stdin.pipe(child.stdin);
+
+// Filter stdout: only pass through lines starting with '{'
+let buffer = '';
+child.stdout.on('data', (chunk) => {
+  buffer += chunk.toString();
+  const lines = buffer.split('\n');
+  buffer = lines.pop();
+  for (const line of lines) {
+    if (line.startsWith('{')) {
+      process.stdout.write(line + '\n');
+    }
+  }
+});
+
+child.stdout.on('end', () => {
+  if (buffer && buffer.startsWith('{')) {
+    process.stdout.write(buffer + '\n');
+  }
+});
+
+child.on('exit', (code) => process.exit(code || 0));
+process.on('SIGTERM', () => child.kill('SIGTERM'));
+process.on('SIGINT', () => child.kill('SIGINT'));
+CIPHERMCPEOF
+    chmod +x "$CIPHER_MCP_BIN"
+    info "cipher-mcp wrapper installed at ${CIPHER_MCP_BIN}"
+  else
+    info "cipher-mcp wrapper already exists, skipping"
+  fi
+
+  # -- fix-openai-embeddings.js (patches OpenAI SDK encoding_format bug) --
+  FIX_EMBED_JS="${HOME}/.local/lib/fix-openai-embeddings.js"
+  if [ ! -f "$FIX_EMBED_JS" ]; then
+    info "Installing fix-openai-embeddings.js..."
+    mkdir -p "${HOME}/.local/lib"
+    cat > "$FIX_EMBED_JS" <<'FIXEMBEDEOF'
+// Patches OpenAI SDK's Embeddings.create() to inject encoding_format: "float"
+// into the body BEFORE the SDK checks hasUserProvidedEncodingFormat.
+// This makes the SDK skip its base64 response decoding, fixing vllm-mlx compat.
+//
+// The SDK flow: create(body) -> checks body.encoding_format -> if absent, adds "base64"
+// and decodes response. By injecting "float" into body, the SDK treats it as
+// user-provided and returns the response as-is.
+
+const path = require('path');
+const fs = require('fs');
+
+// Find the openai module inside cipher's node_modules, resilient to version changes
+function findOpenAIRoot() {
+  const candidates = [
+    // Global npm install (homebrew)
+    '/opt/homebrew/lib/node_modules/@byterover/cipher/node_modules/openai',
+    // Global npm install (default)
+    path.join(process.env.HOME || '', '.npm-global/lib/node_modules/@byterover/cipher/node_modules/openai'),
+    // npx / local
+    path.join(process.env.HOME || '', 'node_modules/@byterover/cipher/node_modules/openai'),
+  ];
+  for (const candidate of candidates) {
+    try {
+      if (fs.existsSync(path.join(candidate, 'resources/embeddings.js'))) {
+        return candidate;
+      }
+    } catch {}
+  }
+  return null;
+}
+
+const OPENAI_ROOT = findOpenAIRoot();
+
+if (OPENAI_ROOT) {
+  try {
+    const embeddings = require(OPENAI_ROOT + '/resources/embeddings.js');
+    if (embeddings && embeddings.Embeddings && embeddings.Embeddings.prototype) {
+      const origCreate = embeddings.Embeddings.prototype.create;
+      embeddings.Embeddings.prototype.create = function(body, options) {
+        if (!body.encoding_format) {
+          body = { ...body, encoding_format: 'float' };
+        }
+        return origCreate.call(this, body, options);
+      };
+      process.stderr.write('[fix-openai-embeddings] Patched Embeddings.create (encoding_format: float)\n');
+    }
+  } catch (e) {
+    process.stderr.write('[fix-openai-embeddings] Failed to patch: ' + e.message + '\n');
+  }
+} else {
+  process.stderr.write('[fix-openai-embeddings] OpenAI SDK not found in cipher node_modules\n');
+}
+FIXEMBEDEOF
+    info "fix-openai-embeddings.js installed at ${FIX_EMBED_JS}"
+  else
+    info "fix-openai-embeddings.js already exists, skipping"
+  fi
+
+  # -- qdrant-store.js (direct Qdrant storage, bypasses cipher's LLM extraction) --
+  QDRANT_STORE_JS="${HOME}/.local/lib/qdrant-store.js"
+  if [ ! -f "$QDRANT_STORE_JS" ]; then
+    info "Installing qdrant-store.js..."
+    mkdir -p "${HOME}/.local/lib"
+    cat > "$QDRANT_STORE_JS" <<'QDRANTSTOREEOF'
+#!/usr/bin/env node
+// Direct Qdrant memory storage — bypasses cipher's LLM extraction layer.
+// Only uses the embedding model (vllm-mlx) for vector generation.
+// Reads config from ~/.cipher/cipher.yml for model/endpoint.
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+function getConfig() {
+  const defaults = {
+    model: 'mlx-community/nomicai-modernbert-embed-base-8bit',
+    baseURL: 'http://localhost:11434/v1',
+    dimensions: 768,
+    qdrantURL: 'http://localhost:6333'
+  };
+  try {
+    const content = fs.readFileSync(path.join(process.env.HOME, '.cipher', 'cipher.yml'), 'utf8');
+    // Extract the embedding: section specifically (between "embedding:" and next top-level key)
+    const embeddingSection = content.match(/^embedding:\s*\n((?:\s+.+\n?)*)/m);
+    if (embeddingSection) {
+      const section = embeddingSection[1];
+      const modelMatch = section.match(/model:\s*(.+)/);
+      const baseURLMatch = section.match(/baseURL:\s*(.+)/);
+      const dimsMatch = section.match(/dimensions:\s*(\d+)/);
+      return {
+        model: modelMatch ? modelMatch[1].trim() : defaults.model,
+        baseURL: baseURLMatch ? baseURLMatch[1].trim() : defaults.baseURL,
+        dimensions: dimsMatch ? parseInt(dimsMatch[1]) : defaults.dimensions,
+        qdrantURL: defaults.qdrantURL
+      };
+    }
+    return defaults;
+  } catch {
+    return defaults;
+  }
+}
+
+function httpReq(method, url, data) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const body = data ? JSON.stringify(data) : null;
+    const opts = {
+      hostname: u.hostname, port: u.port, path: u.pathname + u.search, method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (body) opts.headers['Content-Length'] = Buffer.byteLength(body);
+    const req = http.request(opts, res => {
+      let d = '';
+      res.on('data', c => d += c);
+      res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve(d); } });
+    });
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+async function embed(text) {
+  const config = getConfig();
+  const r = await httpReq('POST', `${config.baseURL}/embeddings`, {
+    input: text, model: config.model, encoding_format: 'float'
+  });
+  if (!r.data || !r.data[0]) throw new Error('Embedding failed: ' + JSON.stringify(r));
+  return r.data[0].embedding;
+}
+
+async function search(query, collection, topK, threshold) {
+  collection = collection || 'knowledge_memory';
+  topK = topK || 3;
+  threshold = threshold || 0.3;
+  const config = getConfig();
+  const vector = await embed(query);
+  const r = await httpReq('POST', `${config.qdrantURL}/collections/${collection}/points/search`, {
+    vector, limit: topK, score_threshold: threshold, with_payload: true
+  });
+  return r.result || [];
+}
+
+async function store(collection, id, text, tags, metadata) {
+  metadata = metadata || {};
+  const config = getConfig();
+  const vector = await embed(text);
+  return httpReq('PUT', `${config.qdrantURL}/collections/${collection}/points`, {
+    points: [{
+      id, vector,
+      payload: {
+        text, tags: tags || [], timestamp: new Date().toISOString(),
+        event: 'ADD', confidence: 0.95,
+        domain: metadata.domain || 'general',
+        source: metadata.source || 'direct-store',
+        projectId: metadata.projectId || '',
+        ...metadata
+      }
+    }]
+  });
+}
+
+async function storeWithDedup(collection, text, tags, metadata) {
+  metadata = metadata || {};
+  const existing = await search(text, collection, 1, 0.85);
+  if (existing.length > 0) {
+    return { action: 'SKIP', reason: 'Similar entry exists (similarity: ' + existing[0].score.toFixed(3) + ')', existingId: existing[0].id };
+  }
+  const id = Date.now() + Math.floor(Math.random() * 1000);
+  const result = await store(collection, id, text, tags, metadata);
+  return { action: 'ADD', id, status: result.status };
+}
+
+if (require.main === module) {
+  const [cmd, ...args] = process.argv.slice(2);
+  const run = async () => {
+    switch (cmd) {
+      case 'config': return console.log(JSON.stringify(getConfig(), null, 2));
+      case 'embed': return console.log(JSON.stringify({ dims: (await embed(args[0])).length }));
+      case 'search': return console.log(JSON.stringify(await search(args[0], args[1], parseInt(args[2]) || 3), null, 2));
+      case 'store': return console.log(JSON.stringify(await storeWithDedup(args[0] || 'knowledge_memory', args[1], args[2] ? args[2].split(',') : [], { domain: args[3] || 'general' }), null, 2));
+      default: console.log('Usage: qdrant-store.js <config|embed|search|store> [args...]');
+    }
+  };
+  run().catch(e => { console.error(e.message); process.exit(1); });
+}
+
+module.exports = { embed, search, store, storeWithDedup, getConfig };
+QDRANTSTOREEOF
+    chmod +x "$QDRANT_STORE_JS"
+    info "qdrant-store.js installed at ${QDRANT_STORE_JS}"
+  else
+    info "qdrant-store.js already exists, skipping"
+  fi
+
+  # -- cipher.yml (cipher agent config with correct models and endpoints) --
+  CIPHER_YML="${HOME}/.cipher/cipher.yml"
+  if [ ! -f "$CIPHER_YML" ]; then
+    info "Generating cipher.yml..."
+    mkdir -p "${HOME}/.cipher"
+    cat > "$CIPHER_YML" <<CIPHERYMLEOF
+mcpServers: {}
+
+llm:
+  provider: openai
+  model: ${XGH_LLM_MODEL}
+  maxIterations: 50
+  apiKey: placeholder
+  baseURL: http://localhost:${XGH_MODEL_PORT}/v1
+
+embedding:
+  type: openai
+  model: ${XGH_EMBED_MODEL}
+  apiKey: placeholder
+  baseURL: http://localhost:${XGH_MODEL_PORT}/v1
+  dimensions: 768
+
+systemPrompt:
+  enabled: true
+  content: |
+    You are an AI programming assistant focused on coding and reasoning tasks. You excel at:
+    - Writing clean, efficient code
+    - Debugging and problem-solving
+    - Code review and optimization
+    - Explaining complex technical concepts
+    - Reasoning through programming challenges
+CIPHERYMLEOF
+    info "cipher.yml generated at ${CIPHER_YML}"
+  else
+    info "cipher.yml already exists, skipping (won't overwrite custom config)"
+  fi
+
+  # -- Qdrant collections (768-dim Cosine vectors) --
+  ensure_qdrant_collections() {
+    local qdrant_url="http://localhost:6333"
+    if ! curl -sf "${qdrant_url}/collections" >/dev/null 2>&1; then
+      warn "Qdrant not running — collections will be created on first use"
+      return 0
+    fi
+
+    for collection in knowledge_memory workspace_memory reflection_memory; do
+      if curl -sf "${qdrant_url}/collections/${collection}" >/dev/null 2>&1; then
+        info "Qdrant collection '${collection}' already exists"
+      else
+        info "Creating Qdrant collection '${collection}' (768-dim Cosine)..."
+        curl -sf -X PUT "${qdrant_url}/collections/${collection}" \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "vectors": {
+              "size": 768,
+              "distance": "Cosine"
+            }
+          }' >/dev/null 2>&1 && info "Created '${collection}'" || warn "Could not create '${collection}'"
+      fi
+    done
+  }
+  ensure_qdrant_collections
+
 else
   info "[DRY RUN] Skipping dependency installation"
+  XGH_LLM_MODEL="${XGH_LLM_MODEL:-mlx-community/Llama-3.2-3B-Instruct-4bit}"
+  XGH_EMBED_MODEL="${XGH_EMBED_MODEL:-mlx-community/nomicai-modernbert-embed-base-8bit}"
 fi
 
 # ── 3. Fetch xgh pack ───────────────────────────────────
@@ -87,30 +512,33 @@ fi
 VS_TYPE=$(grep 'type:' "$PRESET_FILE" | tail -1 | awk '{print $2}')
 VS_URL=$(grep 'url:' "$PRESET_FILE" | tail -1 | awk '{print $2}' || echo "")
 
-# Build env block for MCP config
-MCP_ENV="{
-        \"VECTOR_STORE_TYPE\": \"${VS_TYPE}\",
-        \"CIPHER_LOG_LEVEL\": \"info\",
-        \"SEARCH_MEMORY_TYPE\": \"both\",
-        \"USE_WORKSPACE_MEMORY\": \"true\",
-        \"XGH_TEAM\": \"${XGH_TEAM}\""
-
-# Add vector store URL if present
-if [ -n "$VS_URL" ] && [ "$VS_URL" != '${QDRANT_CLOUD_URL}' ]; then
-  MCP_ENV="${MCP_ENV},
-        \"VECTOR_STORE_URL\": \"${VS_URL}\""
-fi
-
-MCP_ENV="${MCP_ENV}
-      }"
-
 cat > "${CLAUDE_DIR}/.mcp.json" <<MCPEOF
 {
   "mcpServers": {
     "cipher": {
-      "command": "npx",
-      "args": ["-y", "@byterover/cipher"],
-      "env": ${MCP_ENV}
+      "type": "stdio",
+      "command": "${HOME}/.local/bin/cipher-mcp",
+      "args": [],
+      "env": {
+        "MCP_SERVER_MODE": "aggregator",
+        "VECTOR_STORE_TYPE": "${VS_TYPE}",
+        "VECTOR_STORE_URL": "${VS_URL}",
+        "EMBEDDING_PROVIDER": "openai",
+        "EMBEDDING_MODEL": "${XGH_EMBED_MODEL}",
+        "EMBEDDING_BASE_URL": "http://localhost:${XGH_MODEL_PORT}/v1",
+        "EMBEDDING_DIMENSIONS": "768",
+        "EMBEDDING_API_KEY": "placeholder",
+        "OPENAI_API_KEY": "placeholder",
+        "OPENAI_BASE_URL": "http://localhost:${XGH_MODEL_PORT}/v1",
+        "LLM_PROVIDER": "openai",
+        "LLM_MODEL": "${XGH_LLM_MODEL}",
+        "LLM_BASE_URL": "http://localhost:${XGH_MODEL_PORT}/v1",
+        "LLM_API_KEY": "placeholder",
+        "CIPHER_LOG_LEVEL": "info",
+        "SEARCH_MEMORY_TYPE": "both",
+        "USE_WORKSPACE_MEMORY": "true",
+        "XGH_TEAM": "${XGH_TEAM}"
+      }
     }
   }
 }
@@ -136,6 +564,156 @@ HOOKEOF
   fi
   chmod +x "$dst"
 done
+
+# -- Cipher Pre/PostToolUse hooks (detect extraction failures, suggest direct storage) --
+info "Installing cipher Pre/PostToolUse hooks..."
+
+cat > "${CLAUDE_DIR}/hooks/cipher-pre-hook.sh" <<'PREHOOKEOF'
+#!/bin/bash
+# PreToolUse hook for cipher memory tools.
+# Detects structured/complex content that cipher's 3B extraction model
+# will likely reject, and suggests direct Qdrant storage instead.
+
+command -v jq >/dev/null 2>&1 || exit 0
+command -v python3 >/dev/null 2>&1 || exit 0
+
+input=$(cat)
+tool_name=$(echo "$input" | jq -r '.tool_name // empty' 2>/dev/null)
+
+case "$tool_name" in
+  mcp__cipher__cipher_extract_and_operate_memory|mcp__cipher__cipher_workspace_store)
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+
+analysis=$(echo "$input" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    inp = data.get('tool_input', {})
+    interaction = inp.get('interaction', '')
+    if isinstance(interaction, list):
+        interaction = ' '.join(interaction)
+
+    reasons = []
+    length = len(interaction)
+
+    if length > 500:
+        reasons.append(f'long ({length} chars)')
+    if interaction.count('#') >= 2:
+        reasons.append('markdown headers')
+    if '|' in interaction and interaction.count('|') >= 6:
+        reasons.append('tables')
+    if '\`\`\`' in interaction:
+        reasons.append('code blocks')
+    if interaction.count(chr(10)) > 10:
+        reasons.append(f'{interaction.count(chr(10))} lines')
+
+    if reasons:
+        print('COMPLEX:' + '; '.join(reasons))
+    else:
+        print('SIMPLE')
+except:
+    print('SIMPLE')
+" 2>/dev/null)
+
+if [[ "$analysis" == COMPLEX* ]]; then
+    reason="${analysis#COMPLEX:}"
+    read -r -d '' CONTEXT << MARKDOWN
+Warning: **Cipher extraction warning**: Content is structured/complex ($reason). Cipher's 3B model will likely filter this (extracted:0).
+
+**Recommended**: Use \`/store-memory\` skill or store directly via \`ctx_execute\` with:
+\`\`\`javascript
+const { storeWithDedup } = require(process.env.HOME + '/.local/lib/qdrant-store.js');
+\`\`\`
+MARKDOWN
+
+    jq -n --arg ctx "$CONTEXT" '{
+        hookSpecificOutput: {
+            hookEventName: "PreToolUse",
+            additionalContext: $ctx
+        }
+    }'
+fi
+PREHOOKEOF
+chmod +x "${CLAUDE_DIR}/hooks/cipher-pre-hook.sh"
+
+cat > "${CLAUDE_DIR}/hooks/cipher-post-hook.sh" <<'POSTHOOKEOF'
+#!/bin/bash
+# PostToolUse hook for cipher memory tools.
+# Detects when cipher's extraction returned 0 results and
+# instructs Claude to retry via direct Qdrant storage.
+
+command -v jq >/dev/null 2>&1 || exit 0
+command -v python3 >/dev/null 2>&1 || exit 0
+
+input=$(cat)
+tool_name=$(echo "$input" | jq -r '.tool_name // empty' 2>/dev/null)
+
+case "$tool_name" in
+  mcp__cipher__cipher_extract_and_operate_memory|mcp__cipher__cipher_workspace_store)
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+
+result=$(echo "$input" | jq -r '.tool_result // empty' 2>/dev/null)
+
+failed=$(echo "$result" | python3 -c "
+import sys, json
+try:
+    raw = sys.stdin.read().strip()
+    # Handle double-encoded JSON
+    try:
+        data = json.loads(json.loads(raw))
+    except (json.JSONDecodeError, TypeError):
+        data = json.loads(raw)
+
+    ext = data.get('extraction', {})
+    extracted = ext.get('extracted', -1)
+    skipped = ext.get('skipped', 0)
+
+    # Also check workspace-style results
+    if extracted == -1:
+        workspace = data.get('workspace', None)
+        if isinstance(workspace, list) and len(workspace) == 0:
+            extracted = 0
+            skipped = max(skipped, 1)
+
+    if extracted == 0 and skipped > 0:
+        print(f'FAILED:extracted=0,skipped={skipped}')
+    else:
+        print('OK')
+except:
+    print('OK')
+" 2>/dev/null)
+
+if [[ "$failed" == FAILED* ]]; then
+    stats="${failed#FAILED:}"
+    read -r -d '' CONTEXT << MARKDOWN
+Warning: **Cipher extraction failed** ($stats). The 3B model filtered out the content.
+
+**You MUST store this directly.** Use \`ctx_execute\` with JavaScript:
+\`\`\`javascript
+const { storeWithDedup } = require(process.env.HOME + '/.local/lib/qdrant-store.js');
+const result = await storeWithDedup('knowledge_memory', TEXT, ['tag1'], { domain: 'iOS', projectId: 'tr-ios' });
+console.log(JSON.stringify(result));
+\`\`\`
+Pass the ORIGINAL text that was meant to be stored. Do NOT ask the user — just retry automatically.
+MARKDOWN
+
+    jq -n --arg ctx "$CONTEXT" '{
+        hookSpecificOutput: {
+            hookEventName: "PostToolUse",
+            additionalContext: $ctx
+        }
+    }'
+fi
+POSTHOOKEOF
+chmod +x "${CLAUDE_DIR}/hooks/cipher-post-hook.sh"
 
 # ── 6. Settings ─────────────────────────────────────────
 info "Configuring Claude Code settings..."
@@ -175,6 +753,43 @@ json.dump(merged, open('${SETTINGS_FILE}', 'w'), indent=2)
 " 2>/dev/null || cp "$HOOKS_SETTINGS" "$SETTINGS_FILE"
 fi
 
+# Add cipher Pre/PostToolUse hooks to settings
+python3 -c "
+import json
+settings = json.load(open('${SETTINGS_FILE}'))
+hooks = settings.setdefault('hooks', {})
+cipher_matcher = 'mcp__cipher__cipher_extract_and_operate_memory|mcp__cipher__cipher_workspace_store'
+
+# Add PreToolUse hook if not already present
+if 'PreToolUse' not in hooks:
+    hooks['PreToolUse'] = []
+# Check if cipher hook already exists
+pre_exists = any(
+    cipher_matcher in str(h.get('matcher', ''))
+    for h in hooks.get('PreToolUse', [])
+)
+if not pre_exists:
+    hooks['PreToolUse'].append({
+        'matcher': cipher_matcher,
+        'hooks': [{'type': 'command', 'command': 'bash .claude/hooks/cipher-pre-hook.sh'}]
+    })
+
+# Add PostToolUse hook if not already present
+if 'PostToolUse' not in hooks:
+    hooks['PostToolUse'] = []
+post_exists = any(
+    cipher_matcher in str(h.get('matcher', ''))
+    for h in hooks.get('PostToolUse', [])
+)
+if not post_exists:
+    hooks['PostToolUse'].append({
+        'matcher': cipher_matcher,
+        'hooks': [{'type': 'command', 'command': 'bash .claude/hooks/cipher-post-hook.sh'}]
+    })
+
+json.dump(settings, open('${SETTINGS_FILE}', 'w'), indent=2)
+" 2>/dev/null || warn "Could not add cipher hooks to settings — add them manually"
+
 # ── 7. Skills + Commands + Agents ────────────────────────
 info "Installing skills, commands, and agents..."
 mkdir -p "${CLAUDE_DIR}/skills" "${CLAUDE_DIR}/commands" "${CLAUDE_DIR}/agents"
@@ -195,6 +810,92 @@ for agent in "${PACK_DIR}/agents/"*.md; do
   [ -f "$agent" ] || continue
   cp "$agent" "${CLAUDE_DIR}/agents/xgh-$(basename "$agent")"
 done
+
+# -- store-memory skill (global, for direct Qdrant storage bypassing cipher extraction) --
+info "Installing store-memory skill..."
+STORE_MEMORY_DIR="${HOME}/.claude/skills/store-memory"
+if [ ! -d "$STORE_MEMORY_DIR" ]; then
+  mkdir -p "$STORE_MEMORY_DIR"
+  cat > "${STORE_MEMORY_DIR}/SKILL.md" <<'SKILLEOF'
+---
+name: store-memory
+description: Use when storing knowledge, documentation, specs, or structured content in vector memory, especially when cipher_extract_and_operate_memory returns extracted:0 or skipped content, or when ingesting files and documents into memory
+---
+
+# Store Memory
+
+Direct vector memory storage that bypasses cipher's LLM extraction layer. Uses Claude as the extraction brain and the embedding model for vector generation.
+
+## When to Use
+
+- Cipher's `cipher_extract_and_operate_memory` returned `extracted: 0`
+- Storing documentation, specs, architecture decisions
+- Bulk document ingestion (files from `docs/`, specs, etc.)
+- Structured content with markdown, tables, code blocks
+- Content longer than ~500 characters
+
+## When NOT to Use
+
+- Short conversational facts — cipher handles these fine
+- Content that cipher successfully extracted
+
+## Workflow
+
+1. **Analyze**: What's worth storing? Break into independently-searchable chunks (~200-500 chars each).
+2. **Dedup**: For each chunk, search Qdrant (threshold 0.85). Skip if similar exists.
+3. **Store**: Embed via vllm-mlx, write to Qdrant with cipher-compatible payload.
+4. **Verify**: Search for a stored entry to confirm retrieval works.
+
+## Code Pattern
+
+Use `ctx_execute` with JavaScript, requiring the shared helper:
+
+```javascript
+const { storeWithDedup, search } = require(process.env.HOME + '/.local/lib/qdrant-store.js');
+const result = await storeWithDedup('knowledge_memory', text, ['tag1', 'tag2'], {
+  domain: 'iOS', projectId: 'tr-ios', source: 'docs/kb'
+});
+console.log(JSON.stringify(result));
+```
+
+## Payload Schema (cipher-compatible)
+
+| Field | Type | Notes |
+|-------|------|-------|
+| text | string | **Required** — searchable content |
+| tags | string[] | Searchable tags |
+| timestamp | ISO string | Auto-set by helper |
+| source | string | e.g. "docs/kb", "session-insight" |
+| domain | string | e.g. "iOS", "devops" |
+| confidence | float | 0.95 default |
+| event | string | "ADD" |
+| projectId | string | e.g. "tr-ios" |
+
+## Collections
+
+| Collection | Use for |
+|------------|---------|
+| knowledge_memory | Facts, patterns, decisions, specs |
+| workspace_memory | Team progress, bugs, project context |
+| reflection_memory | Reasoning traces (use cipher_store_reasoning_memory) |
+
+## Chunking Guidelines
+
+- Each chunk: independently searchable, ~200-500 chars
+- Include key identifiers (class names, ticket numbers, file paths)
+- Don't split tightly-related context across chunks
+
+## Common Mistakes
+
+- **Storing raw file contents** — summarize and extract key facts instead
+- **One giant entry** — break into chunks for better search precision
+- **Missing `encoding_format: 'float'`** — causes 192-dim zeros (the fix-openai-embeddings.js preload handles this for cipher, but direct HTTP calls need it explicit)
+- **Not verifying** — always search after storing to confirm retrieval
+SKILLEOF
+  info "store-memory skill installed at ${STORE_MEMORY_DIR}"
+else
+  info "store-memory skill already exists, skipping"
+fi
 
 # ── 8. Context Tree ─────────────────────────────────────
 info "Initializing context tree..."
@@ -297,19 +998,55 @@ if [ "$XGH_DRY_RUN" -eq 0 ] && [ "$XGH_INSTALL_PLUGINS" != "skip" ]; then
   fi
 fi
 
+# ── 12. Start script ─────────────────────────────────────
+info "Creating model server start script..."
+SCRIPTS_DIR="${PACK_DIR}/scripts"
+mkdir -p "$SCRIPTS_DIR"
+
+cat > "${SCRIPTS_DIR}/start-models.sh" <<STARTEOF
+#!/usr/bin/env bash
+# Start the vllm-mlx model server for xgh
+# Generated by xgh installer
+
+set -euo pipefail
+
+XGH_LLM_MODEL="\${XGH_LLM_MODEL:-${XGH_LLM_MODEL}}"
+XGH_EMBED_MODEL="\${XGH_EMBED_MODEL:-${XGH_EMBED_MODEL}}"
+XGH_MODEL_PORT="\${XGH_MODEL_PORT:-${XGH_MODEL_PORT}}"
+
+echo "🐴 Starting vllm-mlx model server..."
+echo "   LLM:        \${XGH_LLM_MODEL}"
+echo "   Embeddings: \${XGH_EMBED_MODEL}"
+echo "   Port:       \${XGH_MODEL_PORT}"
+echo ""
+
+exec vllm-mlx serve "\${XGH_LLM_MODEL}" \\
+  --embedding-model "\${XGH_EMBED_MODEL}" \\
+  --port "\${XGH_MODEL_PORT}" \\
+  --host 127.0.0.1
+STARTEOF
+chmod +x "${SCRIPTS_DIR}/start-models.sh"
+
 # ── Done ─────────────────────────────────────────────────
 echo ""
 echo "🐴 xgh installed successfully!"
 echo ""
 echo "  Team:         ${XGH_TEAM}"
 echo "  Preset:       ${XGH_PRESET}"
+echo "  LLM:          ${XGH_LLM_MODEL}"
+echo "  Embeddings:   ${XGH_EMBED_MODEL}"
 echo "  Context tree: ${XGH_CONTEXT_TREE}/"
-echo "  Cipher MCP:   .claude/.mcp.json"
-echo "  Hooks:        .claude/hooks/xgh-*.sh"
+echo "  Cipher MCP:   .claude/.mcp.json (using cipher-mcp wrapper)"
+echo "  Hooks:        .claude/hooks/xgh-*.sh + cipher-{pre,post}-hook.sh"
+echo "  Skill:        ~/.claude/skills/store-memory/"
 echo ""
-echo "  Start Claude Code — your memory layer is active."
+echo "  To start the model server:"
+echo "    bash ${SCRIPTS_DIR}/start-models.sh"
+echo ""
+echo "  Then start Claude Code — your memory layer is active."
 echo ""
 echo "  Customize: XGH_TEAM=my-team XGH_PRESET=openai ./install.sh"
+echo "  Skip models: XGH_LLM_MODEL=... XGH_EMBED_MODEL=... ./install.sh"
 echo "  Skip plugins: XGH_INSTALL_PLUGINS=skip ./install.sh"
 echo "  Install all:  XGH_INSTALL_PLUGINS=all ./install.sh"
 echo ""

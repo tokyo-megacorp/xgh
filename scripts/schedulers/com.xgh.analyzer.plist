@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.xgh.analyzer</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>XGH_CLAUDE_BIN</string>
+    <string>-p</string>
+    <string>/xgh-analyze</string>
+    <string>--allowedTools</string>
+    <string>mcp__cipher__*,Bash,Read,Write,Glob</string>
+    <string>--max-turns</string>
+    <string>10</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>1800</integer>
+  <key>StandardOutPath</key>
+  <string>XGH_LOG_DIR/analyzer.log</string>
+  <key>StandardErrorPath</key>
+  <string>XGH_LOG_DIR/analyzer.log</string>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>XGH_HOME</string>
+    <key>PATH</key>
+    <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin</string>
+  </dict>
+</dict>
+</plist>

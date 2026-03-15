@@ -2,7 +2,7 @@
 set -euo pipefail
 PASS=0; FAIL=0
 assert_file_exists() { if [ -f "$1" ]; then PASS=$((PASS+1)); else echo "FAIL: $1 does not exist"; FAIL=$((FAIL+1)); fi; }
-assert_contains() { if grep -q "$2" "$1" 2>/dev/null; then PASS=$((PASS+1)); else echo "FAIL: $1 does not contain '$2'"; FAIL=$((FAIL+1)); fi; }
+assert_contains() { if grep -qF -- "$2" "$1" 2>/dev/null; then PASS=$((PASS+1)); else echo "FAIL: $1 does not contain '$2'"; FAIL=$((FAIL+1)); fi; }
 
 assert_file_exists "skills/ingest-track/ingest-track.md"
 assert_file_exists "skills/ingest-doctor/ingest-doctor.md"

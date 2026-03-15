@@ -34,15 +34,15 @@ components:
     source: hooks/session-start.sh
     description: "Load context tree and inject conventions at session start. Set XGH_BRIEFING=1 to trigger the briefing skill automatically."
 
-  - id: briefing-skill
+  - id: brief-skill
     type: skill
-    source: skills/briefing/briefing.md
+    source: skills/brief/brief.md
     description: "Session briefing skill — checks Slack, Jira, and GitHub and produces an actionable summary"
 
-  - id: briefing-command
+  - id: brief-command
     type: command
-    source: commands/briefing.md
-    description: "Slash command /xgh-briefing — triggers the xgh:briefing skill on demand"
+    source: commands/brief.md
+    description: "Slash command /xgh-brief — triggers the xgh:brief skill on demand"
 
   - id: mcp-detect
     type: script
@@ -80,65 +80,70 @@ components:
     source: lib/workspace-write.js
     description: "Direct Qdrant write helper — generates embeddings matching Cipher's config"
 
-  - id: ingest-retrieve-skill
+  - id: retrieve-skill
     type: skill
-    source: skills/ingest-retrieve/ingest-retrieve.md
+    source: skills/retrieve/retrieve.md
     description: "Headless retriever loop — scans Slack/Jira/Confluence/GitHub/Figma every 5 min"
 
-  - id: ingest-analyze-skill
+  - id: analyze-skill
     type: skill
-    source: skills/ingest-analyze/ingest-analyze.md
+    source: skills/analyze/analyze.md
     description: "Headless analyzer loop — classifies, deduplicates, writes to Cipher every 30 min"
 
-  - id: ingest-track-skill
+  - id: track-skill
     type: skill
-    source: skills/ingest-track/ingest-track.md
+    source: skills/track/track.md
     description: "Interactive project onboarding — adds new projects to ingest.yaml"
 
-  - id: ingest-doctor-skill
+  - id: doctor-skill
     type: skill
-    source: skills/ingest-doctor/ingest-doctor.md
+    source: skills/doctor/doctor.md
     description: "Pipeline health check — config, connectivity, scheduler freshness, workspace stats"
 
-  - id: ingest-index-repo-skill
+  - id: index-skill
     type: skill
-    source: skills/ingest-index-repo/ingest-index-repo.md
+    source: skills/index/index.md
     description: "Codebase architecture extraction — quick (~5min) and full (~30min) modes"
 
-  - id: ingest-calibrate-skill
+  - id: calibrate-skill
     type: skill
-    source: skills/ingest-calibrate/ingest-calibrate.md
+    source: skills/calibrate/calibrate.md
     description: "Dedup threshold calibration with F1 scoring — interactive, headless, comparison modes"
 
-  - id: ingest-retrieve-command
+  - id: retrieve-command
     type: command
-    source: commands/ingest-retrieve.md
+    source: commands/retrieve.md
     description: "/xgh-retrieve — run retrieval loop (also invoked by scheduler)"
 
-  - id: ingest-analyze-command
+  - id: analyze-command
     type: command
-    source: commands/ingest-analyze.md
+    source: commands/analyze.md
     description: "/xgh-analyze — run analysis loop (also invoked by scheduler)"
 
-  - id: ingest-track-command
+  - id: track-command
     type: command
-    source: commands/ingest-track.md
+    source: commands/track.md
     description: "/xgh-track — add a new project to ingest monitoring"
 
-  - id: ingest-doctor-command
+  - id: doctor-command
     type: command
-    source: commands/ingest-doctor.md
+    source: commands/doctor.md
     description: "/xgh-doctor — validate full pipeline health"
 
-  - id: ingest-index-repo-command
+  - id: index-command
     type: command
-    source: commands/ingest-index-repo.md
-    description: "/xgh-index-repo [path] [--depth quick|full] — index a codebase"
+    source: commands/index.md
+    description: "/xgh-index [path] [--depth quick|full] — index a codebase"
 
-  - id: ingest-calibrate-command
+  - id: calibrate-command
     type: command
-    source: commands/ingest-calibrate.md
+    source: commands/calibrate.md
     description: "/xgh-calibrate [--auto] [--compare] — calibrate dedup threshold"
+
+  - id: help-command
+    type: command
+    source: commands/help.md
+    description: "Slash command /xgh-help — contextual guide and command reference"
 
   - id: ingest-schedule
     type: script

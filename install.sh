@@ -50,9 +50,9 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
 
   # Only install Qdrant for presets that need it
   if [ "$XGH_PRESET" != "local-light" ]; then
-    if ! command -v qdrant &>/dev/null; then
+    if ! command -v qdrant &>/dev/null && ! [ -x "${HOME}/.qdrant/bin/qdrant" ]; then
       info "Installing Qdrant..."
-      brew install qdrant
+      brew install qdrant 2>/dev/null || warn "Could not install Qdrant via brew — install manually or ensure ~/.qdrant/bin/qdrant exists"
     fi
   fi
 

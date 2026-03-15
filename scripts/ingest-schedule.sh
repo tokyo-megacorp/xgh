@@ -15,9 +15,13 @@ CLAUDE_BIN=$(command -v claude 2>/dev/null || echo "/usr/local/bin/claude")
 
 _render_plist() {
   local src="$1" dst="$2"
-  sed -e "s|XGH_LOG_DIR|${XGH_LOG_DIR}|g" \
-      -e "s|XGH_HOME|${HOME}|g" \
-      -e "s|XGH_CLAUDE_BIN|${CLAUDE_BIN}|g" \
+  # Escape & in paths to prevent sed backreference interpretation
+  local safe_log_dir="${XGH_LOG_DIR//&/\\&}"
+  local safe_home="${HOME//&/\\&}"
+  local safe_claude="${CLAUDE_BIN//&/\\&}"
+  sed -e "s|XGH_LOG_DIR|${safe_log_dir}|g" \
+      -e "s|XGH_HOME|${safe_home}|g" \
+      -e "s|XGH_CLAUDE_BIN|${safe_claude}|g" \
       "$src" > "$dst"
 }
 

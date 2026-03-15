@@ -455,7 +455,7 @@ CIPHERYMLEOF
       return 0
     fi
 
-    for collection in knowledge_memory workspace_memory reflection_memory; do
+    for collection in knowledge_memory workspace_memory reflection_memory xgh-workspace; do
       if curl -sf "${qdrant_url}/collections/${collection}" >/dev/null 2>&1; then
         info "Qdrant collection '${collection}' already exists"
       else

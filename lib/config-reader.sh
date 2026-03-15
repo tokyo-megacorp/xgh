@@ -8,6 +8,7 @@ xgh_config_get() {
   local default="${2:-}"
   local config="${HOME}/.xgh/ingest.yaml"
   [ -f "$config" ] || { echo "$default"; return 1; }
+  if ! python3 -c "import yaml" 2>/dev/null; then echo "$default"; return 1; fi
   python3 - "$config" "$key" "$default" << 'PYEOF'
 import sys, yaml
 config_path, key, default = sys.argv[1], sys.argv[2], sys.argv[3]

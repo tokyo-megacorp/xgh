@@ -5,9 +5,10 @@
 #        xgh_usage_check_cap || echo "Cap exceeded"
 
 xgh_usage_log() {
-  local run_name="$1"
-  local turns="$2"
+  local run_name="${1//,/_}"
+  local turns="${2//,/_}"
   local tokens_estimate="${3:-0}"
+  tokens_estimate="${tokens_estimate//,/_}"
   local log_file="${HOME}/.xgh/logs/usage.csv"
   mkdir -p "$(dirname "$log_file")"
   [ -f "$log_file" ] || echo "timestamp,run_name,turns,tokens_estimate" > "$log_file"

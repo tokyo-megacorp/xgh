@@ -402,16 +402,22 @@ session_duration_minutes: 47                # From agent-state.yaml
 
 ### 5.4 Interaction With Existing xgh Components
 
-#### Hooks
+#### Existing Hooks Inventory
 
-| Existing Hook | Interaction |
-|---------------|-------------|
-| `session-start.sh` | **Extended.** After loading the context tree (current behavior), the hook checks for `.xgh/momentum/latest.yaml` and appends the Momentum Briefing to its JSON output. New key: `"momentumBriefing"`. |
-| `prompt-submit.sh` | **No change.** Decision table injection continues independently. |
+xgh currently ships 4 hooks. Here is every hook, what it does today, and how Momentum leverages it:
 
-| New Hook | Purpose |
-|----------|---------|
-| `session-end-momentum.sh` | **New.** Fires on `SessionEnd` event. Captures the snapshot. Must be registered in `hooks-settings.json`. |
+| Hook | Event | What it does today | Momentum integration |
+|------|-------|-------------------|---------------------|
+| **`xgh-session-start.sh`** | `SessionStart` | Loads top 5 context tree files by score, injects decision table, optionally triggers `/xgh-brief` | **Extended.** After loading context tree, reads `.xgh/momentum/latest.yaml` and appends `"momentumBriefing"` key to JSON output. This is the **restore** moment. |
+| **`xgh-prompt-submit.sh`** | `UserPromptSubmit` | Detects code-change intent via regex, injects Cipher tool hints | **Extended.** Detect natural stopping-point signals (commit messages, PR creation, "done"/"ship it" patterns) and inject a reminder for the agent to write `agent-state.yaml`. This is the **capture trigger**. |
+| **`cipher-pre-hook.sh`** | `PreToolUse` (Cipher extract/workspace tools) | Warns when sending complex content to Cipher's 3B extraction model | **No change.** Operates independently. |
+| **`cipher-post-hook.sh`** | `PostToolUse` (Cipher extract/workspace tools) | Detects `extracted:0` failures, instructs agent to retry via direct Qdrant storage | **Indirect benefit.** Ensures Momentum's Cipher writes (session summaries) succeed even with complex content. |
+
+#### New Hook
+
+| Hook | Event | Purpose |
+|------|-------|---------|
+| **`xgh-session-end-momentum.sh`** | `SessionEnd` | **Safety net.** Reads `agent-state.yaml` (if written by agent), enriches with git state, writes `latest.yaml`. Falls back to git-only snapshot if agent didn't write state. Must be registered in `hooks-settings.json`. |
 
 **Hook registration change:**
 
@@ -434,6 +440,19 @@ session_duration_minutes: 47                # From agent-state.yaml
   }
 }
 ```
+
+#### Existing Skills Integration
+
+Skills that naturally interact with Momentum — either as capture triggers or restore consumers:
+
+| Skill | Momentum role | How |
+|-------|--------------|-----|
+| **`/xgh-brief`** | **Restore consumer.** | Momentum adds a "Where you left off" section *before* the Slack/Jira/GitHub data. The briefing becomes: last session state → what changed since → what needs attention. |
+| **`/xgh-curate`** | **Capture trigger.** | When the user curates knowledge, that's a natural stopping point. The curate skill should trigger an `agent-state.yaml` write — the decision being curated likely belongs in `open_decisions`. |
+| **`/xgh-status`** | **Health display.** | Status adds a Momentum section: last snapshot age, restore count, session streak, snapshot disk usage. |
+| **`/xgh-implement`** | **Capture trigger.** | Implementation tasks have clear milestones (test passing, commit, PR). Each milestone triggers a snapshot write with updated `next_steps`. |
+| **`/xgh-investigate`** | **Capture trigger.** | Investigation sessions produce findings and hypotheses. The investigate skill should write these into `open_decisions` so the next session picks up where debugging left off. |
+| **`/xgh-help`** | **Contextual hint.** | If Momentum detects a stale snapshot (>24h), help suggests running `/xgh-brief` to re-orient. |
 
 #### Cipher MCP
 

@@ -175,12 +175,18 @@ models:
   # Override per-project if needed in the project config
 
 budget:
-  daily_token_cap: 2_000_000     # hard cap — both loops stop when reached
-  retriever_max_tokens: 5_000    # per run — keeps retriever sessions short
-  analyzer_max_tokens: 30_000    # per run — analyzer needs more room
-  indexer_max_tokens: 50_000     # per run — full codebase indexing is heavy
+  # Claude CLI supports --max-turns (not --max-tokens). Token caps are enforced
+  # via turn limits + timeout, with external tracking for daily budgets.
+  retriever_max_turns: 3         # per run — scan + stash is ~2-3 turns
+  analyzer_max_turns: 10         # per run — classification + extraction needs more
+  indexer_max_turns: 20          # per run — full codebase exploration is multi-step
+  retriever_timeout: 60s         # kill if exceeds this wall-clock time
+  analyzer_timeout: 300s         # 5 min max per analyzer run
+  indexer_timeout: 600s          # 10 min max for codebase indexing
+  daily_token_cap: 2_000_000     # soft cap — tracked via usage.csv, DM warning when hit
   warn_at_percent: 80            # DM warning when 80% of daily cap consumed
   cost_tracking: true            # log token usage per run to ~/.xgh/logs/usage.csv
+  pause_on_cap: true             # skip scheduled runs when daily cap is exceeded
 
 retriever:
   max_messages_per_channel: 100  # per scan cycle
@@ -873,6 +879,8 @@ Each content type has a time-to-live. When TTL expires, the memory gets `xgh_sta
 ├── logs/                        # Cron output
 │   ├── retriever.log
 │   └── analyzer.log
+├── calibration/                 # Dedup calibration reports
+│   └── YYYY-MM-DD.md
 └── lib/                         # Shared helpers
     └── workspace-write.js       # Centralized Qdrant write function
 ```
@@ -986,12 +994,96 @@ These were raised during review and resolved in the spec:
 | Embedding for direct Qdrant writes | Write helper reads Cipher's `cipher.yml` config and calls the same embedding endpoint | §7.4 |
 | Urgency score can exceed 100 | Capped at 100 via `min()` | §5.1 |
 | Obsidian support timing | v1 outputs Obsidian-compatible format (frontmatter, wikilinks, tags); dashboard is v1.5 | §6.4, §15.0 |
+| Cost management mechanism | `--max-turns` + `timeout` per session; daily soft cap via usage tracking; no native `--max-tokens` in Claude CLI | §3 budget, §18 |
+| All open questions | Resolved — each has configurable parameters in `ingest.yaml` | §18 |
 
-## 18. Open Questions
+## 18. Resolved Open Questions
 
-1. ~~**Qdrant workspace schema versioning**~~ — **Resolved:** All payloads include `xgh_schema_version: 1`. Future schema changes increment the version and the write helper handles migration.
-2. **Cost management** — How many API tokens per retriever/analyzer cycle? Should we add a daily budget cap? Rough estimate: retriever ~2K tokens/run × 288 runs = ~576K tokens/day; analyzer ~10K tokens/run × 48 runs = ~480K tokens/day. Total ~1M tokens/day. Needs validation.
-3. **Log rotation** — Retriever runs 288 times/day. Spec recommends: logs capped at 10MB, rotated daily, 7-day retention. Implementation should use `newsyslog` on macOS or a simple size-check in the launchd wrapper.
-4. **Inbox cleanup** — `processed/` directory grows unbounded. Policy: purge files older than 7 days via a weekly cleanup in the analyzer.
-5. **MCP rate limiting** — Slack and Jira APIs have rate limits. The retriever should implement exponential backoff on 429 responses and skip the channel for the current run if rate-limited.
-6. **Dedup threshold calibration** — The 0.85 cosine similarity threshold for dedup (§6.1) is model-dependent and will need calibration against the local embedding model. Start at 0.85, tune based on false-positive/negative rates.
+All formerly open questions are now resolved with configurable parameters:
+
+| # | Question | Resolution | Config reference |
+|---|----------|-----------|-----------------|
+| 1 | Qdrant schema versioning | All payloads include `xgh_schema_version: 1` | §7.3 |
+| 2 | Cost management | Claude CLI uses `--max-turns` + `timeout` per session (no native `--max-tokens`). Daily soft cap tracked via `usage.csv`, DM at 80%, auto-pause on cap. All configurable. | `budget.*` in §3 |
+| 3 | Log rotation | Configurable: max size, rotation period, retention days. Implementation uses `newsyslog` on macOS. | `retention.logs`, `retention.log_retention` in §3 |
+| 4 | Inbox cleanup | Analyzer purges `processed/` files older than configurable retention period (default 7d). | `retention.inbox_processed` in §3 |
+| 5 | MCP rate limiting | Retriever implements exponential backoff on 429s. Configurable: backoff toggle, max retries per channel per cycle. | `retriever.backoff_on_rate_limit`, `retriever.max_retries` in §3 |
+| 6 | Dedup calibration | Default threshold 0.85, configurable. Automated calibration via `/xgh-calibrate` skill. | `analyzer.dedup_threshold` in §3, §19 |
+
+---
+
+## 19. Dedup Calibration: `/xgh-calibrate`
+
+Automated skill for tuning the dedup similarity threshold against the user's actual data and embedding model. Supports both interactive and headless modes.
+
+### 19.1 Problem
+
+The dedup threshold (cosine similarity above which two memories are considered duplicates) is model-dependent. A threshold of 0.85 with one embedding model might be too aggressive (merging distinct items) or too loose (keeping near-duplicates) with another. The only way to know is to test against real data.
+
+### 19.2 Modes
+
+**Interactive mode** (`/xgh-calibrate`):
+1. Pull N sample pairs from the user's Cipher memory (configurable, default 50)
+2. For each pair, show both texts side by side with their similarity score
+3. Ask: "Are these duplicates? [y/n/skip]"
+4. After all pairs, compute optimal threshold that maximizes agreement with user judgments
+5. Offer to update `analyzer.dedup_threshold` in `ingest.yaml`
+6. Store calibration results for future reference
+
+**Headless mode** (`/xgh-calibrate --auto`):
+1. Pull N sample pairs from Cipher memory
+2. Use a Claude session to judge each pair (is this a semantic duplicate?)
+3. Compute optimal threshold from AI judgments
+4. Write a calibration report to `.xgh/calibration/YYYY-MM-DD.md`
+5. Update config if confidence > 90%, otherwise flag for human review
+
+**Comparison mode** (`/xgh-calibrate --compare`):
+1. Run headless calibration
+2. Then run interactive on the same pairs
+3. Show agreement rate between AI and human judgments
+4. Helps validate whether headless mode is trustworthy for future auto-calibrations
+
+### 19.3 Config
+
+```yaml
+calibration:
+  sample_size: 50                # pairs to evaluate per calibration run
+  auto_update: false             # if true, headless mode updates config without confirmation
+  auto_confidence_threshold: 0.9 # only auto-update if AI judgment confidence exceeds this
+  schedule: monthly              # suggest recalibration on this interval
+  last_run: null                 # set by the skill after each run
+  last_threshold: null           # the threshold that came out of the last calibration
+```
+
+### 19.4 Output
+
+Calibration report at `.xgh/calibration/YYYY-MM-DD.md`:
+
+```markdown
+---
+date: 2026-03-15
+type: calibration
+mode: interactive
+sample_size: 50
+---
+
+# Dedup Calibration Report
+
+## Results
+- Pairs evaluated: 50
+- User said "duplicate": 18
+- User said "not duplicate": 29
+- Skipped: 3
+
+## Threshold Analysis
+| Threshold | Precision | Recall | F1 |
+|-----------|-----------|--------|-----|
+| 0.80 | 0.72 | 0.94 | 0.82 |
+| 0.85 | 0.89 | 0.83 | 0.86 |
+| 0.88 | 0.94 | 0.72 | 0.82 |
+| 0.90 | 1.00 | 0.61 | 0.76 |
+
+## Recommendation
+Optimal threshold: **0.85** (F1: 0.86)
+Previous threshold: 0.85 (no change needed)
+```

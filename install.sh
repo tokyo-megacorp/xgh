@@ -576,7 +576,7 @@ if [ -z "$XGH_HOOKS_SCOPE" ] && [ "$XGH_DRY_RUN" -eq 0 ]; then
   echo ""
   echo -e "  ${BOLD}Where should the horse roam?${NC}"
   echo ""
-  echo "    1) ${GREEN}Global${NC} (~/.claude) — works in all projects ${DIM}(recommended)${NC}"
+  echo -e "    1) ${GREEN}Global${NC} (~/.claude) — works in all projects ${DIM}(recommended)${NC}"
   echo "    2) Project (.claude) — only this project"
   echo ""
   read -r -p "  🐴 Pick [1]: " hooks_choice
@@ -1056,7 +1056,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ] && [ "$XGH_INSTALL_PLUGINS" != "skip" ]; then
     echo ""
     read -r -p "  🤖 Install? [y/N] " INSTALL_CONTEXT_MODE
   fi
-  if [[ "${INSTALL_CONTEXT_MODE,,}" =~ ^y ]]; then
+  if [[ "$(printf '%s' "$INSTALL_CONTEXT_MODE" | tr '[:upper:]' '[:lower:]')" =~ ^y ]]; then
     install_plugin "mksglu/context-mode" "context-mode@context-mode" "context-mode"
   fi
 
@@ -1071,7 +1071,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ] && [ "$XGH_INSTALL_PLUGINS" != "skip" ]; then
     echo ""
     read -r -p "  🤖 Install? [y/N] " INSTALL_SUPERPOWERS
   fi
-  if [[ "${INSTALL_SUPERPOWERS,,}" =~ ^y ]]; then
+  if [[ "$(printf '%s' "$INSTALL_SUPERPOWERS" | tr '[:upper:]' '[:lower:]')" =~ ^y ]]; then
     install_plugin "claude-plugins-official/superpowers" "superpowers@superpowers" "superpowers"
   fi
 fi

@@ -25,9 +25,9 @@ assert_contains "config/presets/local.yaml" "type: qdrant"
 assert_contains "config/presets/openai.yaml" "OPENAI_API_KEY"
 assert_contains "config/presets/anthropic.yaml" "ANTHROPIC_API_KEY"
 
-# Placeholder dirs (agents, skills, commands now have real files)
-assert_file_exists "hooks/.gitkeep"
-for d in skills commands agents; do
+# Plugin subdirs (agents, skills, commands, hooks live under plugin/)
+assert_file_exists "plugin/hooks/.gitkeep"
+for d in plugin/skills plugin/commands plugin/agents; do
   if [ -d "$d" ] && [ "$(ls -A "$d")" ]; then
     PASS=$((PASS+1))
   else

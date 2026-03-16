@@ -683,22 +683,22 @@ if echo "$PRESET_LLM_URL" | grep -q "localhost\|127\.0\.0\.1"; then
     '.env.OLLAMA_BASE_URL = $url')
 fi
 
-# Merge into global settings (~/.claude/settings.json)
-GLOBAL_SETTINGS="${HOME}/.claude/settings.json"
+# Merge into global ~/.claude/.mcp.json (user-level MCP config, available in all projects)
+GLOBAL_MCP="${HOME}/.claude/.mcp.json"
 mkdir -p "${HOME}/.claude"
 
-if [ -f "$GLOBAL_SETTINGS" ] && [ -s "$GLOBAL_SETTINGS" ]; then
+if [ -f "$GLOBAL_MCP" ] && [ -s "$GLOBAL_MCP" ]; then
   jq --argjson cipher "$CIPHER_MCP_JSON" '.mcpServers.cipher = $cipher' \
-    "$GLOBAL_SETTINGS" > "${GLOBAL_SETTINGS}.tmp" \
-    && mv "${GLOBAL_SETTINGS}.tmp" "$GLOBAL_SETTINGS"
+    "$GLOBAL_MCP" > "${GLOBAL_MCP}.tmp" \
+    && mv "${GLOBAL_MCP}.tmp" "$GLOBAL_MCP"
 else
-  echo '{}' | jq --argjson cipher "$CIPHER_MCP_JSON" \
-    '.mcpServers.cipher = $cipher' > "$GLOBAL_SETTINGS"
+  echo '{"mcpServers":{}}' | jq --argjson cipher "$CIPHER_MCP_JSON" \
+    '.mcpServers.cipher = $cipher' > "$GLOBAL_MCP"
 fi
 
-info "Cipher MCP → global (~/.claude/settings.json)"
+info "Cipher MCP → global (~/.claude/.mcp.json)"
 
-# Clean up legacy project-level .mcp.json
+# Clean up legacy project-level .mcp.json if it only has cipher
 if [ -f "${PWD}/.mcp.json" ]; then
   LEGACY_KEYS=$(jq -r '.mcpServers | keys[]' "${PWD}/.mcp.json" 2>/dev/null || echo "")
   if [ "$LEGACY_KEYS" = "cipher" ]; then
@@ -707,7 +707,7 @@ if [ -f "${PWD}/.mcp.json" ]; then
   elif echo "$LEGACY_KEYS" | grep -q "cipher"; then
     jq 'del(.mcpServers.cipher)' "${PWD}/.mcp.json" > "${PWD}/.mcp.json.tmp" \
       && mv "${PWD}/.mcp.json.tmp" "${PWD}/.mcp.json"
-    info "Removed cipher from .mcp.json (other servers kept)"
+    info "Removed cipher from project .mcp.json (now global)"
   fi
 fi
 

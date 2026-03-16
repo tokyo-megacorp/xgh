@@ -55,10 +55,10 @@ assert_dir_exists ".claude/skills"
 assert_dir_exists ".claude/commands"
 assert_dir_exists ".claude/agents"
 
-# Verify MCP config (global: ~/.claude/settings.json)
-assert_file_exists "${HOME}/.claude/settings.json"
-assert_contains "${HOME}/.claude/settings.json" "cipher"
-assert_contains "${HOME}/.claude/settings.json" "cipher-mcp"
+# Verify MCP config (global: ~/.claude/.mcp.json)
+assert_file_exists "${HOME}/.claude/.mcp.json"
+assert_contains "${HOME}/.claude/.mcp.json" "cipher"
+assert_contains "${HOME}/.claude/.mcp.json" "cipher-mcp"
 
 # Verify hooks installed
 assert_file_exists ".claude/hooks/xgh-session-start.sh"

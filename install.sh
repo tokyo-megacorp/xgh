@@ -645,60 +645,81 @@ VS_URL=$(grep 'url:' "$PRESET_FILE" | tail -1 | awk '{print $2}' || echo "")
 # Detect local vs cloud inference by checking if preset uses a localhost base URL
 PRESET_LLM_URL=$(grep 'baseUrl:\|base_url:' "$PRESET_FILE" | head -1 | awk '{print $2}' 2>/dev/null || echo "")
 
-# Build cipher MCP server config
-CIPHER_MCP_JSON=$(cat <<MCPEOF
-{
-  "type": "stdio",
-  "command": "${HOME}/.local/bin/cipher-mcp",
-  "args": [],
-  "env": {
-    "MCP_SERVER_MODE": "aggregator",
-    "VECTOR_STORE_TYPE": "${VS_TYPE}",
-    "VECTOR_STORE_URL": "${VS_URL}",
-    "EMBEDDING_PROVIDER": "openai",
-    "EMBEDDING_MODEL": "${XGH_EMBED_MODEL}",
-    "EMBEDDING_BASE_URL": "http://localhost:${XGH_MODEL_PORT}/v1",
-    "EMBEDDING_DIMENSIONS": "768",
-    "EMBEDDING_API_KEY": "placeholder",
-    "OPENAI_API_KEY": "placeholder",
-    "OPENAI_BASE_URL": "http://localhost:${XGH_MODEL_PORT}/v1",
-    "LLM_PROVIDER": "openai",
-    "LLM_MODEL": "${XGH_LLM_MODEL}",
-    "LLM_BASE_URL": "http://localhost:${XGH_MODEL_PORT}/v1",
-    "LLM_API_KEY": "placeholder",
-    "CIPHER_LOG_LEVEL": "info",
-    "SEARCH_MEMORY_TYPE": "both",
-    "USE_WORKSPACE_MEMORY": "true",
-    "XGH_TEAM": "${XGH_TEAM}"
-  }
-}
-MCPEOF
-)
-
-# For local presets (localhost base URL), tell Cipher to use local inference via OLLAMA_BASE_URL.
-# Cipher rejects "placeholder" as an API key, but accepts OLLAMA_BASE_URL for keyless local inference.
+# Register Cipher MCP globally — use Claude CLI when available, else write file directly
+_OLLAMA_ENV=""
 if echo "$PRESET_LLM_URL" | grep -q "localhost\|127\.0\.0\.1"; then
-  CIPHER_MCP_JSON=$(echo "$CIPHER_MCP_JSON" | jq \
-    --arg url "http://localhost:${XGH_MODEL_PORT}" \
-    '.env.OLLAMA_BASE_URL = $url')
+  _OLLAMA_ENV="OLLAMA_BASE_URL=http://localhost:${XGH_MODEL_PORT}"
 fi
 
-# Merge into global ~/.claude/.mcp.json (user-level MCP config, available in all projects)
-GLOBAL_MCP="${HOME}/.claude/.mcp.json"
-mkdir -p "${HOME}/.claude"
-
-if [ -f "$GLOBAL_MCP" ] && [ -s "$GLOBAL_MCP" ]; then
-  jq --argjson cipher "$CIPHER_MCP_JSON" '.mcpServers.cipher = $cipher' \
-    "$GLOBAL_MCP" > "${GLOBAL_MCP}.tmp" \
-    && mv "${GLOBAL_MCP}.tmp" "$GLOBAL_MCP"
+if command -v claude &>/dev/null && [ "$XGH_DRY_RUN" -eq 0 ]; then
+  # Use the CLI: writes to ~/.claude/.mcp.json with -s user (available in all projects)
+  _ENV_ARGS=(
+    -e "MCP_SERVER_MODE=aggregator"
+    -e "VECTOR_STORE_TYPE=${VS_TYPE}"
+    -e "VECTOR_STORE_URL=${VS_URL}"
+    -e "EMBEDDING_PROVIDER=openai"
+    -e "EMBEDDING_MODEL=${XGH_EMBED_MODEL}"
+    -e "EMBEDDING_BASE_URL=http://localhost:${XGH_MODEL_PORT}/v1"
+    -e "EMBEDDING_DIMENSIONS=768"
+    -e "EMBEDDING_API_KEY=placeholder"
+    -e "OPENAI_API_KEY=placeholder"
+    -e "OPENAI_BASE_URL=http://localhost:${XGH_MODEL_PORT}/v1"
+    -e "LLM_PROVIDER=openai"
+    -e "LLM_MODEL=${XGH_LLM_MODEL}"
+    -e "LLM_BASE_URL=http://localhost:${XGH_MODEL_PORT}/v1"
+    -e "LLM_API_KEY=placeholder"
+    -e "CIPHER_LOG_LEVEL=info"
+    -e "SEARCH_MEMORY_TYPE=both"
+    -e "USE_WORKSPACE_MEMORY=true"
+    -e "XGH_TEAM=${XGH_TEAM}"
+  )
+  [ -n "$_OLLAMA_ENV" ] && _ENV_ARGS+=(-e "$_OLLAMA_ENV")
+  claude mcp remove cipher -s user 2>/dev/null || true
+  claude mcp add -s user "${_ENV_ARGS[@]}" cipher -- "${HOME}/.local/bin/cipher-mcp"
+  info "Cipher MCP ✓ registered globally (claude mcp add -s user)"
 else
-  echo '{"mcpServers":{}}' | jq --argjson cipher "$CIPHER_MCP_JSON" \
-    '.mcpServers.cipher = $cipher' > "$GLOBAL_MCP"
+  # Fallback: write ~/.claude/.mcp.json directly (dry-run or claude not yet in PATH)
+  _GLOBAL_MCP="${HOME}/.claude/.mcp.json"
+  mkdir -p "${HOME}/.claude"
+  _CIPHER_ENV=$(cat <<ENVEOF
+{
+  "MCP_SERVER_MODE": "aggregator",
+  "VECTOR_STORE_TYPE": "${VS_TYPE}",
+  "VECTOR_STORE_URL": "${VS_URL}",
+  "EMBEDDING_PROVIDER": "openai",
+  "EMBEDDING_MODEL": "${XGH_EMBED_MODEL}",
+  "EMBEDDING_BASE_URL": "http://localhost:${XGH_MODEL_PORT}/v1",
+  "EMBEDDING_DIMENSIONS": "768",
+  "EMBEDDING_API_KEY": "placeholder",
+  "OPENAI_API_KEY": "placeholder",
+  "OPENAI_BASE_URL": "http://localhost:${XGH_MODEL_PORT}/v1",
+  "LLM_PROVIDER": "openai",
+  "LLM_MODEL": "${XGH_LLM_MODEL}",
+  "LLM_BASE_URL": "http://localhost:${XGH_MODEL_PORT}/v1",
+  "LLM_API_KEY": "placeholder",
+  "CIPHER_LOG_LEVEL": "info",
+  "SEARCH_MEMORY_TYPE": "both",
+  "USE_WORKSPACE_MEMORY": "true",
+  "XGH_TEAM": "${XGH_TEAM}"
+}
+ENVEOF
+)
+  [ -n "$_OLLAMA_ENV" ] && _CIPHER_ENV=$(echo "$_CIPHER_ENV" | jq \
+    --arg v "http://localhost:${XGH_MODEL_PORT}" '.OLLAMA_BASE_URL = $v')
+  _CIPHER_ENTRY=$(echo "$_CIPHER_ENV" | jq \
+    --arg cmd "${HOME}/.local/bin/cipher-mcp" \
+    '{"type":"stdio","command":$cmd,"args":[],"env":.}')
+  if [ -f "$_GLOBAL_MCP" ] && [ -s "$_GLOBAL_MCP" ]; then
+    jq --argjson e "$_CIPHER_ENTRY" '.mcpServers.cipher = $e' \
+      "$_GLOBAL_MCP" > "${_GLOBAL_MCP}.tmp" && mv "${_GLOBAL_MCP}.tmp" "$_GLOBAL_MCP"
+  else
+    echo '{"mcpServers":{}}' | jq --argjson e "$_CIPHER_ENTRY" \
+      '.mcpServers.cipher = $e' > "$_GLOBAL_MCP"
+  fi
+  info "Cipher MCP → ~/.claude/.mcp.json"
 fi
 
-info "Cipher MCP → global (~/.claude/.mcp.json)"
-
-# Clean up legacy project-level .mcp.json if it only has cipher
+# Clean up any legacy project-level .mcp.json
 if [ -f "${PWD}/.mcp.json" ]; then
   LEGACY_KEYS=$(jq -r '.mcpServers | keys[]' "${PWD}/.mcp.json" 2>/dev/null || echo "")
   if [ "$LEGACY_KEYS" = "cipher" ]; then
@@ -708,15 +729,6 @@ if [ -f "${PWD}/.mcp.json" ]; then
     jq 'del(.mcpServers.cipher)' "${PWD}/.mcp.json" > "${PWD}/.mcp.json.tmp" \
       && mv "${PWD}/.mcp.json.tmp" "${PWD}/.mcp.json"
     info "Removed cipher from project .mcp.json (now global)"
-  fi
-fi
-
-# Verify cipher is registered
-if command -v claude &>/dev/null && [ "$XGH_DRY_RUN" -eq 0 ]; then
-  if claude mcp list 2>/dev/null | grep -q "cipher"; then
-    info "Cipher MCP ✓ registered (global)"
-  else
-    warn "Cipher MCP not yet visible in 'claude mcp list' — you may need to restart Claude Code"
   fi
 fi
 

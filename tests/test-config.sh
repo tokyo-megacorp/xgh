@@ -25,9 +25,15 @@ assert_contains "config/presets/local.yaml" "type: qdrant"
 assert_contains "config/presets/openai.yaml" "OPENAI_API_KEY"
 assert_contains "config/presets/anthropic.yaml" "ANTHROPIC_API_KEY"
 
-# Placeholder dirs
-for d in hooks skills commands agents; do
-  assert_file_exists "${d}/.gitkeep"
+# Placeholder dirs (agents, skills, commands now have real files)
+assert_file_exists "hooks/.gitkeep"
+for d in skills commands agents; do
+  if [ -d "$d" ] && [ "$(ls -A "$d")" ]; then
+    PASS=$((PASS+1))
+  else
+    echo "FAIL: $d is empty or missing"
+    FAIL=$((FAIL+1))
+  fi
 done
 
 # Settings files

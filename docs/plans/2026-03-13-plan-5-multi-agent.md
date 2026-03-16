@@ -1,6 +1,6 @@
 # Multi-Agent Collaboration Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement the Multi-Agent Collaboration Bus — agent registry, workflow templates, message protocol, collaboration skill, dispatcher agent, and `/xgh-collaborate` command — so that xgh can orchestrate work across multiple AI agents (Claude Code, Codex, Cursor, custom).
 
@@ -43,7 +43,7 @@ xgh/
 **Files:**
 - Create: `tests/test-multi-agent.sh`
 
-- [ ] **Step 1: Write the test file**
+- [x] **Step 1: Write the test file**
 
 Create `tests/test-multi-agent.sh`:
 
@@ -138,7 +138,7 @@ echo ""; echo "Multi-agent test: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1
 ```
 
-- [ ] **Step 2: Run the test — verify it fails**
+- [x] **Step 2: Run the test — verify it fails**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/test-multi-agent.sh
@@ -151,7 +151,7 @@ Expected: Multiple FAIL lines, non-zero exit code.
 **Files:**
 - Create: `config/agents.yaml`
 
-- [ ] **Step 3: Write config/agents.yaml**
+- [x] **Step 3: Write config/agents.yaml**
 
 Create `config/agents.yaml`:
 
@@ -221,7 +221,7 @@ agents:
 #   created_at: ISO 8601 timestamp
 ```
 
-- [ ] **Step 4: Run the test — verify agent registry assertions pass**
+- [x] **Step 4: Run the test — verify agent registry assertions pass**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/test-multi-agent.sh 2>&1 | head -5
@@ -229,7 +229,7 @@ cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/
 
 Expected: Agent registry FAIL lines disappear. Other sections still fail.
 
-- [ ] **Step 5: Commit — agent registry and test harness**
+- [x] **Step 5: Commit — agent registry and test harness**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git add config/agents.yaml tests/test-multi-agent.sh && git commit -m "feat(multi-agent): add agent registry and test harness"
@@ -247,13 +247,13 @@ cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git add con
 - Create: `config/workflows/validation.yaml`
 - Create: `config/workflows/security-review.yaml`
 
-- [ ] **Step 6: Create config/workflows/ directory**
+- [x] **Step 6: Create config/workflows/ directory**
 
 ```bash
 mkdir -p /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69/config/workflows
 ```
 
-- [ ] **Step 7: Write config/workflows/plan-review.yaml**
+- [x] **Step 7: Write config/workflows/plan-review.yaml**
 
 Create `config/workflows/plan-review.yaml`:
 
@@ -325,7 +325,7 @@ completion:
   summary: "Store workflow summary in Cipher with thread_id for future reference"
 ```
 
-- [ ] **Step 8: Write config/workflows/parallel-impl.yaml**
+- [x] **Step 8: Write config/workflows/parallel-impl.yaml**
 
 Create `config/workflows/parallel-impl.yaml`:
 
@@ -400,7 +400,7 @@ completion:
   summary: "Store workflow summary with count of subtasks and agents used"
 ```
 
-- [ ] **Step 9: Write config/workflows/validation.yaml**
+- [x] **Step 9: Write config/workflows/validation.yaml**
 
 Create `config/workflows/validation.yaml`:
 
@@ -475,7 +475,7 @@ completion:
   summary: "Store workflow summary with iteration count and final status"
 ```
 
-- [ ] **Step 10: Write config/workflows/security-review.yaml**
+- [x] **Step 10: Write config/workflows/security-review.yaml**
 
 Create `config/workflows/security-review.yaml`:
 
@@ -564,7 +564,7 @@ completion:
   summary: "Store workflow summary with findings count, severity breakdown, and resolution status"
 ```
 
-- [ ] **Step 11: Run the test — verify workflow template assertions pass**
+- [x] **Step 11: Run the test — verify workflow template assertions pass**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/test-multi-agent.sh 2>&1 | grep -c "^FAIL"
@@ -572,7 +572,7 @@ cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/
 
 Expected: Only skill, dispatcher, and command FAILs remain.
 
-- [ ] **Step 12: Commit — workflow templates**
+- [x] **Step 12: Commit — workflow templates**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git add config/workflows/ && git commit -m "feat(multi-agent): add workflow templates (plan-review, parallel-impl, validation, security-review)"
@@ -587,7 +587,7 @@ cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git add con
 **Files:**
 - Create: `skills/agent-collaboration/instructions.md`
 
-- [ ] **Step 13: Write skills/agent-collaboration/instructions.md**
+- [x] **Step 13: Write skills/agent-collaboration/instructions.md**
 
 Create `skills/agent-collaboration/instructions.md`:
 
@@ -736,7 +736,7 @@ Available workflows:
 7. **Honor max_iterations** — if a feedback loop exceeds the template's max_iterations, escalate to the coordinator or user
 ````
 
-- [ ] **Step 14: Run the test — verify skill assertions pass**
+- [x] **Step 14: Run the test — verify skill assertions pass**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/test-multi-agent.sh 2>&1 | grep "^FAIL"
@@ -744,7 +744,7 @@ cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/
 
 Expected: Only dispatcher and command FAILs remain.
 
-- [ ] **Step 15: Commit — collaboration skill**
+- [x] **Step 15: Commit — collaboration skill**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git add skills/agent-collaboration/ && git commit -m "feat(multi-agent): add agent-collaboration skill with message protocol docs"
@@ -759,7 +759,7 @@ cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git add ski
 **Files:**
 - Create: `agents/collaboration-dispatcher.md`
 
-- [ ] **Step 16: Write agents/collaboration-dispatcher.md**
+- [x] **Step 16: Write agents/collaboration-dispatcher.md**
 
 Create `agents/collaboration-dispatcher.md`:
 
@@ -885,7 +885,7 @@ Expected flow:
 4. claude-code implements → stores as `type: result`
 ````
 
-- [ ] **Step 17: Run the test — verify dispatcher assertions pass**
+- [x] **Step 17: Run the test — verify dispatcher assertions pass**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/test-multi-agent.sh 2>&1 | grep "^FAIL"
@@ -898,7 +898,7 @@ Expected: Only command FAILs remain.
 **Files:**
 - Create: `commands/xgh-collaborate.md`
 
-- [ ] **Step 18: Write commands/xgh-collaborate.md**
+- [x] **Step 18: Write commands/xgh-collaborate.md**
 
 Create `commands/xgh-collaborate.md`:
 
@@ -987,7 +987,7 @@ See `config/agents.yaml` for the full registry. Default agents:
 - If an agent is not available, the dispatcher falls back to the workflow's default agent
 ````
 
-- [ ] **Step 19: Run the test — verify all assertions pass**
+- [x] **Step 19: Run the test — verify all assertions pass**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/test-multi-agent.sh
@@ -998,7 +998,7 @@ Expected output:
 Multi-agent test: XX passed, 0 failed
 ```
 
-- [ ] **Step 20: Commit — dispatcher agent and collaborate command**
+- [x] **Step 20: Commit — dispatcher agent and collaborate command**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git add agents/collaboration-dispatcher.md commands/xgh-collaborate.md && git commit -m "feat(multi-agent): add collaboration-dispatcher agent and /xgh-collaborate command"
@@ -1015,13 +1015,13 @@ cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git add age
 - Remove: `commands/.gitkeep` (replaced by `commands/xgh-collaborate.md`)
 - Remove: `skills/.gitkeep` (replaced by `skills/agent-collaboration/`)
 
-- [ ] **Step 21: Remove .gitkeep files from populated directories**
+- [x] **Step 21: Remove .gitkeep files from populated directories**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git rm agents/.gitkeep commands/.gitkeep skills/.gitkeep
 ```
 
-- [ ] **Step 22: Update tests/test-config.sh — adjust .gitkeep assertions**
+- [x] **Step 22: Update tests/test-config.sh — adjust .gitkeep assertions**
 
 The existing `test-config.sh` asserts `.gitkeep` files in agents, skills, and commands. These directories now have real files, so update the test to check for directory existence instead.
 
@@ -1049,7 +1049,7 @@ for d in skills commands agents; do
 done
 ```
 
-- [ ] **Step 23: Run all tests to verify nothing is broken**
+- [x] **Step 23: Run all tests to verify nothing is broken**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/test-config.sh && bash tests/test-techpack.sh && bash tests/test-multi-agent.sh
@@ -1057,13 +1057,13 @@ cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && bash tests/
 
 Expected: All three test suites pass with 0 failures.
 
-- [ ] **Step 24: Commit — cleanup and test updates**
+- [x] **Step 24: Commit — cleanup and test updates**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && git add -A && git commit -m "chore(multi-agent): remove .gitkeep placeholders, update test-config assertions"
 ```
 
-- [ ] **Step 25: Final verification — run the full test suite one more time**
+- [x] **Step 25: Final verification — run the full test suite one more time**
 
 ```bash
 cd /Users/pedro/Developer/tr-xgh/.claude/worktrees/agent-a569bf69 && for t in tests/test-*.sh; do echo "=== $t ==="; bash "$t"; echo; done

@@ -37,14 +37,14 @@ assert_contains "config/workflows/parallel-impl.yaml" "parallel-impl"
 assert_contains "config/workflows/validation.yaml" "validation"
 assert_contains "config/workflows/security-review.yaml" "security-review"
 
-assert_file_exists "skills/agent-collaboration/agent-collaboration.md"
-assert_contains "skills/agent-collaboration/agent-collaboration.md" "message protocol"
+assert_file_exists "skills/agent-collaboration/instructions.md"
+assert_contains "skills/agent-collaboration/instructions.md" "message protocol"
 
 assert_file_exists "agents/collaboration-dispatcher.md"
 assert_contains "agents/collaboration-dispatcher.md" "dispatch"
 
-assert_file_exists "commands/xgh-collab.md"
-assert_contains "commands/xgh-collab.md" "/xgh-collab"
+assert_file_exists "commands/xgh-collaborate.md"
+assert_contains "commands/xgh-collaborate.md" "xgh-collaborate"
 
 
 echo ""

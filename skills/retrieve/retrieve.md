@@ -56,6 +56,24 @@ For each active project, for each Slack channel in its `slack:` list:
 
 **Rate limiting:** On 429 or timeout, back off (2s → 4s → 8s) up to `retriever.max_retries` times, then skip the channel and note it in the log.
 
+**Thread reply pass** (runs after the main channel scan, for each channel):
+
+After scanning new messages, perform a thread reply pass to catch replies on already-indexed messages:
+
+1. Call `slack_read_channel` again for the same channel with:
+   - `oldest` = cursor minus `retriever.thread_lookback_hours` hours (default: 24) — to look back at recent threads
+   - `latest` = cursor — so only messages older than the cursor (already-indexed ones) are returned
+2. For each message returned that has a `latest_reply` field where `latest_reply > cursor`:
+   - Call `slack_read_thread(channel_id, message_ts)` to fetch the full thread
+   - Filter replies to only those with `ts > cursor` (new replies only)
+   - Process each new reply through the urgency scoring pipeline (Step 4)
+   - Stash as inbox items with `source_type: slack_thread`; include the parent message text as context in the stashed content
+3. Count thread-reply items as additional items stashed in the Step 10 log line
+
+> **Config:** `retriever.thread_lookback_hours` (default: `24`) controls how far back to look for threads with new replies.
+
+**Rate limiting:** Apply the same back-off rules (2s → 4s → 8s, up to `retriever.max_retries`) for this pass as for the main channel scan.
+
 ## Step 3 — Follow links 1-hop
 
 > **Access level guard:** Before following links, check the relevant `providers.<type>.access` level for the target provider (jira, confluence, github, figma). If `read`, only fetch data. If `ask` or `auto`, write actions (e.g., transitioning Jira tickets, posting PR comments) may be performed in later steps.

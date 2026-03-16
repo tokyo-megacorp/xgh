@@ -171,6 +171,8 @@ No build step — this is a shell-based project with no compiled artifacts.
 
 See `docs/plans/` for detailed implementation plans with task checklists.
 
+For the full env var reference, backend/MCP matrix, and cipher post-hook behavior see [`docs/configuration-reference.md`](docs/configuration-reference.md).
+
 > **Note on plans directories:** `docs/plans/` tracks xgh's own development work (these checklists). `.xgh/plans/` is a template directory that xgh creates in user projects for their own work tracking.
 
 ---

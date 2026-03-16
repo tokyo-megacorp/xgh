@@ -390,6 +390,12 @@ for t in tests/test-*.sh; do echo -n "$(basename $t): "; bash "$t" 2>&1 | tail -
 
 ---
 
+## Configuration Reference
+
+All environment variables, the backend/MCP env key matrix, cipher post-hook behavior, and the backend extension pattern are documented in [`docs/configuration-reference.md`](docs/configuration-reference.md).
+
+---
+
 ## Design Document
 
 The full architecture is documented in [`docs/plans/2026-03-13-xgh-design.md`](docs/plans/2026-03-13-xgh-design.md), covering:

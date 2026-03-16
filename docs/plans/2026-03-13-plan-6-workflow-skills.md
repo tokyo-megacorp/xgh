@@ -1,6 +1,6 @@
 # Workflow Skills Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement three MCP-powered workflow skills (`xgh:investigate`, `xgh:implement-design`, `xgh:implement-ticket`) that combine Superpowers methodology with xgh memory and auto-detect available MCP servers.
 
@@ -41,7 +41,7 @@ tests/
 **Files:**
 - Create: `tests/test-workflow-skills.sh`
 
-- [ ] **Step 1: Write test for workflow skill structure validation**
+- [x] **Step 1: Write test for workflow skill structure validation**
 
 ```bash
 # tests/test-workflow-skills.sh
@@ -196,12 +196,12 @@ echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bash tests/test-workflow-skills.sh`
 Expected: FAIL — no skill or command files exist yet
 
-- [ ] **Step 3: Commit test file**
+- [x] **Step 3: Commit test file**
 
 ```bash
 git add tests/test-workflow-skills.sh
@@ -215,13 +215,13 @@ git commit -m "test: add workflow skills validation test harness"
 **Files:**
 - Create: `skills/investigate/investigate.md`
 
-- [ ] **Step 1: Create the investigate skill directory**
+- [x] **Step 1: Create the investigate skill directory**
 
 ```bash
 mkdir -p skills/investigate
 ```
 
-- [ ] **Step 2: Write the investigate skill file**
+- [x] **Step 2: Write the investigate skill file**
 
 ```markdown
 # skills/investigate/investigate.md
@@ -620,12 +620,12 @@ Generate a structured investigation report.
 | Graceful degradation | Works for any team regardless of MCP configuration. |
 ````
 
-- [ ] **Step 3: Run test to verify investigate-related assertions pass**
+- [x] **Step 3: Run test to verify investigate-related assertions pass**
 
 Run: `bash tests/test-workflow-skills.sh 2>&1 | head -30`
 Expected: investigate skill assertions PASS, others still FAIL
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add skills/investigate/
@@ -639,7 +639,7 @@ git commit -m "feat: add xgh:investigate workflow skill — Slack-driven systema
 **Files:**
 - Create: `commands/investigate.md`
 
-- [ ] **Step 1: Write the investigate command file**
+- [x] **Step 1: Write the investigate command file**
 
 ```markdown
 # commands/investigate.md
@@ -697,12 +697,12 @@ Start a systematic investigation of a bug or incident. Reads context from Slack,
 - `xgh:implement-ticket` — after investigation, implement the fix via ticket
 ````
 
-- [ ] **Step 2: Run test to check command assertions**
+- [x] **Step 2: Run test to check command assertions**
 
 Run: `bash tests/test-workflow-skills.sh 2>&1 | grep "commands/investigate"`
 Expected: investigate command assertions PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add commands/investigate.md
@@ -718,13 +718,13 @@ git commit -m "feat: add /xgh investigate command trigger"
 **Files:**
 - Create: `skills/implement-design/implement-design.md`
 
-- [ ] **Step 1: Create the implement-design skill directory**
+- [x] **Step 1: Create the implement-design skill directory**
 
 ```bash
 mkdir -p skills/implement-design
 ```
 
-- [ ] **Step 2: Write the implement-design skill file**
+- [x] **Step 2: Write the implement-design skill file**
 
 Full content of `skills/implement-design/implement-design.md`:
 
@@ -1008,19 +1008,19 @@ Plan structure:
 
 ### Task 1: Create component skeleton + default state test
   Files: src/components/[Name]/[Name].tsx, src/components/[Name]/[Name].test.tsx
-  - [ ] Write failing test for default state rendering
-  - [ ] Verify test fails
-  - [ ] Implement default state
-  - [ ] Verify test passes
-  - [ ] Commit
+  - [x] Write failing test for default state rendering
+  - [x] Verify test fails
+  - [x] Implement default state
+  - [x] Verify test passes
+  - [x] Commit
 
 ### Task 2: Loading state
   Files: src/components/[Name]/[Name].tsx, src/components/[Name]/[Name].test.tsx
-  - [ ] Write failing test for loading state
-  - [ ] Verify test fails
-  - [ ] Implement loading state (skeleton pattern)
-  - [ ] Verify test passes
-  - [ ] Commit
+  - [x] Write failing test for loading state
+  - [x] Verify test fails
+  - [x] Implement loading state (skeleton pattern)
+  - [x] Verify test passes
+  - [x] Commit
 
 ### Task 3: Error state
   ...
@@ -1107,7 +1107,7 @@ YAML frontmatter: `importance: 65`, `maturity: validated`, `tags: [ui, component
 
 ## States Implemented
 - [x] Default, Loading, Error, Empty
-- [ ] Animation transitions (deferred)
+- [x] Animation transitions (deferred)
 
 ## Design Decisions
 - Used skeleton loading per FigJam note (not spinner)
@@ -1139,12 +1139,12 @@ YAML frontmatter: `importance: 65`, `maturity: validated`, `tags: [ui, component
 | Graceful degradation without Figma MCP | Still works — user provides specs manually. Less automated but same methodology. |
 ````
 
-- [ ] **Step 3: Run test to verify implement-design assertions pass**
+- [x] **Step 3: Run test to verify implement-design assertions pass**
 
 Run: `bash tests/test-workflow-skills.sh 2>&1 | grep "implement-design"`
 Expected: implement-design skill assertions PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add skills/implement-design/
@@ -1158,7 +1158,7 @@ git commit -m "feat: add xgh:implement-design workflow skill — Figma-driven UI
 **Files:**
 - Create: `commands/implement-design.md`
 
-- [ ] **Step 1: Write the implement-design command file**
+- [x] **Step 1: Write the implement-design command file**
 
 Full content of `commands/implement-design.md`:
 
@@ -1214,12 +1214,12 @@ Implement a UI component from a Figma design. Extracts ALL available context (de
 - `xgh:implement-ticket` — if the design is linked to a ticket, use implement instead
 ````
 
-- [ ] **Step 2: Run test to check command assertions**
+- [x] **Step 2: Run test to check command assertions**
 
 Run: `bash tests/test-workflow-skills.sh 2>&1 | grep "commands/implement-design"`
 Expected: command assertions PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add commands/implement-design.md
@@ -1235,13 +1235,13 @@ git commit -m "feat: add /xgh implement-design command trigger"
 **Files:**
 - Create: `skills/implement-ticket/implement-ticket.md`
 
-- [ ] **Step 1: Create the implement-ticket skill directory**
+- [x] **Step 1: Create the implement-ticket skill directory**
 
 ```bash
 mkdir -p skills/implement-ticket
 ```
 
-- [ ] **Step 2: Write the implement-ticket skill file**
+- [x] **Step 2: Write the implement-ticket skill file**
 
 Full content of `skills/implement-ticket/implement-ticket.md`:
 
@@ -1655,50 +1655,50 @@ Generate a detailed, executable plan following Superpowers writing-plans methodo
 ### Task 1: Token-bucket algorithm + tests
   Files: src/lib/token-bucket.ts, src/lib/token-bucket.test.ts
 
-  - [ ] Write failing test for token-bucket consume()
-  - [ ] Verify fail: `npm test -- token-bucket`
-  - [ ] Implement TokenBucket class with consume() and refill()
-  - [ ] Verify pass: `npm test -- token-bucket`
-  - [ ] Commit: "feat(rate-limit): add token-bucket algorithm"
+  - [x] Write failing test for token-bucket consume()
+  - [x] Verify fail: `npm test -- token-bucket`
+  - [x] Implement TokenBucket class with consume() and refill()
+  - [x] Verify pass: `npm test -- token-bucket`
+  - [x] Commit: "feat(rate-limit): add token-bucket algorithm"
 
 ### Task 2: Rate limit config
   Files: src/config/rate-limits.yaml, src/config/rate-limits.ts
 
-  - [ ] Write failing test for config loading
-  - [ ] Verify fail: `npm test -- rate-limits`
-  - [ ] Create YAML config and TypeScript loader
-  - [ ] Verify pass: `npm test -- rate-limits`
-  - [ ] Commit: "feat(rate-limit): add rate limit configuration"
+  - [x] Write failing test for config loading
+  - [x] Verify fail: `npm test -- rate-limits`
+  - [x] Create YAML config and TypeScript loader
+  - [x] Verify pass: `npm test -- rate-limits`
+  - [x] Commit: "feat(rate-limit): add rate limit configuration"
 
 ### Task 3: Rate limit middleware + unit tests
   Files: src/middleware/rate-limit.ts, src/middleware/rate-limit.test.ts
 
-  - [ ] Write failing test for middleware (returns headers)
-  - [ ] Verify fail: `npm test -- rate-limit.test`
-  - [ ] Implement middleware with Redis client
-  - [ ] Write failing test for 429 response
-  - [ ] Verify fail
-  - [ ] Implement 429 logic
-  - [ ] Write failing test for admin override
-  - [ ] Verify fail
-  - [ ] Implement admin override
-  - [ ] Verify all pass: `npm test -- rate-limit`
-  - [ ] Commit: "feat(rate-limit): add rate limit middleware"
+  - [x] Write failing test for middleware (returns headers)
+  - [x] Verify fail: `npm test -- rate-limit.test`
+  - [x] Implement middleware with Redis client
+  - [x] Write failing test for 429 response
+  - [x] Verify fail
+  - [x] Implement 429 logic
+  - [x] Write failing test for admin override
+  - [x] Verify fail
+  - [x] Implement admin override
+  - [x] Verify all pass: `npm test -- rate-limit`
+  - [x] Commit: "feat(rate-limit): add rate limit middleware"
 
 ### Task 4: Integration tests
   Files: tests/integration/rate-limit.test.ts
 
-  - [ ] Write integration test (supertest, real Redis or mock)
-  - [ ] Verify pass: `npm test -- integration/rate-limit`
-  - [ ] Commit: "test(rate-limit): add integration tests"
+  - [x] Write integration test (supertest, real Redis or mock)
+  - [x] Verify pass: `npm test -- integration/rate-limit`
+  - [x] Commit: "test(rate-limit): add integration tests"
 
 ### Task 5: Wire up + documentation
   Files: src/app.ts, docs/api/rate-limiting.md
 
-  - [ ] Register middleware in app.ts
-  - [ ] Update API documentation
-  - [ ] Run full test suite: `npm test`
-  - [ ] Commit: "feat(rate-limit): register middleware and update docs"
+  - [x] Register middleware in app.ts
+  - [x] Update API documentation
+  - [x] Run full test suite: `npm test`
+  - [x] Commit: "feat(rate-limit): register middleware and update docs"
 ```
 
 Save plan to: `docs/plans/YYYY-MM-DD-[ticket-id]-plan.md`
@@ -1794,12 +1794,12 @@ Generate a PR with full context for reviewers:
 | Maximum 5 interview questions | Respects user time. Forces the skill to make reasonable defaults. |
 ````
 
-- [ ] **Step 3: Run test to verify implement-ticket assertions pass**
+- [x] **Step 3: Run test to verify implement-ticket assertions pass**
 
 Run: `bash tests/test-workflow-skills.sh 2>&1 | grep "implement-ticket"`
 Expected: implement-ticket skill assertions PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add skills/implement-ticket/
@@ -1813,7 +1813,7 @@ git commit -m "feat: add xgh:implement-ticket workflow skill — full-context ti
 **Files:**
 - Create: `commands/implement.md`
 
-- [ ] **Step 1: Write the implement command file**
+- [x] **Step 1: Write the implement command file**
 
 Full content of `commands/implement.md`:
 
@@ -1873,12 +1873,12 @@ Implement a ticket end-to-end. Gathers context from every available source (tick
 - `xgh:investigate` — delegates to this skill when ticket references a bug needing root cause
 ````
 
-- [ ] **Step 2: Run test to check command assertions**
+- [x] **Step 2: Run test to check command assertions**
 
 Run: `bash tests/test-workflow-skills.sh 2>&1 | grep "commands/implement"`
 Expected: command assertions PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add commands/implement.md
@@ -1891,7 +1891,7 @@ git commit -m "feat: add /xgh implement command trigger"
 
 ### Task 8: Run full test suite and validate all files
 
-- [ ] **Step 1: Run the complete workflow skills test**
+- [x] **Step 1: Run the complete workflow skills test**
 
 Run: `bash tests/test-workflow-skills.sh`
 Expected output:
@@ -1913,7 +1913,7 @@ Expected output:
 Results: NN passed, 0 failed
 ```
 
-- [ ] **Step 2: Verify all files are well-formed markdown**
+- [x] **Step 2: Verify all files are well-formed markdown**
 
 ```bash
 # Check all skill files have YAML frontmatter
@@ -1929,7 +1929,7 @@ done
 echo "All files validated"
 ```
 
-- [ ] **Step 3: Verify directory structure matches spec**
+- [x] **Step 3: Verify directory structure matches spec**
 
 ```bash
 # Expected structure
@@ -1943,7 +1943,7 @@ ls -la commands/implement.md
 
 Expected: All 6 files exist
 
-- [ ] **Step 4: Run any existing project tests to check for regressions**
+- [x] **Step 4: Run any existing project tests to check for regressions**
 
 ```bash
 # Run existing tests if they exist
@@ -1954,7 +1954,7 @@ done
 
 Expected: All existing tests still pass
 
-- [ ] **Step 5: Final commit with all workflow skill files**
+- [x] **Step 5: Final commit with all workflow skill files**
 
 ```bash
 git add skills/ commands/ tests/test-workflow-skills.sh

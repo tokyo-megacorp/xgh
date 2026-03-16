@@ -45,6 +45,10 @@ Implement a UI component from a Figma design. Extracts ALL available context (de
 /xgh-design
 ```
 
+## Aliases
+
+This command is also accessible as `/xgh implement-design`.
+
 ## Related Skills
 
 - `xgh:design` — the full workflow skill this command triggers

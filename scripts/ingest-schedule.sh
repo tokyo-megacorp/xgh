@@ -22,6 +22,9 @@ VLLM_BIN=$(command -v vllm-mlx 2>/dev/null || echo "/usr/local/bin/vllm-mlx")
 XGH_LLM_MODEL="${XGH_LLM_MODEL:-}"
 XGH_EMBED_MODEL="${XGH_EMBED_MODEL:-}"
 XGH_MODEL_PORT="${XGH_MODEL_PORT:-11434}"
+XGH_MODEL_HOST="${XGH_MODEL_HOST:-127.0.0.1}"
+XGH_BACKEND="${XGH_BACKEND:-}"
+XGH_REMOTE_URL="${XGH_REMOTE_URL:-}"
 if [ -f "$MODELS_ENV" ]; then
   # shellcheck disable=SC1090
   source "$MODELS_ENV"
@@ -38,6 +41,7 @@ _render_plist() {
   local safe_llm_model="${XGH_LLM_MODEL//&/\\&}"
   local safe_embed_model="${XGH_EMBED_MODEL//&/\\&}"
   local safe_model_port="${XGH_MODEL_PORT//&/\\&}"
+  local safe_model_host="${XGH_MODEL_HOST//&/\\&}"
   sed -e "s|XGH_LOG_DIR|${safe_log_dir}|g" \
       -e "s|XGH_USER_HOME|${safe_home}|g" \
       -e "s|XGH_HOME|${safe_xgh_home}|g" \
@@ -46,6 +50,7 @@ _render_plist() {
       -e "s|XGH_LLM_MODEL|${safe_llm_model}|g" \
       -e "s|XGH_EMBED_MODEL|${safe_embed_model}|g" \
       -e "s|XGH_MODEL_PORT|${safe_model_port}|g" \
+      -e "s|XGH_MODEL_HOST_PLACEHOLDER|${safe_model_host}|g" \
       "$src" > "$dst"
 }
 
@@ -57,8 +62,10 @@ install_macos() {
   launchctl unload "${PLIST_DIR}/com.xgh.analyzer.plist"  2>/dev/null || true
   launchctl load   "${PLIST_DIR}/com.xgh.retriever.plist"
   launchctl load   "${PLIST_DIR}/com.xgh.analyzer.plist"
-  # Install models daemon if plist template exists and models are configured
-  if [ -f "$MODELS_PLIST" ] && [ -n "$XGH_LLM_MODEL" ]; then
+  # Install models daemon if plist template exists, models are configured, and not using remote backend
+  if [ "$XGH_BACKEND" = "remote" ]; then
+    echo "✓ launchd agents loaded (retriever: 5min, analyzer: 30min) [remote backend — no local model service]"
+  elif [ -f "$MODELS_PLIST" ] && [ -n "$XGH_LLM_MODEL" ]; then
     _render_plist "$MODELS_PLIST" "${PLIST_DIR}/com.xgh.models.plist"
     launchctl unload "${PLIST_DIR}/com.xgh.models.plist" 2>/dev/null || true
     launchctl load   "${PLIST_DIR}/com.xgh.models.plist"
@@ -81,14 +88,19 @@ install_linux() {
   rm -f "$tmp"
   echo "✓ cron entries installed"
 
-  # Ensure Ollama system service is running (installed by curl | sh)
-  if systemctl is-active ollama.service >/dev/null 2>&1; then
-    echo "✓ ollama.service already running"
-  elif systemctl is-enabled ollama.service >/dev/null 2>&1; then
-    sudo systemctl start ollama.service 2>/dev/null \
-      || echo "⚠ Could not start ollama.service — run: sudo systemctl start ollama"
+  # Skip local model service setup for remote backend
+  if [ "$XGH_BACKEND" = "remote" ]; then
+    echo "  (remote backend — skipping local model service setup)"
   else
-    echo "⚠ ollama.service not found — run: curl -fsSL https://ollama.com/install.sh | sh"
+    # Ensure Ollama system service is running (installed by curl | sh)
+    if systemctl is-active ollama.service >/dev/null 2>&1; then
+      echo "✓ ollama.service already running"
+    elif systemctl is-enabled ollama.service >/dev/null 2>&1; then
+      sudo systemctl start ollama.service 2>/dev/null \
+        || echo "⚠ Could not start ollama.service — run: sudo systemctl start ollama"
+    else
+      echo "⚠ ollama.service not found — run: curl -fsSL https://ollama.com/install.sh | sh"
+    fi
   fi
 
   # Write and enable xgh-qdrant systemd user service
@@ -144,7 +156,15 @@ case "${1:-help}" in
   uninstall)
     if [[ "$(uname)" == "Darwin" ]]; then uninstall_macos; else uninstall_linux; fi ;;
   status)
-    if [[ "$(uname)" == "Darwin" ]]; then
+    if [ "$XGH_BACKEND" = "remote" ]; then
+      echo "backend: remote"
+      echo "remote URL: ${XGH_REMOTE_URL:-<not set>}"
+      if [ -n "$XGH_REMOTE_URL" ] && curl -sf --max-time 5 "${XGH_REMOTE_URL}/v1/models" >/dev/null 2>&1; then
+        echo "connectivity: reachable ✓"
+      else
+        echo "connectivity: unreachable ✗"
+      fi
+    elif [[ "$(uname)" == "Darwin" ]]; then
       echo "launchd:"; launchctl list 2>/dev/null | grep "com.xgh" || echo "  (not loaded)"
     else
       echo "cron:"; crontab -l 2>/dev/null | grep "xgh" || echo "  (not installed)"

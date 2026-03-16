@@ -104,7 +104,7 @@ connections, it must bind to `0.0.0.0` or a specific interface.
 
 ### Step 1 — Backend detection: allow `remote` override
 
-- [ ] In install.sh platform detection block, allow explicit override:
+- [x] In install.sh platform detection block, allow explicit override:
   ```bash
   if [ -n "$XGH_BACKEND" ] && [ "$XGH_BACKEND" = "remote" ]; then
     : # keep as remote — user explicitly set this
@@ -114,7 +114,7 @@ connections, it must bind to `0.0.0.0` or a specific interface.
     XGH_BACKEND="${XGH_BACKEND:-ollama}"
   fi
   ```
-- [ ] In interactive install (non-dry-run, no XGH_BACKEND set), add a backend picker:
+- [x] In interactive install (non-dry-run, no XGH_BACKEND set), add a backend picker:
   ```
   Which inference backend?
 
@@ -126,7 +126,7 @@ connections, it must bind to `0.0.0.0` or a specific interface.
 
 ### Step 2 — Remote URL prompt and validation
 
-- [ ] After backend picker, if `XGH_BACKEND=remote`:
+- [x] After backend picker, if `XGH_BACKEND=remote`:
   ```bash
   if [ -z "$XGH_REMOTE_URL" ]; then
     read -r -p "  🐴 Remote server URL [http://192.168.1.x:11434]: " XGH_REMOTE_URL
@@ -138,7 +138,7 @@ connections, it must bind to `0.0.0.0` or a specific interface.
     fi
   fi
   ```
-- [ ] Test connectivity before proceeding:
+- [x] Test connectivity before proceeding:
   ```bash
   if curl -sf --max-time 5 "${XGH_REMOTE_URL}/v1/models" >/dev/null 2>&1; then
     info "Remote server reachable ✓"
@@ -149,7 +149,7 @@ connections, it must bind to `0.0.0.0` or a specific interface.
 
 ### Step 3 — Model picker: query remote server
 
-- [ ] `_model_available` for remote backend:
+- [x] `_model_available` for remote backend:
   ```bash
   _model_available() {
     curl -sf "${XGH_REMOTE_URL}/v1/models" 2>/dev/null \
@@ -161,7 +161,7 @@ print('yes' if '${1}' in ids else 'no')
 " 2>/dev/null | grep -q "^yes"
   }
   ```
-- [ ] Auto-populate model lists from remote `/v1/models` if reachable:
+- [x] Auto-populate model lists from remote `/v1/models` if reachable:
   ```bash
   if curl -sf --max-time 5 "${XGH_REMOTE_URL}/v1/models" >/dev/null 2>&1; then
     _REMOTE_MODELS=$(curl -sf "${XGH_REMOTE_URL}/v1/models" \
@@ -177,16 +177,16 @@ print('yes' if '${1}' in ids else 'no')
 
 ### Step 4 — No model download for remote
 
-- [ ] Skip the download/pull lane entirely for `remote` backend.
+- [x] Skip the download/pull lane entirely for `remote` backend.
 
 ### Step 5 — models.env: store remote URL
 
-- [ ] Add `XGH_REMOTE_URL="${XGH_REMOTE_URL}"` to the generated `models.env`.
+- [x] Add `XGH_REMOTE_URL="${XGH_REMOTE_URL}"` to the generated `models.env`.
 
 ### Step 6 — cipher.yml + MCP env vars: remote uses openai type with remote baseURL
 
-- [ ] Add `remote` branch in the cipher.yml generation and sync blocks.
-- [ ] Branch `_ENV_ARGS` in the `claude mcp add -s user` call:
+- [x] Add `remote` branch in the cipher.yml generation and sync blocks.
+- [x] Branch `_ENV_ARGS` in the `claude mcp add -s user` call:
 
   **remote** (provider=openai, remote URL with /v1 suffix):
   ```
@@ -198,7 +198,7 @@ print('yes' if '${1}' in ids else 'no')
   ```
   No `OLLAMA_BASE_URL`. All localhost references replaced with `${XGH_REMOTE_URL}`.
 
-- [ ] Same branching in the fallback `_CIPHER_ENV` JSON heredoc.
+- [x] Same branching in the fallback `_CIPHER_ENV` JSON heredoc.
 
 **Full env key matrix across all backends:**
 
@@ -216,16 +216,16 @@ print('yes' if '${1}' in ids else 'no')
 
 ### Step 7 — ingest-schedule.sh: no model service for remote
 
-- [ ] In `install_linux()` and `install_macos()`, skip model server setup when `XGH_BACKEND=remote`.
-- [ ] `status` subcommand: for remote backend, show connectivity status instead of service status.
+- [x] In `install_linux()` and `install_macos()`, skip model server setup when `XGH_BACKEND=remote`.
+- [x] `status` subcommand: for remote backend, show connectivity status instead of service status.
 
 ### Step 8 — techpack.yaml: add remote component
 
-- [ ] Add a `remote-inference` component entry (no install command, just a connectivity check).
+- [x] Add a `remote-inference` component entry (no install command, just a connectivity check).
 
 ### Step 9 — doctor skill: add remote server check
 
-- [ ] Update `skills/doctor/doctor.md`: when `XGH_BACKEND=remote`, Check 2 (Connectivity)
+- [x] Update `skills/doctor/doctor.md`: when `XGH_BACKEND=remote`, Check 2 (Connectivity)
   includes a remote server reachability check:
   ```
   Remote inference server
@@ -237,11 +237,11 @@ print('yes' if '${1}' in ids else 'no')
 
 ### Step 10 — Server side: XGH_SERVE_NETWORK flag
 
-- [ ] In `com.xgh.models.plist` template: change `127.0.0.1` to `XGH_MODEL_HOST` placeholder.
-- [ ] In `ingest-schedule.sh` `_render_plist()`: add `XGH_MODEL_HOST` substitution.
-- [ ] In `install.sh`, add to models.env render: default `XGH_MODEL_HOST=127.0.0.1`, but
+- [x] In `com.xgh.models.plist` template: change `127.0.0.1` to `XGH_MODEL_HOST` placeholder.
+- [x] In `ingest-schedule.sh` `_render_plist()`: add `XGH_MODEL_HOST` substitution.
+- [x] In `install.sh`, add to models.env render: default `XGH_MODEL_HOST=127.0.0.1`, but
   if `XGH_SERVE_NETWORK=1`, set to `0.0.0.0`.
-- [ ] Post-install message when serving on network:
+- [x] Post-install message when serving on network:
   ```
   ✓ vllm-mlx bound to 0.0.0.0:11434
   Other devices can connect via: http://<your-ip>:11434

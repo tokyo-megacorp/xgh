@@ -26,6 +26,15 @@ components:
       - shellScript: "systemctl is-active ollama.service >/dev/null 2>&1"
         label: "ollama.service is running"
 
+  - id: remote-inference
+    type: connectivity
+    description: "External inference server (OpenAI-compatible API)"
+    platform: any
+    when: "XGH_BACKEND=remote"
+    doctorChecks:
+      - shellScript: "curl -sf --max-time 5 \"${XGH_REMOTE_URL}/v1/models\" >/dev/null 2>&1"
+        label: "Remote inference server is reachable"
+
   - id: qdrant
     type: brew
     package: qdrant

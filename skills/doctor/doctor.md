@@ -27,6 +27,25 @@ For each active project:
 - Each Slack channel: `slack_search_channels` to verify accessible
 - Each Jira key: `getJiraIssue` with a simple query to verify it resolves
 
+**Model server checks:** Read `XGH_BACKEND` from `~/.xgh/models.env` (source the file via Bash).
+- If `XGH_BACKEND=remote`: skip local model server checks (no vllm-mlx / ollama service to verify);
+  instead run the remote server reachability check below.
+- If `XGH_BACKEND=vllm-mlx` or `XGH_BACKEND=ollama` (or unset): run the local model server check
+  (`curl -sf http://localhost:11434/v1/models`) as normal.
+
+**Remote inference server check** (only when `XGH_BACKEND=remote`):
+Read `XGH_REMOTE_URL` from `~/.xgh/models.env`, then:
+```bash
+curl -sf --max-time 5 "${XGH_REMOTE_URL}/v1/models"
+```
+- If reachable: parse the JSON response and count models (`jq '.data | length'` or Python).
+  Report: `✓ ${XGH_REMOTE_URL} — reachable, N models available`
+- If unreachable (non-zero exit / timeout): report:
+  ```
+  ✗ ${XGH_REMOTE_URL} — unreachable (timeout)
+    Fix: ensure the server is running and port is accessible from this machine
+  ```
+
 Qdrant: `curl -sf http://localhost:6333/healthz` via Bash — show URL from `cipher.yml`
 
 If Qdrant fails, run deeper diagnosis:
@@ -97,6 +116,11 @@ Connectivity
   ✓ Jira: PTECH-31204 exists (23 open issues)
   ✓ Qdrant: localhost:6333 responding
   ✓ Cipher MCP: connected (tool available)
+  # Remote inference (when XGH_BACKEND=remote):
+  ✓ Remote inference server: http://macmini.local:11434 — reachable, 2 models available
+  # OR if unreachable:
+  ✗ Remote inference server: http://192.168.1.100:11434 — unreachable (timeout)
+    Fix: ensure the server is running and port 11434 is accessible from this machine
   # OR if issues:
   ✗ Qdrant: not responding — WAL lock detected
     Fix: pkill -f qdrant && rm -f ~/.qdrant/storage/storage/collections/*/0/wal/open-* && launchctl load ~/Library/LaunchAgents/com.qdrant.server.plist

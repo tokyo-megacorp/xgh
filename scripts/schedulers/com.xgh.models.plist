@@ -15,7 +15,7 @@
     <string>--port</string>
     <string>XGH_MODEL_PORT</string>
     <string>--host</string>
-    <string>127.0.0.1</string>
+    <string>XGH_MODEL_HOST_PLACEHOLDER</string>
   </array>
   <key>KeepAlive</key>
   <true/>

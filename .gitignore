@@ -8,3 +8,4 @@ data/cipher-sessions.db*
 .claude/settings.local.json
 .worktrees/
 .mcp.json
+.xgh/local/

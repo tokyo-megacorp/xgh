@@ -1,6 +1,6 @@
 # Context Tree Engine Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build the Context Tree Engine — CRUD operations, scoring/maturity system, BM25 search, manifest management, archival, and sync dispatch for `.xgh/context-tree/` knowledge files.
 
@@ -44,7 +44,7 @@ tests/
 - Create: `scripts/ct-frontmatter.sh`
 - Create: `tests/test-ct-frontmatter.sh`
 
-- [ ] **Step 1: Write failing test for frontmatter functions**
+- [x] **Step 1: Write failing test for frontmatter functions**
 
 Create `tests/test-ct-frontmatter.sh`:
 
@@ -134,7 +134,7 @@ cd /path/to/xgh && bash tests/test-ct-frontmatter.sh
 # Expected: error — ct-frontmatter.sh not found
 ```
 
-- [ ] **Step 2: Implement frontmatter helpers**
+- [x] **Step 2: Implement frontmatter helpers**
 
 Create `scripts/ct-frontmatter.sh`:
 
@@ -286,7 +286,7 @@ cd /path/to/xgh && bash tests/test-ct-frontmatter.sh
 # Expected: all pass
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add scripts/ct-frontmatter.sh tests/test-ct-frontmatter.sh
@@ -301,7 +301,7 @@ git commit -m "Add frontmatter parser/writer for context tree markdown files"
 - Create: `scripts/context-tree.sh`
 - Create: `tests/test-ct-crud.sh`
 
-- [ ] **Step 1: Write failing test for create + read**
+- [x] **Step 1: Write failing test for create + read**
 
 Create `tests/test-ct-crud.sh`:
 
@@ -459,7 +459,7 @@ cd /path/to/xgh && bash tests/test-ct-crud.sh
 # Expected: error — context-tree.sh not found
 ```
 
-- [ ] **Step 2: Implement context-tree.sh with create, read, list, update, delete**
+- [x] **Step 2: Implement context-tree.sh with create, read, list, update, delete**
 
 Create `scripts/context-tree.sh`:
 
@@ -803,13 +803,13 @@ cd /path/to/xgh && bash tests/test-ct-crud.sh
 # Expected: all pass
 ```
 
-- [ ] **Step 3: Run test and verify pass**
+- [x] **Step 3: Run test and verify pass**
 
 ```bash
 bash tests/test-ct-crud.sh
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/context-tree.sh tests/test-ct-crud.sh
@@ -826,7 +826,7 @@ git commit -m "Add context tree CRUD operations (create/read/update/delete/list)
 - Create: `scripts/ct-scoring.sh`
 - Create: `tests/test-ct-scoring.sh`
 
-- [ ] **Step 1: Write failing test for scoring**
+- [x] **Step 1: Write failing test for scoring**
 
 Create `tests/test-ct-scoring.sh`:
 
@@ -981,7 +981,7 @@ cd /path/to/xgh && bash tests/test-ct-scoring.sh
 # Expected: error — ct-scoring.sh not found or functions missing
 ```
 
-- [ ] **Step 2: Implement scoring engine**
+- [x] **Step 2: Implement scoring engine**
 
 Create `scripts/ct-scoring.sh`:
 
@@ -1126,13 +1126,13 @@ cd /path/to/xgh && bash tests/test-ct-scoring.sh
 # Expected: all pass
 ```
 
-- [ ] **Step 3: Run test and verify pass**
+- [x] **Step 3: Run test and verify pass**
 
 ```bash
 bash tests/test-ct-scoring.sh
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/ct-scoring.sh tests/test-ct-scoring.sh
@@ -1150,7 +1150,7 @@ git commit -m "Add scoring engine with recency decay, maturity promotion/demotio
 - Create: `scripts/ct-search.sh`
 - Create: `tests/test-ct-search.sh`
 
-- [ ] **Step 1: Write failing test for BM25 search**
+- [x] **Step 1: Write failing test for BM25 search**
 
 Create `tests/test-ct-search.sh`:
 
@@ -1251,7 +1251,7 @@ cd /path/to/xgh && bash tests/test-ct-search.sh
 # Expected: error — ct-search.sh / bm25.py not found
 ```
 
-- [ ] **Step 2: Implement BM25 Python module**
+- [x] **Step 2: Implement BM25 Python module**
 
 Create `scripts/bm25.py`:
 
@@ -1476,7 +1476,7 @@ if __name__ == '__main__':
     print(json.dumps(results, indent=2))
 ```
 
-- [ ] **Step 3: Implement search shell wrapper**
+- [x] **Step 3: Implement search shell wrapper**
 
 Create `scripts/ct-search.sh`:
 
@@ -1594,13 +1594,13 @@ cd /path/to/xgh && bash tests/test-ct-search.sh
 # Expected: all pass
 ```
 
-- [ ] **Step 4: Run test and verify pass**
+- [x] **Step 4: Run test and verify pass**
 
 ```bash
 bash tests/test-ct-search.sh
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/bm25.py scripts/ct-search.sh tests/test-ct-search.sh
@@ -1617,7 +1617,7 @@ git commit -m "Add BM25 search engine with combined scoring and Cipher merge sup
 - Create: `scripts/ct-manifest.sh`
 - Create: `tests/test-ct-manifest.sh`
 
-- [ ] **Step 1: Write failing test for manifest operations**
+- [x] **Step 1: Write failing test for manifest operations**
 
 Create `tests/test-ct-manifest.sh`:
 
@@ -1739,7 +1739,7 @@ cd /path/to/xgh && bash tests/test-ct-manifest.sh
 # Expected: error — ct-manifest.sh not found
 ```
 
-- [ ] **Step 2: Implement manifest manager**
+- [x] **Step 2: Implement manifest manager**
 
 Create `scripts/ct-manifest.sh`:
 
@@ -2004,13 +2004,13 @@ cd /path/to/xgh && bash tests/test-ct-manifest.sh
 # Expected: all pass
 ```
 
-- [ ] **Step 3: Run test and verify pass**
+- [x] **Step 3: Run test and verify pass**
 
 ```bash
 bash tests/test-ct-manifest.sh
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/ct-manifest.sh tests/test-ct-manifest.sh
@@ -2027,7 +2027,7 @@ git commit -m "Add manifest manager with rebuild, add/remove entries, and index 
 - Create: `scripts/ct-archive.sh`
 - Create: `tests/test-ct-archive.sh`
 
-- [ ] **Step 1: Write failing test for archival**
+- [x] **Step 1: Write failing test for archival**
 
 Create `tests/test-ct-archive.sh`:
 
@@ -2170,7 +2170,7 @@ cd /path/to/xgh && bash tests/test-ct-archive.sh
 # Expected: error — ct-archive.sh not found
 ```
 
-- [ ] **Step 2: Implement archival system**
+- [x] **Step 2: Implement archival system**
 
 Create `scripts/ct-archive.sh`:
 
@@ -2337,13 +2337,13 @@ cd /path/to/xgh && bash tests/test-ct-archive.sh
 # Expected: all pass
 ```
 
-- [ ] **Step 3: Run test and verify pass**
+- [x] **Step 3: Run test and verify pass**
 
 ```bash
 bash tests/test-ct-archive.sh
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/ct-archive.sh tests/test-ct-archive.sh
@@ -2360,7 +2360,7 @@ git commit -m "Add archival system for low-importance draft files with stub pres
 - Create: `scripts/ct-sync.sh`
 - Create: `tests/test-ct-sync.sh`
 
-- [ ] **Step 1: Write failing test for sync operations**
+- [x] **Step 1: Write failing test for sync operations**
 
 Create `tests/test-ct-sync.sh`:
 
@@ -2476,7 +2476,7 @@ cd /path/to/xgh && bash tests/test-ct-sync.sh
 # Expected: error — ct-sync.sh not found or cmd_sync missing
 ```
 
-- [ ] **Step 2: Implement sync dispatcher**
+- [x] **Step 2: Implement sync dispatcher**
 
 Create `scripts/ct-sync.sh`:
 
@@ -2639,13 +2639,13 @@ cd /path/to/xgh && bash tests/test-ct-sync.sh
 # Expected: all pass
 ```
 
-- [ ] **Step 3: Run test and verify pass**
+- [x] **Step 3: Run test and verify pass**
 
 ```bash
 bash tests/test-ct-sync.sh
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/ct-sync.sh tests/test-ct-sync.sh
@@ -2662,7 +2662,7 @@ git commit -m "Add sync dispatcher for curate/query/score/archive orchestration"
 - Create: `tests/test-ct-integration.sh`
 - Modify: all scripts (ensure executable bit)
 
-- [ ] **Step 1: Write integration test that exercises the full workflow**
+- [x] **Step 1: Write integration test that exercises the full workflow**
 
 Create `tests/test-ct-integration.sh`:
 
@@ -2856,7 +2856,7 @@ echo "=== Integration test: $PASS passed, $FAIL failed ==="
 [ "$FAIL" -eq 0 ] || exit 1
 ```
 
-- [ ] **Step 2: Make all scripts executable**
+- [x] **Step 2: Make all scripts executable**
 
 ```bash
 chmod +x scripts/context-tree.sh scripts/ct-frontmatter.sh scripts/ct-scoring.sh \
@@ -2867,14 +2867,14 @@ chmod +x tests/test-ct-crud.sh tests/test-ct-frontmatter.sh tests/test-ct-scorin
   tests/test-ct-sync.sh tests/test-ct-integration.sh
 ```
 
-- [ ] **Step 3: Run integration test**
+- [x] **Step 3: Run integration test**
 
 ```bash
 cd /path/to/xgh && bash tests/test-ct-integration.sh
 # Expected: all pass
 ```
 
-- [ ] **Step 4: Run all context tree tests to confirm nothing is broken**
+- [x] **Step 4: Run all context tree tests to confirm nothing is broken**
 
 ```bash
 cd /path/to/xgh
@@ -2886,7 +2886,7 @@ done
 echo "All context tree tests passed."
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/ tests/test-ct-integration.sh

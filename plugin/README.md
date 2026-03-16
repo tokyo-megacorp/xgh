@@ -14,7 +14,7 @@ XGH_LOCAL_PACK=. bash install.sh
 
 ### Lite install via Claude plugin
 
-Install the plugin without the full toolchain:
+Lite install (assumes infra already running — once published to plugin registry):
 
 ```
 /plugin install github:ipedro/xgh

@@ -914,8 +914,9 @@ chmod +x "${HOOKS_DIR}/cipher-pre-hook.sh"
 cat > "${HOOKS_DIR}/cipher-post-hook.sh" <<'POSTHOOKEOF'
 #!/bin/bash
 # PostToolUse hook for cipher memory tools.
-# Detects when cipher's extraction returned 0 results and
-# instructs Claude to retry via direct Qdrant storage.
+# Detects two failure modes and instructs Claude on recovery:
+#   1. extracted:0  — cipher's LLM filtered the content → retry via qdrant-store.js
+#   2. dimension mismatch — embedding model dims don't match Qdrant collection → diagnose + fix
 
 command -v jq >/dev/null 2>&1 || exit 0
 command -v python3 >/dev/null 2>&1 || exit 0
@@ -933,39 +934,135 @@ esac
 
 result=$(echo "$input" | jq -r '.tool_result // empty' 2>/dev/null)
 
-failed=$(echo "$result" | python3 -c "
-import sys, json
-try:
-    raw = sys.stdin.read().strip()
-    # Handle double-encoded JSON
+diagnosis=$(echo "$result" | python3 -c "
+import sys, json, re
+
+def decode(raw):
+    raw = raw.strip()
     try:
-        data = json.loads(json.loads(raw))
+        return json.loads(json.loads(raw))
     except (json.JSONDecodeError, TypeError):
-        data = json.loads(raw)
+        try:
+            return json.loads(raw)
+        except Exception:
+            return {'_raw': raw}
 
-    ext = data.get('extraction', {})
-    extracted = ext.get('extracted', -1)
-    skipped = ext.get('skipped', 0)
+raw = sys.stdin.read()
+data = decode(raw)
+raw_str = str(data)
 
-    # Also check workspace-style results
-    if extracted == -1:
-        workspace = data.get('workspace', None)
-        if isinstance(workspace, list) and len(workspace) == 0:
-            extracted = 0
-            skipped = max(skipped, 1)
+# --- Check 1: dimension mismatch ---
+dim_pattern = re.search(r'[Vv]ector dimension[^;]*expected\s*(?:dim:?\s*)?(\d+)[^;]*got\s*(\d+)', raw_str)
+if not dim_pattern:
+    dim_pattern = re.search(r'expected\s*dim[:\s]+(\d+)[,\s]+got\s*(\d+)', raw_str)
+if dim_pattern:
+    expected, got = dim_pattern.group(1), dim_pattern.group(2)
+    print(f'DIM_MISMATCH:{expected}:{got}')
+    sys.exit(0)
 
-    if extracted == 0 and skipped > 0:
-        print(f'FAILED:extracted=0,skipped={skipped}')
-    else:
-        print('OK')
-except:
-    print('OK')
+if 'dimension' in raw_str.lower() and ('error' in raw_str.lower() or 'wrong' in raw_str.lower()):
+    print('DIM_MISMATCH:unknown:unknown')
+    sys.exit(0)
+
+# --- Check 2: extracted:0 ---
+ext = data.get('extraction', {})
+extracted = ext.get('extracted', -1)
+skipped = ext.get('skipped', 0)
+
+if extracted == -1:
+    workspace = data.get('workspace', None)
+    if isinstance(workspace, list) and len(workspace) == 0:
+        extracted = 0
+        skipped = max(skipped, 1)
+
+if extracted == 0 and skipped > 0:
+    print(f'EXTRACTED_ZERO:{skipped}')
+    sys.exit(0)
+
+print('OK')
 " 2>/dev/null)
 
-if [[ "$failed" == FAILED* ]]; then
-    stats="${failed#FAILED:}"
+# ── Dimension mismatch ───────────────────────────────────────────────────────
+if [[ "$diagnosis" == DIM_MISMATCH:* ]]; then
+    IFS=':' read -r _ expected_dim got_dim <<< "$diagnosis"
+
+    collection_dim=$(python3 -c "
+import urllib.request, json
+try:
+    r = urllib.request.urlopen('http://localhost:6333/collections/knowledge_memory', timeout=3)
+    d = json.load(r)
+    print(d['result']['config']['params']['vectors']['size'])
+except Exception:
+    print('unknown')
+" 2>/dev/null)
+
+    model_dim=$(python3 -c "
+import urllib.request, json, os
+try:
+    import yaml
+    cfg = yaml.safe_load(open(os.path.expanduser('~/.cipher/cipher.yml')))
+    model = cfg.get('embedding', {}).get('model', 'unknown')
+    base = cfg.get('embedding', {}).get('baseURL', 'http://localhost:11434/v1')
+    data = json.dumps({'input': 'test', 'model': model, 'encoding_format': 'float'}).encode()
+    req = urllib.request.Request(base + '/embeddings', data=data,
+        headers={'Content-Type': 'application/json'})
+    resp = urllib.request.urlopen(req, timeout=5)
+    result = json.load(resp)
+    print(len(result['data'][0]['embedding']))
+except Exception:
+    print('unknown')
+" 2>/dev/null)
+
+    cipher_model=$(python3 -c "
+import yaml, os
+try:
+    cfg = yaml.safe_load(open(os.path.expanduser('~/.cipher/cipher.yml')))
+    print(cfg.get('embedding', {}).get('model', 'unknown'))
+except Exception:
+    print('unknown')
+" 2>/dev/null)
+
     read -r -d '' CONTEXT << MARKDOWN
-Warning: **Cipher extraction failed** ($stats). The 3B model filtered out the content.
+**Cipher vector dimension mismatch** — Qdrant rejected the embedding.
+
+| | Value |
+|---|---|
+| Qdrant collection expects | **${collection_dim} dims** |
+| Current embedding model outputs | **${model_dim} dims** (model: \`${cipher_model}\`) |
+
+**Root cause:** The embedding model was changed after the collection was created with different dimensions. Qdrant collections have a fixed vector size.
+
+**Fix options:**
+
+**Option A — Recreate the collection** (data loss — all stored memories are deleted):
+\`\`\`bash
+curl -sf -X DELETE http://localhost:6333/collections/knowledge_memory
+curl -sf -X PUT http://localhost:6333/collections/knowledge_memory \
+  -H 'Content-Type: application/json' \
+  -d '{"vectors":{"size":${model_dim},"distance":"Cosine"}}'
+\`\`\`
+Then retry the original store operation.
+
+**Option B — Switch back to a compatible embedding model** (no data loss):
+Edit \`~/.cipher/cipher.yml\` and set \`embedding.model\` to a model that outputs ${collection_dim} dims, then restart the cipher-mcp process.
+
+**Do NOT retry the current operation until one of the above is resolved.** Ask the user which option they prefer.
+MARKDOWN
+
+    jq -n --arg ctx "$CONTEXT" '{
+        hookSpecificOutput: {
+            hookEventName: "PostToolUse",
+            additionalContext: $ctx
+        }
+    }'
+    exit 0
+fi
+
+# ── Extracted zero ───────────────────────────────────────────────────────────
+if [[ "$diagnosis" == EXTRACTED_ZERO:* ]]; then
+    skipped="${diagnosis#EXTRACTED_ZERO:}"
+    read -r -d '' CONTEXT << MARKDOWN
+**Cipher extraction failed** (extracted=0, skipped=${skipped}). The LLM filtered out the content.
 
 **You MUST store this directly.** Use \`ctx_execute\` with JavaScript:
 \`\`\`javascript

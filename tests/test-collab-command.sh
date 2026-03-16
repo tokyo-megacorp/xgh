@@ -22,10 +22,10 @@ assert_contains() {
   fi
 }
 
-assert_file_exists "commands/collaborate.md"
-assert_contains "commands/collaborate.md" "/xgh collaborate"
-assert_contains "commands/collaborate.md" "workflow"
-assert_contains "commands/collaborate.md" "dispatcher"
+assert_file_exists "commands/collab.md"
+assert_contains "commands/collab.md" "/xgh-collab"
+assert_contains "commands/collab.md" "workflow"
+assert_contains "commands/collab.md" "dispatcher"
 
 echo ""
 echo "Collaborate command test: $PASS passed, $FAIL failed"

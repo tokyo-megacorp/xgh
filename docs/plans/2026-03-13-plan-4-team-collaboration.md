@@ -1,6 +1,6 @@
 # Team Collaboration Skills Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement the 6 team collaboration skills, the `/xgh-collaborate` command, and the collaboration-dispatcher agent that together enable async team knowledge sharing through Cipher workspace memory.
 
@@ -47,7 +47,7 @@ tests/
 **Files:**
 - Create: `tests/test-team-skills.sh`
 
-- [ ] **Step 1: Write test harness for all 6 team collaboration skills**
+- [x] **Step 1: Write test harness for all 6 team collaboration skills**
 
 Create the test file with assertions for file existence, required sections, and key content for all skills. We write the full test file now so each subsequent task can run the relevant subset.
 
@@ -184,7 +184,7 @@ TESTEOF
 chmod +x tests/test-team-skills.sh
 ```
 
-- [ ] **Step 2: Run tests — verify all fail (no skill files exist yet)**
+- [x] **Step 2: Run tests — verify all fail (no skill files exist yet)**
 
 ```bash
 bash tests/test-team-skills.sh
@@ -196,7 +196,7 @@ bash tests/test-team-skills.sh
 **Files:**
 - Create: `skills/pr-context-bridge/pr-context-bridge.md`
 
-- [ ] **Step 3: Create pr-context-bridge skill**
+- [x] **Step 3: Create pr-context-bridge skill**
 
 ```bash
 mkdir -p skills/pr-context-bridge
@@ -439,7 +439,7 @@ When the author returns to address review comments, their Claude queries the thr
 SKILLEOF
 ```
 
-- [ ] **Step 4: Run pr-context-bridge tests — verify pass**
+- [x] **Step 4: Run pr-context-bridge tests — verify pass**
 
 ```bash
 bash tests/test-team-skills.sh 2>&1 | grep -A1 "pr-context-bridge"
@@ -451,7 +451,7 @@ bash tests/test-team-skills.sh 2>&1 | grep -A1 "pr-context-bridge"
 **Files:**
 - Create: `skills/knowledge-handoff/knowledge-handoff.md`
 
-- [ ] **Step 5: Create knowledge-handoff skill**
+- [x] **Step 5: Create knowledge-handoff skill**
 
 ```bash
 mkdir -p skills/knowledge-handoff
@@ -643,21 +643,21 @@ The retrieved handoff context is injected into the developer's session automatic
 SKILLEOF
 ```
 
-- [ ] **Step 6: Run knowledge-handoff tests — verify pass**
+- [x] **Step 6: Run knowledge-handoff tests — verify pass**
 
 ```bash
 bash tests/test-team-skills.sh 2>&1 | grep -A1 "knowledge-handoff"
 # Expected: all knowledge-handoff assertions pass
 ```
 
-- [ ] **Step 7: Run full test suite — verify pr-context-bridge and knowledge-handoff pass**
+- [x] **Step 7: Run full test suite — verify pr-context-bridge and knowledge-handoff pass**
 
 ```bash
 bash tests/test-team-skills.sh
 # Expected: ~20 passed (pr-context-bridge + knowledge-handoff), remaining fail
 ```
 
-- [ ] **Step 8: Commit chunk 1**
+- [x] **Step 8: Commit chunk 1**
 
 ```bash
 git add skills/pr-context-bridge/ skills/knowledge-handoff/ tests/test-team-skills.sh
@@ -681,7 +681,7 @@ Includes test harness for all 6 team collaboration skills."
 **Files:**
 - Create: `skills/convention-guardian/convention-guardian.md`
 
-- [ ] **Step 1: Create convention-guardian skill**
+- [x] **Step 1: Create convention-guardian skill**
 
 ```bash
 mkdir -p skills/convention-guardian
@@ -876,7 +876,7 @@ Conventions evolve. They are NEVER silently deleted.
 SKILLEOF
 ```
 
-- [ ] **Step 2: Run convention-guardian tests — verify pass**
+- [x] **Step 2: Run convention-guardian tests — verify pass**
 
 ```bash
 bash tests/test-team-skills.sh 2>&1 | grep -A1 "convention-guardian"
@@ -888,7 +888,7 @@ bash tests/test-team-skills.sh 2>&1 | grep -A1 "convention-guardian"
 **Files:**
 - Create: `skills/cross-team-pollinator/cross-team-pollinator.md`
 
-- [ ] **Step 3: Create cross-team-pollinator skill**
+- [x] **Step 3: Create cross-team-pollinator skill**
 
 ```bash
 mkdir -p skills/cross-team-pollinator
@@ -1061,21 +1061,21 @@ Parameters:
 SKILLEOF
 ```
 
-- [ ] **Step 4: Run cross-team-pollinator tests — verify pass**
+- [x] **Step 4: Run cross-team-pollinator tests — verify pass**
 
 ```bash
 bash tests/test-team-skills.sh 2>&1 | grep -A1 "cross-team-pollinator"
 # Expected: all cross-team-pollinator assertions pass
 ```
 
-- [ ] **Step 5: Run full test suite — verify 4 skills pass**
+- [x] **Step 5: Run full test suite — verify 4 skills pass**
 
 ```bash
 bash tests/test-team-skills.sh
 # Expected: ~35 passed (4 skills), remaining fail
 ```
 
-- [ ] **Step 6: Commit chunk 2**
+- [x] **Step 6: Commit chunk 2**
 
 ```bash
 git add skills/convention-guardian/ skills/cross-team-pollinator/
@@ -1096,7 +1096,7 @@ git commit -m "feat: add convention-guardian and cross-team-pollinator skills
 **Files:**
 - Create: `skills/subagent-pair-programming/subagent-pair-programming.md`
 
-- [ ] **Step 1: Create subagent-pair-programming skill**
+- [x] **Step 1: Create subagent-pair-programming skill**
 
 ```bash
 mkdir -p skills/subagent-pair-programming
@@ -1424,7 +1424,7 @@ Parameters:
 SKILLEOF
 ```
 
-- [ ] **Step 2: Run subagent-pair-programming tests — verify pass**
+- [x] **Step 2: Run subagent-pair-programming tests — verify pass**
 
 ```bash
 bash tests/test-team-skills.sh 2>&1 | grep -A1 "subagent-pair-programming"
@@ -1436,7 +1436,7 @@ bash tests/test-team-skills.sh 2>&1 | grep -A1 "subagent-pair-programming"
 **Files:**
 - Create: `skills/onboarding-accelerator/onboarding-accelerator.md`
 
-- [ ] **Step 3: Create onboarding-accelerator skill**
+- [x] **Step 3: Create onboarding-accelerator skill**
 
 ```bash
 mkdir -p skills/onboarding-accelerator
@@ -1680,21 +1680,21 @@ Parameters:
 SKILLEOF
 ```
 
-- [ ] **Step 4: Run onboarding-accelerator tests — verify pass**
+- [x] **Step 4: Run onboarding-accelerator tests — verify pass**
 
 ```bash
 bash tests/test-team-skills.sh 2>&1 | grep -A1 "onboarding-accelerator"
 # Expected: all onboarding-accelerator assertions pass
 ```
 
-- [ ] **Step 5: Run full test suite — verify all 6 skills pass**
+- [x] **Step 5: Run full test suite — verify all 6 skills pass**
 
 ```bash
 bash tests/test-team-skills.sh
 # Expected: ~50 passed, 0 failed — all 6 skills complete
 ```
 
-- [ ] **Step 6: Commit chunk 3**
+- [x] **Step 6: Commit chunk 3**
 
 ```bash
 git add skills/subagent-pair-programming/ skills/onboarding-accelerator/
@@ -1716,7 +1716,7 @@ git commit -m "feat: add subagent-pair-programming and onboarding-accelerator sk
 - Create: `tests/test-collaborate-command.sh`
 - Create: `tests/test-collaboration-agent.sh`
 
-- [ ] **Step 1: Write test for collaborate command**
+- [x] **Step 1: Write test for collaborate command**
 
 ```bash
 cat > tests/test-collaborate-command.sh << 'TESTEOF'
@@ -1778,7 +1778,7 @@ TESTEOF
 chmod +x tests/test-collaborate-command.sh
 ```
 
-- [ ] **Step 2: Write test for collaboration-dispatcher agent**
+- [x] **Step 2: Write test for collaboration-dispatcher agent**
 
 ```bash
 cat > tests/test-collaboration-agent.sh << 'TESTEOF'
@@ -1838,7 +1838,7 @@ TESTEOF
 chmod +x tests/test-collaboration-agent.sh
 ```
 
-- [ ] **Step 3: Run both tests — verify all fail**
+- [x] **Step 3: Run both tests — verify all fail**
 
 ```bash
 bash tests/test-collaborate-command.sh; bash tests/test-collaboration-agent.sh
@@ -1850,7 +1850,7 @@ bash tests/test-collaborate-command.sh; bash tests/test-collaboration-agent.sh
 **Files:**
 - Create: `commands/collaborate.md`
 
-- [ ] **Step 4: Create the /xgh-collaborate command**
+- [x] **Step 4: Create the /xgh-collaborate command**
 
 ```bash
 cat > commands/collaborate.md << 'CMDEOF'
@@ -2098,7 +2098,7 @@ Parameters:
 CMDEOF
 ```
 
-- [ ] **Step 5: Run collaborate command tests — verify pass**
+- [x] **Step 5: Run collaborate command tests — verify pass**
 
 ```bash
 bash tests/test-collaborate-command.sh
@@ -2110,7 +2110,7 @@ bash tests/test-collaborate-command.sh
 **Files:**
 - Create: `agents/collaboration-dispatcher.md`
 
-- [ ] **Step 6: Create the collaboration-dispatcher agent**
+- [x] **Step 6: Create the collaboration-dispatcher agent**
 
 ```bash
 cat > agents/collaboration-dispatcher.md << 'AGENTEOF'
@@ -2318,21 +2318,21 @@ If a step does not complete within a reasonable time:
 AGENTEOF
 ```
 
-- [ ] **Step 7: Run collaboration-dispatcher agent tests — verify pass**
+- [x] **Step 7: Run collaboration-dispatcher agent tests — verify pass**
 
 ```bash
 bash tests/test-collaboration-agent.sh
 # Expected: all assertions pass
 ```
 
-- [ ] **Step 8: Run all test suites**
+- [x] **Step 8: Run all test suites**
 
 ```bash
 bash tests/test-team-skills.sh && bash tests/test-collaborate-command.sh && bash tests/test-collaboration-agent.sh
 # Expected: all pass — 0 failures across all test files
 ```
 
-- [ ] **Step 9: Commit chunk 4**
+- [x] **Step 9: Commit chunk 4**
 
 ```bash
 git add commands/collaborate.md agents/collaboration-dispatcher.md tests/test-collaborate-command.sh tests/test-collaboration-agent.sh
@@ -2353,7 +2353,7 @@ git commit -m "feat: add /xgh-collaborate command and collaboration-dispatcher a
 **Files:**
 - Create: `tests/test-plan4-integration.sh`
 
-- [ ] **Step 1: Write integration test that verifies all Plan 4 deliverables**
+- [x] **Step 1: Write integration test that verifies all Plan 4 deliverables**
 
 ```bash
 cat > tests/test-plan4-integration.sh << 'TESTEOF'
@@ -2476,14 +2476,14 @@ TESTEOF
 chmod +x tests/test-plan4-integration.sh
 ```
 
-- [ ] **Step 2: Run integration test**
+- [x] **Step 2: Run integration test**
 
 ```bash
 bash tests/test-plan4-integration.sh
 # Expected: all pass — full Plan 4 verified
 ```
 
-- [ ] **Step 3: Run ALL test suites one final time**
+- [x] **Step 3: Run ALL test suites one final time**
 
 ```bash
 bash tests/test-team-skills.sh && \
@@ -2493,7 +2493,7 @@ bash tests/test-plan4-integration.sh
 # Expected: all pass — 0 failures
 ```
 
-- [ ] **Step 4: Commit integration test**
+- [x] **Step 4: Commit integration test**
 
 ```bash
 git add tests/test-plan4-integration.sh

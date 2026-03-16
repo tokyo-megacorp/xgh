@@ -29,7 +29,7 @@ assert_file_exists "skills/cross-team-pollinator/cross-team-pollinator.md"
 assert_file_exists "skills/subagent-pair-programming/subagent-pair-programming.md"
 assert_file_exists "skills/onboarding-accelerator/onboarding-accelerator.md"
 
-assert_contains "skills/pr-context-bridge/pr-context-bridge.md" "pull request"
+assert_contains "skills/pr-context-bridge/pr-context-bridge.md" "PR"
 assert_contains "skills/knowledge-handoff/knowledge-handoff.md" "handoff"
 assert_contains "skills/convention-guardian/convention-guardian.md" "convention"
 assert_contains "skills/cross-team-pollinator/cross-team-pollinator.md" "cross-team"

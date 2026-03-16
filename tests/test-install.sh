@@ -39,6 +39,7 @@ git init --quiet
 export XGH_DRY_RUN=1
 export XGH_TEAM="test-team"
 export XGH_CONTEXT_PATH=".xgh/context-tree"
+export XGH_HOOKS_SCOPE="project"
 export XGH_LOCAL_PACK="$(cd - >/dev/null && pwd)"
 
 bash "${XGH_LOCAL_PACK}/install.sh"
@@ -53,7 +54,7 @@ assert_dir_exists ".claude/agents"
 # Verify MCP config
 assert_file_exists ".claude/.mcp.json"
 assert_contains ".claude/.mcp.json" "cipher"
-assert_contains ".claude/.mcp.json" "@byterover/cipher"
+assert_contains ".claude/.mcp.json" "cipher-mcp"
 
 # Verify hooks installed
 assert_file_exists ".claude/hooks/xgh-session-start.sh"

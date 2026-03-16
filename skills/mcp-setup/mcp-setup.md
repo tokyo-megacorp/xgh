@@ -4,43 +4,53 @@ description: Interactive MCP server setup helper. Called by workflow skills when
 type: flexible
 triggers:
   - when a workflow skill detects a missing MCP dependency
-  - when the user runs /xgh setup
+  - when the user runs /xgh-setup
 ---
 
 # xgh:mcp-setup — Interactive MCP Setup Helper
 
 When a workflow skill needs an MCP server that isn't configured, don't just skip it — **offer to set it up right now**. The goal is zero-friction first use: the user should never have to leave their terminal or read docs to configure an MCP.
 
-## Supported MCP Servers
+## How MCPs Work in Claude Code
 
-| MCP | Detection | Required For |
-|-----|-----------|-------------|
-| **Cipher** | `cipher_memory_search` in tools | All xgh skills (core dependency) |
-| **Slack** | `slack_read_thread` in tools | `investigate`, `implement-ticket` |
-| **Figma** | `get_design_context` in tools | `implement-design`, `implement-ticket` |
-| **Atlassian** | `getJiraIssue` in tools | `investigate`, `implement-ticket` |
-| **GitHub** | `gh` CLI available | `implement-ticket` (Issues) |
+Claude Code has two kinds of MCP servers:
+
+1. **Remote MCPs** — first-party, managed by Anthropic (`claude.ai *` in `claude mcp list`). Zero config, OAuth-based. Examples: Gmail, Google Calendar. These come and go as Anthropic adds them.
+2. **Local MCPs** — configured in `.claude/.mcp.json`, run via `npx` or a local binary. Require API keys. Examples: Slack, Atlassian, Figma, Linear.
+
+**Detection is runtime-only.** Don't assume which remote MCPs exist — check `claude mcp list` for what's actually connected. The landscape changes as Anthropic adds new connectors.
+
+## Supported Integrations
+
+| Service | Detection (tool name) | Required For | Setup |
+|---------|----------------------|-------------|-------|
+| **Cipher** | `cipher_memory_search` | All xgh skills (core) | Installed by xgh |
+| **GitHub** | `gh` CLI or remote MCP | `implement`, `investigate` | `brew install gh && gh auth login` |
+| **Slack** | `slack_*` tools | `investigate`, `brief`, `retrieve` | Community MCP |
+| **Atlassian** | `getJiraIssue`, `confluence_*` | `implement`, `investigate` | Community MCP |
+| **Figma** | `get_design_context` | `design` | Community MCP |
+| **Linear** | `linear_*` tools | `implement` | Community MCP |
+| **Asana** | `asana_*` tools | `implement` | Community MCP |
+| **Shortcut** | `shortcut_*` tools | `implement` | Community MCP |
 
 ## Detection Protocol
 
-At the start of any workflow skill that needs external MCPs, run this check:
+At the start of any workflow skill that needs external MCPs:
 
 ```
 For each required MCP:
   1. Check if the MCP's tools are available in the current session
   2. If available → proceed normally
-  3. If NOT available → trigger the Setup Flow for that MCP
+  3. If NOT available → trigger the Setup Flow
 ```
 
 ## Setup Flow
 
-When a missing MCP is detected:
-
 ### Step 1: Inform the user
 
 ```
-"I need [MCP name] to [specific capability, e.g., 'read the Slack thread'].
-It's not configured yet. Want me to set it up? (takes ~30 seconds)"
+"I need [capability, e.g., 'to read the Slack thread'] but [MCP name] isn't configured.
+Want me to help set it up? (takes ~30 seconds)"
 
 Options:
   A) Yes, set it up now
@@ -48,143 +58,131 @@ Options:
   C) Skip — don't need this feature
 ```
 
-### Step 2: If user chooses A — Interactive Setup
+### Step 2: Check for remote MCP first
 
-Each MCP has a predetermined setup recipe:
+Before guiding community MCP setup, check if the service is already available as a remote MCP:
 
-#### Slack MCP
-The Slack MCP is a Claude.ai first-party integration. It requires:
-1. Check if the user has Claude.ai Slack integration enabled
-2. If not, guide them:
-   ```
-   "The Slack MCP is a Claude.ai first-party integration.
-   To enable it:
-   1. Open Claude Code settings: /settings
-   2. Go to 'MCP Servers'
-   3. Enable 'Slack' from the built-in integrations
-   4. Authorize with your Slack workspace when prompted
+```bash
+claude mcp list 2>/dev/null | grep -i "[service]"
+```
 
-   Once done, restart this session and I'll pick up where we left off."
-   ```
+If it shows `✓ Connected` — the user already has it. Just use it.
 
-#### Figma MCP
-The Figma MCP is a Claude.ai first-party integration. Setup:
-1. Guide the user:
-   ```
-   "The Figma MCP is a Claude.ai first-party integration.
-   To enable it:
-   1. Open Claude Code settings: /settings
-   2. Go to 'MCP Servers'
-   3. Enable 'Figma' from the built-in integrations
-   4. Authorize with your Figma account when prompted
+If it shows as available but not connected, or the service might be available as a remote MCP:
 
-   Once done, restart this session and I'll detect it automatically."
-   ```
+```
+"[Service] might be available as a Claude connector (zero config, no API key).
+Check: Claude.ai → Settings → Connectors → look for [Service].
 
-#### Atlassian MCP (Jira/Confluence)
-The Atlassian MCP is a Claude.ai first-party integration. Setup:
-1. Guide the user:
-   ```
-   "The Atlassian MCP is a Claude.ai first-party integration.
-   To enable it:
-   1. Open Claude Code settings: /settings
-   2. Go to 'MCP Servers'
-   3. Enable 'Atlassian' from the built-in integrations
-   4. Authorize with your Atlassian account when prompted
+If it's there, enable it and restart this session.
+If not, I'll set up the community MCP instead."
+```
 
-   This gives access to Jira and Confluence.
-   Once done, restart this session."
-   ```
+### Step 3: Community MCP Setup
 
-#### Cipher MCP
+For services that need a local MCP server:
+
+```
+"[Service] needs a community MCP server with an API key.
+
+Steps:
+  1. Get your API token from [specific URL]
+  2. I'll add the MCP config to .claude/.mcp.json
+  3. Restart this session
+
+Ready? I'll need your [TOKEN_NAME]."
+```
+
+Then add to `.claude/.mcp.json`:
+```json
+{
+  "mcpServers": {
+    "[service]": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "[package]"],
+      "env": {
+        "[ENV_VAR]": "[user-provided-token]"
+      }
+    }
+  }
+}
+```
+
+**Community MCP packages and API key sources:**
+
+| Service | Package | Env Vars | Token URL |
+|---------|---------|----------|-----------|
+| Slack | `@anthropic/mcp-slack` | `SLACK_BOT_TOKEN` | https://api.slack.com/apps |
+| Atlassian | `@anthropic/mcp-atlassian` | `ATLASSIAN_API_TOKEN`, `ATLASSIAN_SITE_URL`, `ATLASSIAN_EMAIL` | https://id.atlassian.com/manage-profile/security/api-tokens |
+| Figma | `@anthropic/mcp-figma` | `FIGMA_ACCESS_TOKEN` | https://www.figma.com/developers/api#access-tokens |
+| Linear | `@anthropic/mcp-linear` | `LINEAR_API_KEY` | https://linear.app/settings/api |
+| Asana | `@anthropic/mcp-asana` | `ASANA_ACCESS_TOKEN` | https://app.asana.com/0/developer-console |
+| Shortcut | `@anthropic/mcp-shortcut` | `SHORTCUT_API_TOKEN` | https://app.shortcut.com/settings/account/api-tokens |
+
+### Cipher MCP
+
 Cipher should already be configured by xgh install. If missing:
 1. Check if `.claude/.mcp.json` exists with cipher config
-2. If not, run the install script:
-   ```
-   "Cipher MCP is missing. This is xgh's core memory server.
-   Let me fix that — running the xgh installer..."
-   ```
-3. Execute: `XGH_DRY_RUN=0 bash /path/to/install.sh` (or guide manual setup)
+2. If not: `XGH_LOCAL_PACK=. bash install.sh`
 
-#### GitHub Issues (via gh CLI)
-Not an MCP — uses `gh` CLI directly:
-1. Check: `command -v gh`
-2. If missing: `"Install GitHub CLI: brew install gh && gh auth login"`
-3. If present but not authed: `gh auth status` → guide through `gh auth login`
+### GitHub
 
-#### Linear / Shortcut / Asana / Other Task Managers
-These use community MCP servers. Setup pattern:
-1. Ask which task manager the user uses
-2. Provide the appropriate `npx` command for `.claude/.mcp.json`:
-   ```json
-   {
-     "mcpServers": {
-       "linear": {
-         "command": "npx",
-         "args": ["-y", "@anthropic/mcp-linear"],
-         "env": {
-           "LINEAR_API_KEY": "${LINEAR_API_KEY}"
-         }
-       }
-     }
-   }
-   ```
-3. Guide through API key generation if needed
-4. Offer to add to `.claude/.mcp.json` automatically
+Check in order:
+1. Remote MCP connected? (`claude mcp list | grep -i github`) → use it
+2. `gh` CLI available and authed? (`gh auth status`) → use it
+3. Neither → `brew install gh && gh auth login`
 
-### Step 3: Verify Setup
+### Step 4: Verify Setup
 
 After setup instructions:
-1. Ask the user to confirm they've completed the steps
-2. If MCP requires session restart, inform the user:
+1. If MCP requires session restart:
    ```
-   "Setup complete! Please restart Claude Code for the new MCP to be available.
-   When you restart, run the same command again — I'll remember where we left off
-   via Cipher memory."
+   "Setup complete! Restart Claude Code for the new MCP to load.
+   Run the same command again — I'll pick up where we left off via Cipher memory."
    ```
-3. If MCP is immediately available (no restart needed), verify:
-   - Try a simple MCP tool call
-   - If it works → continue with the workflow
-   - If it fails → troubleshoot (auth expired, wrong workspace, etc.)
+2. If immediately available, try a simple tool call to verify.
 
-### Step 4: Remember the Setup
+### Step 5: Remember the Setup
 
-After successful first-time setup:
-1. Store in Cipher memory:
-   ```
-   cipher_store_reasoning_memory:
-     type: setup
-     content: "[MCP name] configured for [user/team]"
-     metadata:
-       mcp: slack|figma|atlassian|linear|...
-       configured_at: [timestamp]
-       workspace: [workspace name if applicable]
-   ```
-2. Future sessions skip the "want to set it up?" prompt — the MCP is expected to be available
+After successful setup, store in Cipher:
+```
+cipher_store_reasoning_memory:
+  type: setup
+  content: "[MCP name] configured for [user/team]"
+  metadata:
+    mcp: slack|figma|atlassian|linear|...
+    type: remote|community
+    configured_at: [timestamp]
+```
 
 ## Composability
 
-This skill is called BY other skills, never directly by the user (though `/xgh setup` can trigger a full audit). The calling skill:
+This skill is called BY other skills, never directly by the user (though `/xgh-setup` can trigger a full audit). The calling skill:
 
 1. Checks for required MCPs
 2. If missing, invokes this skill's setup flow
 3. Gets back: `available` (proceed) or `skipped` (degrade gracefully)
 4. Continues its own flow
 
-## Full Audit Mode (`/xgh setup`)
+## Full Audit Mode (`/xgh-setup`)
 
-When triggered manually, audit ALL MCP integrations:
+When triggered manually, audit ALL MCP integrations by running `claude mcp list` and checking tool availability:
 
 ```
-"🐴 xgh MCP Integration Status:
+"🐴 xgh Integration Status:
 
-  ✅ Cipher        — configured (core memory)
-  ❌ Slack         — not configured
-  ✅ Figma         — configured
-  ❌ Atlassian     — not configured
-  ✅ GitHub CLI    — authenticated
+  Connected:
+    ✅ Cipher        — core memory
+    ✅ Gmail         — remote MCP
+    ✅ Calendar      — remote MCP
 
-  Want me to set up the missing integrations?"
+  Not configured:
+    ❌ Slack         — community MCP (needs API key)
+    ❌ Atlassian     — community MCP (needs API key)
+    ❌ Figma         — community MCP (needs API key)
+
+  Want me to help set up the missing integrations?"
 ```
 
-Then walk through each missing MCP interactively.
+Walk through each missing MCP interactively.

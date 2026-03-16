@@ -137,8 +137,25 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   info "Embedding model:  ${XGH_EMBED_MODEL}"
 
   # ── 3. Download models ─────────────────────────────────
-  lane "Downloading models (grab a coffee) ☕"
-  uv run --with huggingface-hub python3 -c "
+  # Check if models are already in the HuggingFace cache
+  HF_CACHE="${HF_HOME:-${HOME}/.cache/huggingface}/hub"
+  _model_cached() {
+    local slug; slug="models--$(echo "$1" | sed 's|/|--|g')"
+    [ -d "${HF_CACHE}/${slug}" ]
+  }
+
+  MODELS_TO_DOWNLOAD=()
+  for m in "$XGH_LLM_MODEL" "$XGH_EMBED_MODEL"; do
+    if _model_cached "$m"; then
+      info "Model already cached: ${m}"
+    else
+      MODELS_TO_DOWNLOAD+=("$m")
+    fi
+  done
+
+  if [ ${#MODELS_TO_DOWNLOAD[@]} -gt 0 ]; then
+    lane "Downloading models (grab a coffee) ☕"
+    uv run --with huggingface-hub python3 -c "
 from huggingface_hub import snapshot_download
 import sys
 for model in sys.argv[1:]:
@@ -148,7 +165,10 @@ for model in sys.argv[1:]:
         print(f'  ✓ {model}')
     except Exception as e:
         print(f'  ⚠ Could not download {model}: {e}')
-" "$XGH_LLM_MODEL" "$XGH_EMBED_MODEL" || warn "Model pre-download failed — models will download on first use"
+" "${MODELS_TO_DOWNLOAD[@]}" || warn "Model pre-download failed — models will download on first use"
+  else
+    info "All models already cached — skipping download"
+  fi
 
   # ── 3b. Cipher Infrastructure ──────────────────────────
   lane "Wiring up the memory layer 🧬"
@@ -1054,6 +1074,49 @@ if [ "$XGH_DRY_RUN" -eq 0 ] && [ "$XGH_INSTALL_PLUGINS" != "skip" ]; then
   if [[ "${INSTALL_SUPERPOWERS,,}" =~ ^y ]]; then
     install_plugin "claude-plugins-official/superpowers" "superpowers@superpowers" "superpowers"
   fi
+fi
+
+# ── 11b. Claude Code MCP Detection ────────────────────────
+# Detect what MCPs are already connected in Claude Code (remote or local).
+# Skills use this at runtime to know what's available vs. needs setup.
+
+if command -v claude &>/dev/null && [ "$XGH_DRY_RUN" -eq 0 ]; then
+  lane "Detecting connected MCPs 🔌"
+
+  # Parse `claude mcp list` for all connected servers
+  CONNECTED_MCPS=""
+  while IFS= read -r line; do
+    if echo "$line" | grep -q "✓ Connected"; then
+      name=$(echo "$line" | sed 's/:.*//' | xargs)
+      CONNECTED_MCPS="${CONNECTED_MCPS}${name},"
+      info "${name} ✓"
+    fi
+  done < <(claude mcp list 2>/dev/null)
+
+  if [ -z "$CONNECTED_MCPS" ]; then
+    info "No MCPs detected (besides Cipher)"
+  fi
+
+  # Save state for skills to read at runtime
+  CONNECTOR_STATE="${PWD}/.xgh/connectors.json"
+  mkdir -p "$(dirname "$CONNECTOR_STATE")"
+  cat > "$CONNECTOR_STATE" <<CONNEOF
+{
+  "detected_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "connected": [$(echo "$CONNECTED_MCPS" | sed 's/,$//' | sed 's/\([^,]*\)/"\1"/g' | sed 's/,/, /g')],
+  "community_mcps": [
+    {"name": "Slack", "package": "@anthropic/mcp-slack", "env": ["SLACK_BOT_TOKEN"]},
+    {"name": "Linear", "package": "@anthropic/mcp-linear", "env": ["LINEAR_API_KEY"]},
+    {"name": "Atlassian", "package": "@anthropic/mcp-atlassian", "env": ["ATLASSIAN_API_TOKEN", "ATLASSIAN_SITE_URL", "ATLASSIAN_EMAIL"]},
+    {"name": "Figma", "package": "@anthropic/mcp-figma", "env": ["FIGMA_ACCESS_TOKEN"]},
+    {"name": "Asana", "package": "@anthropic/mcp-asana", "env": ["ASANA_ACCESS_TOKEN"]},
+    {"name": "Shortcut", "package": "@anthropic/mcp-shortcut", "env": ["SHORTCUT_API_TOKEN"]}
+  ]
+}
+CONNEOF
+  info "MCP state → ${CONNECTOR_STATE}"
+else
+  info "Skipping MCP detection (dry run or no claude CLI)"
 fi
 
 # ── 12. Start script ─────────────────────────────────────

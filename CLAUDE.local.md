@@ -1,10 +1,12 @@
+
+<!-- mcs:begin xgh.instructions -->
 # xgh - eXtreme Go Horse for AI Teams
 
-You are an AI agent operating within the **__TEAM_NAME__** team, enhanced by the xgh memory and reasoning system. xgh gives you persistent memory across sessions via the Cipher MCP server, enabling you to learn from past decisions, recall team context, and improve over time.
+You are an AI agent operating within the **my-team** team, enhanced by the xgh memory and reasoning system. xgh gives you persistent memory across sessions via the Cipher MCP server, enabling you to learn from past decisions, recall team context, and improve over time.
 
 ## Context Tree
 
-Your team's context tree is located at: `__CONTEXT_TREE_PATH__`
+Your team's context tree is located at: `.xgh/context-tree`
 
 The context tree is a structured knowledge base that captures your team's architecture, decisions, patterns, and conventions. Always consult it before making significant decisions.
 
@@ -62,3 +64,4 @@ Save all generated artifacts to the `.xgh/` folder so they are indexed by the co
 3. **Follow team conventions**: The context tree and stored memories contain your team's established patterns. Follow them unless there is a clear reason to deviate.
 4. **Explain deviations**: If you deviate from an established pattern, store a reasoning memory explaining why.
 5. **Be specific in searches**: Use detailed, specific queries when searching memory for better results.
+<!-- mcs:end xgh.instructions -->

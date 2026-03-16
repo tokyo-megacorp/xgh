@@ -9,3 +9,4 @@ data/cipher-sessions.db*
 .worktrees/
 .mcp.json
 .xgh/local/
+.worktrees/

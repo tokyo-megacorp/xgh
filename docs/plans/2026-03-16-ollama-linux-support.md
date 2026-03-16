@@ -1,7 +1,7 @@
 # Ollama Linux Support
 
 **Date:** 2026-03-16
-**Status:** Planning
+**Status:** Ready to implement
 **Scope:** Add Ollama as the inference backend for Linux/non-Apple-Silicon systems
 
 ---
@@ -9,12 +9,19 @@
 ## Background
 
 xgh currently uses vllm-mlx as its local model server (OpenAI-compatible API on port 11434).
-vllm-mlx is Apple Silicon-only. For Linux (and Intel Mac), Ollama is the natural equivalent:
+vllm-mlx is Apple Silicon-only. For Linux and Intel Mac, Ollama is the natural equivalent:
 same port, same OpenAI-compatible API surface, similar model quality tier.
 
-The key architectural constraint: `~/.cipher/cipher.yml`, `lib/workspace-write.js`, and all
-skills must remain identical across platforms. Only the install/start mechanism and the model
-name strings written into `models.env` differ.
+**Key architectural insight:** Cipher has **native Ollama support** (`embedding.type: ollama`,
+`llm.provider: ollama` in cipher.yml). On Linux, use the native Ollama type instead of the
+OpenAI-compat shim — this avoids the base64 encoding issue that required the
+`fix-openai-embeddings.js` patch on macOS/vllm-mlx entirely.
+
+Platform matrix:
+| Platform | Backend | cipher.yml embedding.type |
+|---|---|---|
+| macOS Apple Silicon | vllm-mlx | `openai` (localhost OpenAI-compat) |
+| Linux / Intel Mac | Ollama | `ollama` (native Cipher support) |
 
 ---
 
@@ -22,17 +29,19 @@ name strings written into `models.env` differ.
 
 | Role | vllm-mlx (macOS HF ID) | Ollama model name | Dims | Notes |
 |---|---|---|---|---|
-| LLM default | mlx-community/Llama-3.2-3B-Instruct-4bit | llama3.2:3b | — | Same base model |
+| LLM default | mlx-community/Llama-3.2-3B-Instruct-4bit | llama3.2:3b | — | Confirmed in Ollama library |
 | LLM tiny | mlx-community/Llama-3.2-1B-Instruct-4bit | llama3.2:1b | — | |
 | LLM powerful | mlx-community/Mistral-7B-Instruct-v0.3-4bit | mistral:7b | — | |
-| LLM balanced | mlx-community/Qwen3-4B-4bit | qwen3:4b | — | Check Ollama library availability |
-| LLM strong | mlx-community/Qwen3-8B-4bit | qwen3:8b | — | Check Ollama library availability |
-| Embed default | mlx-community/nomicai-modernbert-embed-base-8bit | nomic-embed-text | 768 | CRITICAL: same dims |
-| Embed smaller | mlx-community/nomicai-modernbert-embed-base-4bit | nomic-embed-text | 768 | No direct 4-bit Ollama equivalent; use same model |
-| Embed fast | mlx-community/all-MiniLM-L6-v2-4bit | all-minilm:22m | 384 | Dims mismatch if switching from 768 — warn user |
+| LLM balanced | mlx-community/Qwen3-4B-4bit | qwen3:4b | — | Confirmed (2.5GB, 256K ctx) |
+| LLM strong | mlx-community/Qwen3-8B-4bit | qwen3:8b | — | Confirmed (5.2GB, 40K ctx) |
+| **Embed default** | mlx-community/nomicai-modernbert-embed-base-8bit | **nomic-embed-text** | **768** | Cipher's recommended default; beats OpenAI ada-002; 8192 token ctx |
+| Embed high-perf | _(no equivalent)_ | mxbai-embed-large | **1024** | ⚠️ Dim mismatch with 768 collections — must recreate |
+| Embed fast | mlx-community/all-MiniLM-L6-v2-4bit | all-minilm:22m | **384** | ⚠️ Dim mismatch with 768 collections — must recreate |
 
-**Embedding compatibility rule:** Never mix a 768-dim Qdrant collection with a 384-dim model.
-The installer must warn if the existing collection was created with a different embedding model.
+**Embedding compatibility rule:** `nomic-embed-text` (768 dims) is the **only safe default** — it
+matches existing Qdrant collections built on macOS. The post-hook dimension mismatch detector
+handles cases where users switch to a different-dim model. The installer must warn explicitly
+if the user selects a non-768 embed model and an existing 768-dim collection is detected.
 
 ---
 
@@ -64,12 +73,35 @@ In the dependencies lane of `install.sh`, the current block installs Homebrew, N
     curl -fsSL https://ollama.com/install.sh | sh
     ```
   - Add guard: if `ollama` still not found after install attempt, `warn` and `exit 1`.
-  - Install Qdrant for Linux: download the latest binary from GitHub releases to `~/.qdrant/bin/qdrant` (no Homebrew on Linux). Use:
+  - Install Qdrant for Linux via binary download (no apt/snap available; binary is fully
+    supported by Qdrant for local/dev use):
     ```bash
+    ARCH=$(uname -m)  # x86_64 or aarch64
     QDRANT_VER=$(curl -sf https://api.github.com/repos/qdrant/qdrant/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-    curl -fsSL "https://github.com/qdrant/qdrant/releases/download/${QDRANT_VER}/qdrant-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C ~/.qdrant/bin/
+    curl -fsSL "https://github.com/qdrant/qdrant/releases/download/${QDRANT_VER}/qdrant-${ARCH}-unknown-linux-gnu.tar.gz" \
+      | tar -xz -C ~/.qdrant/bin/
+    chmod +x ~/.qdrant/bin/qdrant
     ```
-  - Start Qdrant as background process on Linux (no launchd/systemd for Qdrant — just nohup).
+  - Write a systemd user service for Qdrant (Qdrant ships no unit file — write our own):
+    ```ini
+    [Unit]
+    Description=Qdrant vector database
+    After=network.target
+
+    [Service]
+    ExecStart=%h/.qdrant/bin/qdrant
+    WorkingDirectory=%h/.qdrant/storage
+    Restart=always
+    RestartSec=5
+    Environment=HOME=%h
+    StandardOutput=append:%h/.xgh/logs/qdrant.log
+    StandardError=append:%h/.xgh/logs/qdrant.log
+
+    [Install]
+    WantedBy=default.target
+    ```
+  - `loginctl enable-linger $USER` before enabling the service (required for user services
+    to start without an active login session — SSH/server environments).
 
 ---
 
@@ -116,12 +148,29 @@ XGH_MODEL_PORT=11434
 
 ---
 
-### Step 6 — cipher.yml: correct model names (no change to logic)
+### Step 6 — cipher.yml: use native Ollama type on Linux
 
-The `install.sh` Cipher section writes `~/.cipher/cipher.yml` using `$XGH_LLM_MODEL` / `$XGH_EMBED_MODEL` verbatim. Since Steps 3–4 already set these to platform-appropriate values (HF IDs on macOS, Ollama names on Linux), no change is needed here.
+Cipher has first-class Ollama support (`type: ollama`, `provider: ollama`). On Linux, generate
+cipher.yml using the native Ollama type rather than the OpenAI-compat shim:
 
-- [ ] Verify the `baseUrl` remains `http://localhost:11434/v1` — identical for both backends.
-- [ ] The existing `sync` block (added 2026-03-16) correctly updates model names on reinstall.
+- [ ] Branch the cipher.yml template in install.sh on `$XGH_BACKEND`:
+  - **vllm-mlx (macOS):** keep existing `embedding.type: openai` + `baseURL: http://localhost:11434/v1`
+  - **ollama (Linux):**
+    ```yaml
+    llm:
+      provider: ollama
+      model: ${XGH_LLM_MODEL}       # e.g. llama3.2:3b
+      baseURL: http://localhost:11434
+
+    embedding:
+      type: ollama
+      model: ${XGH_EMBED_MODEL}     # e.g. nomic-embed-text
+      baseURL: http://localhost:11434
+      dimensions: 768
+    ```
+- [ ] With `type: ollama`, Cipher does NOT go through the OpenAI SDK — the `fix-openai-embeddings.js` patch is **not needed on Linux**. No change to the wrapper, it's a no-op on Ollama.
+- [ ] The cipher.yml `sync` block added on 2026-03-16 must also branch on backend to write the correct type field.
+- [ ] No `OLLAMA_BASE_URL` env var needed in the MCP config — the native Ollama type reads from `baseURL` in cipher.yml directly.
 
 ---
 
@@ -141,16 +190,20 @@ On macOS, if Ollama is installed alongside vllm-mlx, they both try to use port 1
 
 ---
 
-### Step 8 — ingest-schedule.sh: Linux systemd service branches on backend
+### Step 8 — ingest-schedule.sh: Linux systemd services
 
-The existing `install_linux()` hardcodes `vllm-mlx` in the systemd unit:
+`curl https://ollama.com/install.sh | sh` installs Ollama with its **own systemd system
+service** (`ollama.service`) that auto-starts. xgh should not create a competing wrapper.
 
-- [ ] Source `~/.xgh/models.env` at the top (already done via `MODELS_ENV` variable).
-- [ ] Branch the systemd `ExecStart` on `$XGH_BACKEND`:
-  - **vllm-mlx:** `ExecStart=${VLLM_BIN} serve ${XGH_LLM_MODEL} --embedding-model ${XGH_EMBED_MODEL} --port ${XGH_MODEL_PORT} --host 127.0.0.1`
-  - **ollama:** `ExecStart=/usr/local/bin/ollama serve` with `Environment=OLLAMA_HOST=127.0.0.1:11434`
-- [ ] Add `loginctl enable-linger $USER` before `systemctl --user daemon-reload` (required for user services to start without an active login session).
-- [ ] `uninstall_linux()` for Ollama: only stop `xgh-models.service`, do not uninstall Ollama itself (other apps may use it).
+- [ ] In `install_linux()`, after running the Ollama installer, just enable and verify:
+  ```bash
+  systemctl is-active ollama.service >/dev/null 2>&1 \
+    || sudo systemctl enable --now ollama.service 2>/dev/null \
+    || warn "Could not enable ollama.service — start manually: ollama serve"
+  ```
+- [ ] Write a **separate** `~/.config/systemd/user/xgh-qdrant.service` for Qdrant (see Step 2 unit file).
+- [ ] `loginctl enable-linger $USER` before any `systemctl --user` calls.
+- [ ] `uninstall_linux()`: stop/disable `xgh-qdrant.service`; do NOT touch `ollama.service` (other apps may use it).
 
 ---
 
@@ -204,10 +257,13 @@ The generated `~/.xgh/start-models.sh` currently calls `exec vllm-mlx serve ...`
 
 ---
 
-## Open Questions
+## Resolved Decisions
 
-1. **Qwen3 on Ollama:** Available? If not, replace with `gemma3:4b` / `gemma3:9b` as Linux LLM options?
-2. **Qdrant on Linux:** Direct binary download vs `apt`/`snap` vs Docker? Binary avoids root requirement.
-3. **Ollama service management on Linux:** Wrap `ollama serve` in `xgh-models.service`, or rely on Ollama's own systemd service installed by `curl | sh`?
-4. **Collection reset UX:** Auto-delete on dim mismatch (data loss) or require `XGH_RESET_COLLECTION=1`?
-5. **Intel Mac:** Ollama backend or separate warning about poor performance?
+| Question | Decision |
+|---|---|
+| Qwen3 on Ollama? | ✅ Confirmed available: `qwen3:4b` (2.5GB) and `qwen3:8b` (5.2GB) |
+| Qdrant on Linux install method? | ✅ Binary download — no apt/snap exists; binary is fully supported by Qdrant for local use. arch-aware (`x86_64` / `aarch64`). |
+| Ollama service management on Linux? | ✅ Rely on Ollama's own `ollama.service` (installed by `curl \| sh`). xgh only manages `xgh-qdrant.service` via systemd user. |
+| Collection reset on dim mismatch? | ✅ Never auto-reset. The cipher-post-hook surfaces a diagnostic table and asks user to choose Option A (recreate, data loss) or Option B (switch model). `XGH_RESET_COLLECTION=1` available as escape hatch in installer. |
+| Intel Mac? | ✅ Ollama path — `uname -m != arm64` → Ollama, regardless of OS. |
+| cipher.yml type on Linux? | ✅ `type: ollama` (native Cipher support) — avoids the OpenAI SDK base64 encoding issue. macOS keeps `type: openai` (vllm-mlx compat). |

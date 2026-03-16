@@ -12,6 +12,10 @@ assert_not_contains() {
   if ! grep -q "$2" "$1" 2>/dev/null; then PASS=$((PASS + 1)); else echo "FAIL: $1 still contains '$2'"; FAIL=$((FAIL + 1)); fi
 }
 
+assert_no_dir() {
+  if [ ! -d "$1" ]; then PASS=$((PASS + 1)); else echo "FAIL: dir $1 should not exist after uninstall"; FAIL=$((FAIL + 1)); fi
+}
+
 # Setup: install first, then uninstall
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
@@ -48,6 +52,19 @@ assert_not_exists ".mcp.json"
 if [ -f "CLAUDE.local.md" ]; then
   assert_not_contains "CLAUDE.local.md" "mcs:begin xgh"
 fi
+
+# Plugin deregistration
+PLUGINS_JSON="${HOME}/.claude/plugins/installed_plugins.json"
+if [ -f "$PLUGINS_JSON" ]; then
+  if grep -q '"xgh@ipedro"' "$PLUGINS_JSON"; then
+    echo "FAIL: xgh@ipedro still in installed_plugins.json after uninstall"
+    FAIL=$((FAIL + 1))
+  else
+    echo "PASS: xgh@ipedro removed from installed_plugins.json"
+    PASS=$((PASS + 1))
+  fi
+fi
+assert_no_dir "${HOME}/.claude/plugins/cache/ipedro/xgh"
 
 echo ""
 echo "Uninstall test: $PASS passed, $FAIL failed"

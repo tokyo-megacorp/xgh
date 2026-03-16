@@ -18,6 +18,40 @@ echo ""
 
 CLAUDE_DIR="${PWD}/.claude"
 
+deregister_plugin() {
+  local plugins_json="${HOME}/.claude/plugins/installed_plugins.json"
+  local cache_dir="${HOME}/.claude/plugins/cache/ipedro/xgh"
+
+  # Remove from installed_plugins.json
+  if [ -f "$plugins_json" ]; then
+    python3 - <<PYEOF
+import json, os
+
+plugins_file = "${plugins_json}"
+try:
+    with open(plugins_file) as f:
+        data = json.load(f)
+    data.get("plugins", {}).pop("xgh@ipedro", None)
+    with open(plugins_file, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    print("Removed xgh@ipedro from installed_plugins.json")
+except Exception as e:
+    print(f"Could not update installed_plugins.json: {e}")
+PYEOF
+  fi
+
+  # Remove all cached plugin versions
+  if [ -d "$cache_dir" ]; then
+    rm -rf "$cache_dir"
+    echo "Removed plugin cache at ${cache_dir}"
+  fi
+}
+
+# Deregister plugin
+info "Deregistering plugin"
+deregister_plugin
+
 # Remove hooks
 info "Removing hooks"
 rm -f "${CLAUDE_DIR}/hooks/"xgh-*.sh

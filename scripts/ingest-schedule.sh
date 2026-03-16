@@ -58,17 +58,18 @@ install_macos() {
   mkdir -p "$PLIST_DIR" "$XGH_LOG_DIR"
   _render_plist "$RETRIEVER_PLIST" "${PLIST_DIR}/com.xgh.retriever.plist"
   _render_plist "$ANALYZER_PLIST"  "${PLIST_DIR}/com.xgh.analyzer.plist"
-  launchctl unload "${PLIST_DIR}/com.xgh.retriever.plist" 2>/dev/null || true
-  launchctl unload "${PLIST_DIR}/com.xgh.analyzer.plist"  2>/dev/null || true
-  launchctl load   "${PLIST_DIR}/com.xgh.retriever.plist"
-  launchctl load   "${PLIST_DIR}/com.xgh.analyzer.plist"
+  local gui_domain="gui/$(id -u)"
+  launchctl bootout "${gui_domain}/com.xgh.retriever" 2>/dev/null || true
+  launchctl bootout "${gui_domain}/com.xgh.analyzer"  2>/dev/null || true
+  launchctl bootstrap "${gui_domain}" "${PLIST_DIR}/com.xgh.retriever.plist"
+  launchctl bootstrap "${gui_domain}" "${PLIST_DIR}/com.xgh.analyzer.plist"
   # Install models daemon if plist template exists, models are configured, and not using remote backend
   if [ "$XGH_BACKEND" = "remote" ]; then
     echo "✓ launchd agents loaded (retriever: 5min, analyzer: 30min) [remote backend — no local model service]"
   elif [ -f "$MODELS_PLIST" ] && [ -n "$XGH_LLM_MODEL" ]; then
     _render_plist "$MODELS_PLIST" "${PLIST_DIR}/com.xgh.models.plist"
-    launchctl unload "${PLIST_DIR}/com.xgh.models.plist" 2>/dev/null || true
-    launchctl load   "${PLIST_DIR}/com.xgh.models.plist"
+    launchctl bootout "${gui_domain}/com.xgh.models" 2>/dev/null || true
+    launchctl bootstrap "${gui_domain}" "${PLIST_DIR}/com.xgh.models.plist"
     echo "✓ launchd agents loaded (retriever: 5min, analyzer: 30min, models: daemon)"
   else
     echo "✓ launchd agents loaded (retriever: 5min, analyzer: 30min)"
@@ -132,9 +133,10 @@ QDRANTSVCEOF
 }
 
 uninstall_macos() {
-  launchctl unload "${PLIST_DIR}/com.xgh.retriever.plist" 2>/dev/null || true
-  launchctl unload "${PLIST_DIR}/com.xgh.analyzer.plist"  2>/dev/null || true
-  launchctl unload "${PLIST_DIR}/com.xgh.models.plist"    2>/dev/null || true
+  local gui_domain="gui/$(id -u)"
+  launchctl bootout "${gui_domain}/com.xgh.retriever" 2>/dev/null || true
+  launchctl bootout "${gui_domain}/com.xgh.analyzer"  2>/dev/null || true
+  launchctl bootout "${gui_domain}/com.xgh.models"    2>/dev/null || true
   rm -f "${PLIST_DIR}/com.xgh.retriever.plist" "${PLIST_DIR}/com.xgh.analyzer.plist" "${PLIST_DIR}/com.xgh.models.plist"
   echo "✓ launchd agents unloaded"
 }

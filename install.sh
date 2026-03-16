@@ -40,6 +40,18 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
 
+  # Node.js and npm (required by Cipher MCP wrapper and helper scripts)
+  if ! command -v node &>/dev/null; then
+    info "Node.js not found — installing via Homebrew"
+    brew install node || warn "Could not install Node.js — install manually: brew install node"
+  fi
+
+  # Python 3 (required for model downloads and settings merging)
+  if ! command -v python3 &>/dev/null; then
+    info "Python 3 not found — installing via Homebrew"
+    brew install python@3 || warn "Could not install Python 3 — install manually: brew install python@3"
+  fi
+
   # Install uv (Python package installer) if not present
   if ! command -v uv &>/dev/null; then
     info "uv (Python installer)"
@@ -58,10 +70,26 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
       info "Installing Qdrant..."
       brew install qdrant 2>/dev/null || warn "Could not install Qdrant via brew — install manually or ensure ~/.qdrant/bin/qdrant exists"
     fi
+
+    # Start Qdrant as a background service if not already running
+    if ! curl -sf http://localhost:6333/healthz >/dev/null 2>&1; then
+      info "Starting Qdrant background service..."
+      brew services start qdrant 2>/dev/null || warn "Could not start Qdrant service — start manually: brew services start qdrant"
+    else
+      info "Qdrant is already running"
+    fi
   fi
 
   # ── 2. Model Selection ─────────────────────────────────
   lane "Picking brains 🧠"
+
+  # Detect installed models in HuggingFace cache
+  HF_CACHE="${HF_HOME:-${HOME}/.cache/huggingface}/hub"
+  _model_cached() {
+    local slug; slug="models--$(echo "$1" | sed 's|/|--|g')"
+    [ -d "${HF_CACHE}/${slug}" ]
+  }
+
   LLM_MODELS=(
     "mlx-community/Llama-3.2-3B-Instruct-4bit|Llama 3.2 3B (default, fast, 2GB)"
     "mlx-community/Llama-3.2-1B-Instruct-4bit|Llama 3.2 1B (tiny, 0.7GB)"
@@ -75,8 +103,45 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     "mlx-community/all-MiniLM-L6-v2-4bit|MiniLM L6 (fast, 384 dims)"
   )
 
-  DEFAULT_LLM="mlx-community/Llama-3.2-3B-Instruct-4bit"
-  DEFAULT_EMBED="mlx-community/nomicai-modernbert-embed-base-8bit"
+  ORIG_DEFAULT_LLM="mlx-community/Llama-3.2-3B-Instruct-4bit"
+  ORIG_DEFAULT_EMBED="mlx-community/nomicai-modernbert-embed-base-8bit"
+
+  # Prefer an already-installed model as the default (first installed wins)
+  DEFAULT_LLM="$ORIG_DEFAULT_LLM"
+  for entry in "${LLM_MODELS[@]}"; do
+    IFS='|' read -r mid _ <<< "$entry"
+    if _model_cached "$mid"; then
+      DEFAULT_LLM="$mid"
+      break
+    fi
+  done
+
+  DEFAULT_EMBED="$ORIG_DEFAULT_EMBED"
+  for entry in "${EMBED_MODELS[@]}"; do
+    IFS='|' read -r mid _ <<< "$entry"
+    if _model_cached "$mid"; then
+      DEFAULT_EMBED="$mid"
+      break
+    fi
+  done
+
+  # Find the 1-based index of the default model in a list
+  _default_index() {
+    local default_id="$1"; shift
+    local idx=1
+    for entry in "$@"; do
+      IFS='|' read -r mid _ <<< "$entry"
+      if [ "$mid" = "$default_id" ]; then
+        echo "$idx"
+        return
+      fi
+      idx=$((idx + 1))
+    done
+    echo "1"
+  }
+
+  DEFAULT_LLM_IDX=$(_default_index "$DEFAULT_LLM" "${LLM_MODELS[@]}")
+  DEFAULT_EMBED_IDX=$(_default_index "$DEFAULT_EMBED" "${EMBED_MODELS[@]}")
 
   # Interactive model picker (skip if env vars are set)
   if [ -z "$XGH_LLM_MODEL" ]; then
@@ -85,16 +150,20 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     echo ""
     for i in "${!LLM_MODELS[@]}"; do
       IFS='|' read -r model_id model_desc <<< "${LLM_MODELS[$i]}"
+      local_tag=""
+      if _model_cached "$model_id"; then
+        local_tag=" ${GREEN}(installed)${NC}"
+      fi
       if [ "$model_id" = "$DEFAULT_LLM" ]; then
-        echo -e "    ${GREEN}$((i+1)))${NC} ${model_desc}"
+        echo -e "    ${GREEN}$((i+1)))${NC} ${model_desc}${local_tag}"
       else
-        echo "    $((i+1))) ${model_desc}"
+        echo -e "    $((i+1))) ${model_desc}${local_tag}"
       fi
     done
     echo "    c) Custom HuggingFace model ID"
     echo ""
-    read -r -p "  🐴 Pick [1]: " llm_choice
-    llm_choice="${llm_choice:-1}"
+    read -r -p "  🐴 Pick [${DEFAULT_LLM_IDX}]: " llm_choice
+    llm_choice="${llm_choice:-$DEFAULT_LLM_IDX}"
 
     if [ "$llm_choice" = "c" ] || [ "$llm_choice" = "C" ]; then
       read -r -p "  Enter HuggingFace model ID: " XGH_LLM_MODEL
@@ -112,16 +181,20 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     echo ""
     for i in "${!EMBED_MODELS[@]}"; do
       IFS='|' read -r model_id model_desc <<< "${EMBED_MODELS[$i]}"
+      local_tag=""
+      if _model_cached "$model_id"; then
+        local_tag=" ${GREEN}(installed)${NC}"
+      fi
       if [ "$model_id" = "$DEFAULT_EMBED" ]; then
-        echo -e "    ${GREEN}$((i+1)))${NC} ${model_desc}"
+        echo -e "    ${GREEN}$((i+1)))${NC} ${model_desc}${local_tag}"
       else
-        echo "    $((i+1))) ${model_desc}"
+        echo -e "    $((i+1))) ${model_desc}${local_tag}"
       fi
     done
     echo "    c) Custom HuggingFace model ID"
     echo ""
-    read -r -p "  🐴 Pick [1]: " embed_choice
-    embed_choice="${embed_choice:-1}"
+    read -r -p "  🐴 Pick [${DEFAULT_EMBED_IDX}]: " embed_choice
+    embed_choice="${embed_choice:-$DEFAULT_EMBED_IDX}"
 
     if [ "$embed_choice" = "c" ] || [ "$embed_choice" = "C" ]; then
       read -r -p "  Enter HuggingFace model ID: " XGH_EMBED_MODEL
@@ -137,13 +210,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   info "Embedding model:  ${XGH_EMBED_MODEL}"
 
   # ── 3. Download models ─────────────────────────────────
-  # Check if models are already in the HuggingFace cache
-  HF_CACHE="${HF_HOME:-${HOME}/.cache/huggingface}/hub"
-  _model_cached() {
-    local slug; slug="models--$(echo "$1" | sed 's|/|--|g')"
-    [ -d "${HF_CACHE}/${slug}" ]
-  }
-
+  # _model_cached and HF_CACHE already defined in Model Selection above
   MODELS_TO_DOWNLOAD=()
   for m in "$XGH_LLM_MODEL" "$XGH_EMBED_MODEL"; do
     if _model_cached "$m"; then
@@ -172,6 +239,20 @@ for model in sys.argv[1:]:
 
   # ── 3b. Cipher Infrastructure ──────────────────────────
   lane "Wiring up the memory layer 🧬"
+
+  # -- install cipher globally if not present --
+  if ! command -v cipher &>/dev/null; then
+    if command -v npm &>/dev/null; then
+      info "Installing Cipher MCP server..."
+      npm install -g @byterover/cipher &>/dev/null || {
+        warn "Could not install @byterover/cipher — install manually: npm install -g @byterover/cipher"
+      }
+    else
+      warn "npm not found — install Node.js first, then: npm install -g @byterover/cipher"
+    fi
+  else
+    info "Cipher already installed: $(command -v cipher)"
+  fi
 
   # -- cipher-mcp wrapper (filters stdout pollution, injects --agent config, fixes encoding_format) --
   CIPHER_MCP_BIN="${HOME}/.local/bin/cipher-mcp"
@@ -474,8 +555,20 @@ CIPHERYMLEOF
   # -- Qdrant collections (768-dim Cosine vectors) --
   ensure_qdrant_collections() {
     local qdrant_url="http://localhost:6333"
+
+    # Wait for Qdrant to become ready (max 5 seconds)
+    local retries=5
+    while [ "$retries" -gt 0 ]; do
+      if curl -sf "${qdrant_url}/healthz" >/dev/null 2>&1; then
+        break
+      fi
+      info "Waiting for Qdrant to become ready... (${retries}s remaining)"
+      sleep 1
+      retries=$((retries - 1))
+    done
+
     if ! curl -sf "${qdrant_url}/collections" >/dev/null 2>&1; then
-      warn "Qdrant not running — collections will be created on first use"
+      warn "Qdrant not reachable after waiting — collections will be created on first use"
       return 0
     fi
 
@@ -1119,34 +1212,16 @@ else
   info "Skipping MCP detection (dry run or no claude CLI)"
 fi
 
-# ── 12. Start script ─────────────────────────────────────
-info "Creating model server start script"
-SCRIPTS_DIR="${PACK_DIR}/scripts"
-mkdir -p "$SCRIPTS_DIR"
-
-cat > "${SCRIPTS_DIR}/start-models.sh" <<STARTEOF
-#!/usr/bin/env bash
-# Start the vllm-mlx model server for xgh
-# Generated by xgh installer
-
-set -euo pipefail
-
-XGH_LLM_MODEL="\${XGH_LLM_MODEL:-${XGH_LLM_MODEL}}"
-XGH_EMBED_MODEL="\${XGH_EMBED_MODEL:-${XGH_EMBED_MODEL}}"
-XGH_MODEL_PORT="\${XGH_MODEL_PORT:-${XGH_MODEL_PORT}}"
-
-echo "🐴🤖 Starting vllm-mlx model server..."
-echo "   LLM:        \${XGH_LLM_MODEL}"
-echo "   Embeddings: \${XGH_EMBED_MODEL}"
-echo "   Port:       \${XGH_MODEL_PORT}"
-echo ""
-
-exec vllm-mlx serve "\${XGH_LLM_MODEL}" \\
-  --embedding-model "\${XGH_EMBED_MODEL}" \\
-  --port "\${XGH_MODEL_PORT}" \\
-  --host 127.0.0.1
-STARTEOF
-chmod +x "${SCRIPTS_DIR}/start-models.sh"
+# ── 12. Model config ─────────────────────────────────────
+info "Writing model configuration to ~/.xgh/models.env"
+mkdir -p "$HOME/.xgh"
+cat > "$HOME/.xgh/models.env" <<MODELSEOF
+# xgh model server configuration — generated by installer
+XGH_LLM_MODEL="${XGH_LLM_MODEL}"
+XGH_EMBED_MODEL="${XGH_EMBED_MODEL}"
+XGH_MODEL_PORT="${XGH_MODEL_PORT}"
+MODELSEOF
+# Note: vllm-mlx model server runs as a launchd/systemd daemon (see ingest-schedule.sh)
 
 # ── xgh-ingest setup ──────────────────────────────────────
 if [ "$XGH_DRY_RUN" -eq 0 ]; then
@@ -1174,6 +1249,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   # Copy scheduler templates
   cp "${PACK_DIR}/scripts/schedulers/com.xgh.retriever.plist" "$HOME/.xgh/schedulers/"
   cp "${PACK_DIR}/scripts/schedulers/com.xgh.analyzer.plist"  "$HOME/.xgh/schedulers/"
+  cp "${PACK_DIR}/scripts/schedulers/com.xgh.models.plist"    "$HOME/.xgh/schedulers/"
   cp "${PACK_DIR}/scripts/ingest-schedule.sh" "$HOME/.xgh/lib/"
   chmod +x "$HOME/.xgh/lib/ingest-schedule.sh"
 
@@ -1184,6 +1260,19 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     info "Dry run — skipping scheduler install"
   fi
   info "Run /xgh-doctor to validate the pipeline"
+fi
+
+# ── Claude CLI auth check ────────────────────────────────
+if command -v claude &>/dev/null; then
+  if AUTH_JSON=$(claude auth status 2>/dev/null) && echo "$AUTH_JSON" | grep -q '"loggedIn": true'; then
+    AUTH_EMAIL=$(echo "$AUTH_JSON" | grep '"email"' | sed 's/.*"email": *"//;s/".*//')
+    info "Claude CLI authenticated${AUTH_EMAIL:+ as ${AUTH_EMAIL}}"
+  else
+    warn "Claude CLI found but not authenticated"
+    warn "Run ${BOLD}claude${NC} to complete login before using xgh"
+  fi
+else
+  warn "Claude CLI not found — install it, then run ${BOLD}claude${NC} to log in"
 fi
 
 # ── Done ─────────────────────────────────────────────────
@@ -1201,9 +1290,10 @@ echo -e "  ${DIM}Scope${NC}        ${XGH_HOOKS_SCOPE}"
 echo ""
 echo -e "  ${BOLD}Next steps:${NC}"
 echo ""
-echo -e "  ${GREEN}1.${NC} Start models    ${DIM}bash ${SCRIPTS_DIR}/start-models.sh${NC}"
-echo -e "  ${GREEN}2.${NC} Launch Claude    ${DIM}claude${NC}"
-echo -e "  ${GREEN}3.${NC} Run briefing     ${DIM}/xgh-brief${NC}"
+echo -e "  ${GREEN}1.${NC} Launch Claude    ${DIM}claude${NC}"
+echo -e "  ${GREEN}2.${NC} Run briefing     ${DIM}/xgh-brief${NC}"
+echo -e ""
+echo -e "  ${DIM}Models run automatically as a daemon (launchd/systemd).${NC}"
 echo ""
 echo -e "  ${DIM}Your AI now remembers. Ship it. 🐴${NC}"
 echo ""

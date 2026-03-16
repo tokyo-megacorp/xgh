@@ -9,9 +9,23 @@ XGH_LOG_DIR="${XGH_HOME}/logs"
 SCHED_DIR="${XGH_HOME}/schedulers"
 RETRIEVER_PLIST="${SCHED_DIR}/com.xgh.retriever.plist"
 ANALYZER_PLIST="${SCHED_DIR}/com.xgh.analyzer.plist"
+MODELS_PLIST="${SCHED_DIR}/com.xgh.models.plist"
+MODELS_ENV="${XGH_HOME}/models.env"
 
 # Detect claude binary location
 CLAUDE_BIN=$(command -v claude 2>/dev/null || echo "/usr/local/bin/claude")
+
+# Detect vllm-mlx binary location
+VLLM_BIN=$(command -v vllm-mlx 2>/dev/null || echo "/usr/local/bin/vllm-mlx")
+
+# Load model config from models.env if available
+XGH_LLM_MODEL="${XGH_LLM_MODEL:-}"
+XGH_EMBED_MODEL="${XGH_EMBED_MODEL:-}"
+XGH_MODEL_PORT="${XGH_MODEL_PORT:-11434}"
+if [ -f "$MODELS_ENV" ]; then
+  # shellcheck disable=SC1090
+  source "$MODELS_ENV"
+fi
 
 _render_plist() {
   local src="$1" dst="$2"
@@ -20,10 +34,18 @@ _render_plist() {
   local safe_home="${HOME//&/\\&}"
   local safe_xgh_home="${XGH_HOME//&/\\&}"
   local safe_claude="${CLAUDE_BIN//&/\\&}"
+  local safe_vllm="${VLLM_BIN//&/\\&}"
+  local safe_llm_model="${XGH_LLM_MODEL//&/\\&}"
+  local safe_embed_model="${XGH_EMBED_MODEL//&/\\&}"
+  local safe_model_port="${XGH_MODEL_PORT//&/\\&}"
   sed -e "s|XGH_LOG_DIR|${safe_log_dir}|g" \
       -e "s|XGH_USER_HOME|${safe_home}|g" \
       -e "s|XGH_HOME|${safe_xgh_home}|g" \
       -e "s|XGH_CLAUDE_BIN|${safe_claude}|g" \
+      -e "s|XGH_VLLM_BIN|${safe_vllm}|g" \
+      -e "s|XGH_LLM_MODEL|${safe_llm_model}|g" \
+      -e "s|XGH_EMBED_MODEL|${safe_embed_model}|g" \
+      -e "s|XGH_MODEL_PORT|${safe_model_port}|g" \
       "$src" > "$dst"
 }
 
@@ -35,7 +57,15 @@ install_macos() {
   launchctl unload "${PLIST_DIR}/com.xgh.analyzer.plist"  2>/dev/null || true
   launchctl load   "${PLIST_DIR}/com.xgh.retriever.plist"
   launchctl load   "${PLIST_DIR}/com.xgh.analyzer.plist"
-  echo "✓ launchd agents loaded (retriever: 5min, analyzer: 30min)"
+  # Install models daemon if plist template exists and models are configured
+  if [ -f "$MODELS_PLIST" ] && [ -n "$XGH_LLM_MODEL" ]; then
+    _render_plist "$MODELS_PLIST" "${PLIST_DIR}/com.xgh.models.plist"
+    launchctl unload "${PLIST_DIR}/com.xgh.models.plist" 2>/dev/null || true
+    launchctl load   "${PLIST_DIR}/com.xgh.models.plist"
+    echo "✓ launchd agents loaded (retriever: 5min, analyzer: 30min, models: daemon)"
+  else
+    echo "✓ launchd agents loaded (retriever: 5min, analyzer: 30min)"
+  fi
 }
 
 install_linux() {
@@ -50,18 +80,47 @@ install_linux() {
   crontab "$tmp"
   rm -f "$tmp"
   echo "✓ cron entries installed"
+  # Install models as a systemd user service if models are configured
+  if [ -n "$XGH_LLM_MODEL" ]; then
+    local svc_dir="${HOME}/.config/systemd/user"
+    mkdir -p "$svc_dir"
+    cat > "${svc_dir}/xgh-models.service" <<SVCEOF
+[Unit]
+Description=xgh vllm-mlx model server
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=${VLLM_BIN} serve ${XGH_LLM_MODEL} --embedding-model ${XGH_EMBED_MODEL} --port ${XGH_MODEL_PORT} --host 127.0.0.1
+Restart=always
+RestartSec=5
+Environment=HOME=${HOME}
+StandardOutput=append:${XGH_LOG_DIR}/vllm-mlx.log
+StandardError=append:${XGH_LOG_DIR}/vllm-mlx.log
+
+[Install]
+WantedBy=default.target
+SVCEOF
+    systemctl --user daemon-reload 2>/dev/null || true
+    systemctl --user enable --now xgh-models.service 2>/dev/null || true
+    echo "✓ systemd user service xgh-models installed and started"
+  fi
 }
 
 uninstall_macos() {
   launchctl unload "${PLIST_DIR}/com.xgh.retriever.plist" 2>/dev/null || true
   launchctl unload "${PLIST_DIR}/com.xgh.analyzer.plist"  2>/dev/null || true
-  rm -f "${PLIST_DIR}/com.xgh.retriever.plist" "${PLIST_DIR}/com.xgh.analyzer.plist"
+  launchctl unload "${PLIST_DIR}/com.xgh.models.plist"    2>/dev/null || true
+  rm -f "${PLIST_DIR}/com.xgh.retriever.plist" "${PLIST_DIR}/com.xgh.analyzer.plist" "${PLIST_DIR}/com.xgh.models.plist"
   echo "✓ launchd agents unloaded"
 }
 
 uninstall_linux() {
   crontab -l 2>/dev/null | grep -v "xgh-retrieve\|xgh-analyze" | crontab - || true
-  echo "✓ cron entries removed"
+  systemctl --user disable --now xgh-models.service 2>/dev/null || true
+  rm -f "${HOME}/.config/systemd/user/xgh-models.service"
+  systemctl --user daemon-reload 2>/dev/null || true
+  echo "✓ cron entries and systemd services removed"
 }
 
 case "${1:-help}" in
@@ -74,6 +133,7 @@ case "${1:-help}" in
       echo "launchd:"; launchctl list 2>/dev/null | grep "com.xgh" || echo "  (not loaded)"
     else
       echo "cron:"; crontab -l 2>/dev/null | grep "xgh" || echo "  (not installed)"
+      echo "systemd:"; systemctl --user status xgh-models.service 2>/dev/null | head -5 || echo "  (not installed)"
     fi ;;
   *) echo "Usage: $0 install|uninstall|status"; exit 1 ;;
 esac

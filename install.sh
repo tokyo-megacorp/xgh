@@ -1177,7 +1177,13 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   cp "${PACK_DIR}/scripts/ingest-schedule.sh" "$HOME/.xgh/lib/"
   chmod +x "$HOME/.xgh/lib/ingest-schedule.sh"
 
-  info "Run /xgh-doctor to validate, or ~/.xgh/lib/ingest-schedule.sh install to start the scheduler"
+  # Auto-install the scheduler
+  if [ "$XGH_DRY_RUN" -eq 0 ]; then
+    bash "$HOME/.xgh/lib/ingest-schedule.sh" install || warn "Could not install scheduler — run ~/.xgh/lib/ingest-schedule.sh install manually"
+  else
+    info "Dry run — skipping scheduler install"
+  fi
+  info "Run /xgh-doctor to validate the pipeline"
 fi
 
 # ── Done ─────────────────────────────────────────────────

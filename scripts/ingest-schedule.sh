@@ -18,9 +18,11 @@ _render_plist() {
   # Escape & in paths to prevent sed backreference interpretation
   local safe_log_dir="${XGH_LOG_DIR//&/\\&}"
   local safe_home="${HOME//&/\\&}"
+  local safe_xgh_home="${XGH_HOME//&/\\&}"
   local safe_claude="${CLAUDE_BIN//&/\\&}"
   sed -e "s|XGH_LOG_DIR|${safe_log_dir}|g" \
-      -e "s|XGH_HOME|${safe_home}|g" \
+      -e "s|XGH_USER_HOME|${safe_home}|g" \
+      -e "s|XGH_HOME|${safe_xgh_home}|g" \
       -e "s|XGH_CLAUDE_BIN|${safe_claude}|g" \
       "$src" > "$dst"
 }

@@ -25,7 +25,7 @@
   <key>EnvironmentVariables</key>
   <dict>
     <key>HOME</key>
-    <string>XGH_HOME</string>
+    <string>XGH_USER_HOME</string>
     <key>PATH</key>
     <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin</string>
   </dict>

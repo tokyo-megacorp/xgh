@@ -675,12 +675,12 @@ if command -v claude &>/dev/null && [ "$XGH_DRY_RUN" -eq 0 ]; then
   )
   [ -n "$_OLLAMA_ENV" ] && _ENV_ARGS+=(-e "$_OLLAMA_ENV")
   claude mcp remove cipher -s user 2>/dev/null || true
-  claude mcp add -s user "${_ENV_ARGS[@]}" cipher -- "${HOME}/.local/bin/cipher-mcp"
+  # name and commandOrUrl must come before -e flags
+  claude mcp add -s user cipher "${HOME}/.local/bin/cipher-mcp" "${_ENV_ARGS[@]}"
   info "Cipher MCP ✓ registered globally (claude mcp add -s user)"
 else
-  # Fallback: write ~/.claude/.mcp.json directly (dry-run or claude not yet in PATH)
-  _GLOBAL_MCP="${HOME}/.claude/.mcp.json"
-  mkdir -p "${HOME}/.claude"
+  # Fallback: write ~/.claude.json directly (dry-run or claude not yet in PATH)
+  _GLOBAL_CLAUDE_JSON="${HOME}/.claude.json"
   _CIPHER_ENV=$(cat <<ENVEOF
 {
   "MCP_SERVER_MODE": "aggregator",
@@ -709,14 +709,15 @@ ENVEOF
   _CIPHER_ENTRY=$(echo "$_CIPHER_ENV" | jq \
     --arg cmd "${HOME}/.local/bin/cipher-mcp" \
     '{"type":"stdio","command":$cmd,"args":[],"env":.}')
-  if [ -f "$_GLOBAL_MCP" ] && [ -s "$_GLOBAL_MCP" ]; then
+  if [ -f "$_GLOBAL_CLAUDE_JSON" ] && [ -s "$_GLOBAL_CLAUDE_JSON" ]; then
     jq --argjson e "$_CIPHER_ENTRY" '.mcpServers.cipher = $e' \
-      "$_GLOBAL_MCP" > "${_GLOBAL_MCP}.tmp" && mv "${_GLOBAL_MCP}.tmp" "$_GLOBAL_MCP"
+      "$_GLOBAL_CLAUDE_JSON" > "${_GLOBAL_CLAUDE_JSON}.tmp" \
+      && mv "${_GLOBAL_CLAUDE_JSON}.tmp" "$_GLOBAL_CLAUDE_JSON"
   else
     echo '{"mcpServers":{}}' | jq --argjson e "$_CIPHER_ENTRY" \
-      '.mcpServers.cipher = $e' > "$_GLOBAL_MCP"
+      '.mcpServers.cipher = $e' > "$_GLOBAL_CLAUDE_JSON"
   fi
-  info "Cipher MCP → ~/.claude/.mcp.json"
+  info "Cipher MCP → ~/.claude.json"
 fi
 
 # Clean up any legacy project-level .mcp.json

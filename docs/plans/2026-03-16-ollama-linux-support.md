@@ -220,7 +220,33 @@ service** (`ollama.service`) that auto-starts. xgh should not create a competing
 
 ---
 
-### Step 11 — API compatibility: no changes needed
+### Step 11 — MCP env vars: branch on backend
+
+The `_ENV_ARGS` passed to `claude mcp add -s user` are currently hardcoded to `openai` provider
+and localhost URLs. Must be branched per backend.
+
+- [ ] Replace the current flat `_ENV_ARGS` block with a backend-conditional one:
+
+  **vllm-mlx** (keep existing — provider=openai, /v1 suffix):
+  ```
+  EMBEDDING_PROVIDER=openai   EMBEDDING_BASE_URL=http://localhost:11434/v1
+  OPENAI_API_KEY=placeholder  OPENAI_BASE_URL=http://localhost:11434/v1
+  LLM_PROVIDER=openai         LLM_BASE_URL=http://localhost:11434/v1
+  ```
+
+  **ollama** (new — provider=ollama, no /v1 suffix, no OPENAI_* keys):
+  ```
+  EMBEDDING_PROVIDER=ollama   EMBEDDING_BASE_URL=http://localhost:11434
+  OLLAMA_BASE_URL=http://localhost:11434
+  LLM_PROVIDER=ollama         LLM_BASE_URL=http://localhost:11434
+  ```
+  Omitting `OPENAI_API_KEY` / `OPENAI_BASE_URL` prevents the cipher-mcp wrapper from
+  attempting OpenAI-compat paths when the native Ollama provider is active.
+
+- [ ] Apply the same branching to the fallback `_CIPHER_ENV` JSON heredoc (written directly
+  to `~/.claude.json` when `claude` CLI is unavailable).
+
+### Step 11b — API compatibility: no code changes needed
 
 Ollama's `/v1/embeddings` returns the same JSON shape as vllm-mlx. The existing `fix-openai-embeddings.js` patch in the cipher-mcp wrapper is a no-op on Ollama and safe to leave in place.
 

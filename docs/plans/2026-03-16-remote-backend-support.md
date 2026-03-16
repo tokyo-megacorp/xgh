@@ -183,9 +183,36 @@ print('yes' if '${1}' in ids else 'no')
 
 - [ ] Add `XGH_REMOTE_URL="${XGH_REMOTE_URL}"` to the generated `models.env`.
 
-### Step 6 — cipher.yml: remote uses openai type with remote baseURL
+### Step 6 — cipher.yml + MCP env vars: remote uses openai type with remote baseURL
 
 - [ ] Add `remote` branch in the cipher.yml generation and sync blocks.
+- [ ] Branch `_ENV_ARGS` in the `claude mcp add -s user` call:
+
+  **remote** (provider=openai, remote URL with /v1 suffix):
+  ```
+  EMBEDDING_PROVIDER=openai   EMBEDDING_MODEL=${XGH_EMBED_MODEL}
+  EMBEDDING_BASE_URL=${XGH_REMOTE_URL}/v1   EMBEDDING_API_KEY=placeholder
+  OPENAI_API_KEY=placeholder   OPENAI_BASE_URL=${XGH_REMOTE_URL}/v1
+  LLM_PROVIDER=openai   LLM_MODEL=${XGH_LLM_MODEL}
+  LLM_BASE_URL=${XGH_REMOTE_URL}/v1   LLM_API_KEY=placeholder
+  ```
+  No `OLLAMA_BASE_URL`. All localhost references replaced with `${XGH_REMOTE_URL}`.
+
+- [ ] Same branching in the fallback `_CIPHER_ENV` JSON heredoc.
+
+**Full env key matrix across all backends:**
+
+| Key | `vllm-mlx` | `ollama` | `remote` |
+|---|---|---|---|
+| `EMBEDDING_PROVIDER` | `openai` | `ollama` | `openai` |
+| `EMBEDDING_BASE_URL` | `http://localhost:11434/v1` | `http://localhost:11434` | `${XGH_REMOTE_URL}/v1` |
+| `EMBEDDING_API_KEY` | `placeholder` | _(omit)_ | `placeholder` |
+| `OPENAI_API_KEY` | `placeholder` | _(omit)_ | `placeholder` |
+| `OPENAI_BASE_URL` | `http://localhost:11434/v1` | _(omit)_ | `${XGH_REMOTE_URL}/v1` |
+| `OLLAMA_BASE_URL` | _(omit)_ | `http://localhost:11434` | _(omit)_ |
+| `LLM_PROVIDER` | `openai` | `ollama` | `openai` |
+| `LLM_BASE_URL` | `http://localhost:11434/v1` | `http://localhost:11434` | `${XGH_REMOTE_URL}/v1` |
+| `LLM_API_KEY` | `placeholder` | _(omit)_ | `placeholder` |
 
 ### Step 7 — ingest-schedule.sh: no model service for remote
 

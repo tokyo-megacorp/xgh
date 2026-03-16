@@ -1072,7 +1072,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ] && [ "$XGH_INSTALL_PLUGINS" != "skip" ]; then
     read -r -p "  🤖 Install? [y/N] " INSTALL_SUPERPOWERS
   fi
   if [[ "$(printf '%s' "$INSTALL_SUPERPOWERS" | tr '[:upper:]' '[:lower:]')" =~ ^y ]]; then
-    install_plugin "claude-plugins-official/superpowers" "superpowers@superpowers" "superpowers"
+    install_plugin "obra/superpowers-marketplace" "superpowers@superpowers-marketplace" "superpowers"
   fi
 fi
 

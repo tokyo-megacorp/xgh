@@ -1,6 +1,6 @@
 # Hooks & Core Skills Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace the placeholder hooks with real implementations that inject context-tree knowledge and decision tables, and create the six core skills plus three slash commands that form xgh's self-learning loop.
 
@@ -57,7 +57,7 @@ The SessionStart hook must:
 4. Output a single JSON object: `{"result": "...injected context..."}`
 5. If no context tree exists, output a graceful fallback message
 
-- [ ] **Step 1: Write test for hooks**
+- [x] **Step 1: Write test for hooks**
 
 Create `tests/test-hooks.sh` with assertions for both hooks:
 
@@ -177,14 +177,14 @@ TESTEOF
 chmod +x tests/test-hooks.sh
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd /path/to/xgh && bash tests/test-hooks.sh
 # Expected: multiple FAILs because hooks are still placeholders
 ```
 
-- [ ] **Step 3: Implement session-start.sh**
+- [x] **Step 3: Implement session-start.sh**
 
 Replace `hooks/session-start.sh` with the full implementation:
 
@@ -340,7 +340,7 @@ HOOKEOF
 chmod +x hooks/session-start.sh
 ```
 
-- [ ] **Step 4: Run test to verify session-start passes**
+- [x] **Step 4: Run test to verify session-start passes**
 
 ```bash
 cd /path/to/xgh && bash tests/test-hooks.sh
@@ -353,7 +353,7 @@ cd /path/to/xgh && bash tests/test-hooks.sh
 - Modify: `hooks/prompt-submit.sh`
 - Test: `tests/test-hooks.sh` (already has tests from Task 1)
 
-- [ ] **Step 1: Implement prompt-submit.sh**
+- [x] **Step 1: Implement prompt-submit.sh**
 
 Replace `hooks/prompt-submit.sh` with the full implementation:
 
@@ -413,7 +413,7 @@ HOOKEOF
 chmod +x hooks/prompt-submit.sh
 ```
 
-- [ ] **Step 2: Run full hook tests to verify all pass**
+- [x] **Step 2: Run full hook tests to verify all pass**
 
 ```bash
 cd /path/to/xgh && bash tests/test-hooks.sh
@@ -421,7 +421,7 @@ cd /path/to/xgh && bash tests/test-hooks.sh
 # Results: N passed, 0 failed
 ```
 
-- [ ] **Step 3: Commit hooks**
+- [x] **Step 3: Commit hooks**
 
 ```bash
 git add hooks/session-start.sh hooks/prompt-submit.sh tests/test-hooks.sh
@@ -449,7 +449,7 @@ Both hooks output valid JSON for Claude Code's hook system."
 
 This is the RIGID iron-law skill. It enforces: "EVERY CODING SESSION MUST QUERY MEMORY BEFORE WRITING CODE AND CURATE LEARNINGS BEFORE ENDING."
 
-- [ ] **Step 1: Write test for skills**
+- [x] **Step 1: Write test for skills**
 
 ```bash
 cat > tests/test-skills.sh << 'TESTEOF'
@@ -526,14 +526,14 @@ TESTEOF
 chmod +x tests/test-skills.sh
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd /path/to/xgh && bash tests/test-skills.sh
 # Expected: all FAILs (no skill files exist yet)
 ```
 
-- [ ] **Step 3: Create continuous-learning skill**
+- [x] **Step 3: Create continuous-learning skill**
 
 ```bash
 mkdir -p skills/continuous-learning
@@ -617,10 +617,10 @@ These are the excuses agents use to skip memory operations. Every one of them is
 
 These are binary pass/fail checkpoints. If any gate fails, the session is non-compliant.
 
-- [ ] **Gate 1:** At least one `cipher_memory_search` call was made before the first code change
-- [ ] **Gate 2:** At least one `cipher_extract_and_operate_memory` or `/xgh-curate` call was made during or after code changes
-- [ ] **Gate 3:** Any architectural decision has a corresponding `cipher_store_reasoning_memory` call
-- [ ] **Gate 4:** Session-end curation was performed (not deferred)
+- [x] **Gate 1:** At least one `cipher_memory_search` call was made before the first code change
+- [x] **Gate 2:** At least one `cipher_extract_and_operate_memory` or `/xgh-curate` call was made during or after code changes
+- [x] **Gate 3:** Any architectural decision has a corresponding `cipher_store_reasoning_memory` call
+- [x] **Gate 4:** Session-end curation was performed (not deferred)
 
 ## Verification
 
@@ -630,7 +630,7 @@ After curating, always verify:
 3. If it does not appear, re-curate with better keywords/tags
 ```
 
-- [ ] **Step 4: Run test to check continuous-learning passes**
+- [x] **Step 4: Run test to check continuous-learning passes**
 
 ```bash
 cd /path/to/xgh && bash tests/test-skills.sh
@@ -642,7 +642,7 @@ cd /path/to/xgh && bash tests/test-skills.sh
 **Files:**
 - Create: `skills/curate-knowledge/curate-knowledge.md`
 
-- [ ] **Step 1: Create curate-knowledge skill**
+- [x] **Step 1: Create curate-knowledge skill**
 
 ```bash
 mkdir -p skills/curate-knowledge
@@ -788,19 +788,19 @@ After creating or updating a knowledge file:
 
 Before considering curation complete:
 
-- [ ] Title is clear and searchable (would YOU find this by searching?)
-- [ ] Tags include category + technology + domain + abstract concept
-- [ ] Keywords include specific searchable terms
-- [ ] Raw Concept has enough detail to reproduce/understand technically
-- [ ] Narrative explains WHY, not just WHAT
-- [ ] Facts are one-sentence, factual, categorized
-- [ ] File is in the correct domain/topic path
-- [ ] Manifest is updated
-- [ ] Cipher memory is updated (via cipher_extract_and_operate_memory)
-- [ ] Verification: `cipher_memory_search` finds the new entry
+- [x] Title is clear and searchable (would YOU find this by searching?)
+- [x] Tags include category + technology + domain + abstract concept
+- [x] Keywords include specific searchable terms
+- [x] Raw Concept has enough detail to reproduce/understand technically
+- [x] Narrative explains WHY, not just WHAT
+- [x] Facts are one-sentence, factual, categorized
+- [x] File is in the correct domain/topic path
+- [x] Manifest is updated
+- [x] Cipher memory is updated (via cipher_extract_and_operate_memory)
+- [x] Verification: `cipher_memory_search` finds the new entry
 ```
 
-- [ ] **Step 2: Run test to check curate-knowledge passes**
+- [x] **Step 2: Run test to check curate-knowledge passes**
 
 ```bash
 cd /path/to/xgh && bash tests/test-skills.sh
@@ -812,7 +812,7 @@ cd /path/to/xgh && bash tests/test-skills.sh
 **Files:**
 - Create: `skills/query-strategies/query-strategies.md`
 
-- [ ] **Step 1: Create query-strategies skill**
+- [x] **Step 1: Create query-strategies skill**
 
 ```bash
 mkdir -p skills/query-strategies
@@ -980,14 +980,14 @@ Search is complete when ANY of these are true:
 **Never skip the search.** Even "nothing found" is valuable information — it means you are about to create new team knowledge.
 ```
 
-- [ ] **Step 2: Run test to check query-strategies passes**
+- [x] **Step 2: Run test to check query-strategies passes**
 
 ```bash
 cd /path/to/xgh && bash tests/test-skills.sh
 # Expected: 3 skills pass, 2 still fail
 ```
 
-- [ ] **Step 3: Commit first three skills**
+- [x] **Step 3: Commit first three skills**
 
 ```bash
 git add skills/continuous-learning/ skills/curate-knowledge/ skills/query-strategies/ tests/test-skills.sh
@@ -1012,7 +1012,7 @@ reasoning patterns, debugging) with refinement patterns and scoring formula."
 **Files:**
 - Create: `skills/context-tree-maintenance/context-tree-maintenance.md`
 
-- [ ] **Step 1: Create context-tree-maintenance skill**
+- [x] **Step 1: Create context-tree-maintenance skill**
 
 ```bash
 mkdir -p skills/context-tree-maintenance
@@ -1193,7 +1193,7 @@ Report these in `/xgh-status`:
 | Orphaned entries (in manifest but file missing) | 0 | 1-2 | > 2 |
 ```
 
-- [ ] **Step 2: Run test to check context-tree-maintenance passes**
+- [x] **Step 2: Run test to check context-tree-maintenance passes**
 
 ```bash
 cd /path/to/xgh && bash tests/test-skills.sh
@@ -1205,7 +1205,7 @@ cd /path/to/xgh && bash tests/test-skills.sh
 **Files:**
 - Create: `skills/memory-verification/memory-verification.md`
 
-- [ ] **Step 1: Create memory-verification skill**
+- [x] **Step 1: Create memory-verification skill**
 
 ```bash
 mkdir -p skills/memory-verification
@@ -1279,13 +1279,13 @@ When curating to both Cipher and context tree:
 
 Use this after every curate or store operation:
 
-- [ ] `cipher_memory_search` with title keywords returns the entry in top 5
-- [ ] `cipher_memory_search` with a natural-language question returns the entry in top 5
-- [ ] Context tree file exists at the expected path
-- [ ] Context tree file has valid YAML frontmatter
-- [ ] `_manifest.json` includes the entry with correct path and metadata
-- [ ] Importance score is set appropriately (50 for new, higher for updates)
-- [ ] Maturity is set correctly (draft for new entries)
+- [x] `cipher_memory_search` with title keywords returns the entry in top 5
+- [x] `cipher_memory_search` with a natural-language question returns the entry in top 5
+- [x] Context tree file exists at the expected path
+- [x] Context tree file has valid YAML frontmatter
+- [x] `_manifest.json` includes the entry with correct path and metadata
+- [x] Importance score is set appropriately (50 for new, higher for updates)
+- [x] Maturity is set correctly (draft for new entries)
 
 ## Common Failure Modes
 
@@ -1309,7 +1309,7 @@ For a memory operation to be considered successful, ALL of these must be true:
 If any of these fail, the memory operation is NOT complete. Fix it before proceeding.
 ```
 
-- [ ] **Step 2: Run full skill tests to verify all pass**
+- [x] **Step 2: Run full skill tests to verify all pass**
 
 ```bash
 cd /path/to/xgh && bash tests/test-skills.sh
@@ -1317,7 +1317,7 @@ cd /path/to/xgh && bash tests/test-skills.sh
 # Results: N passed, 0 failed
 ```
 
-- [ ] **Step 3: Commit remaining skills**
+- [x] **Step 3: Commit remaining skills**
 
 ```bash
 git add skills/context-tree-maintenance/ skills/memory-verification/
@@ -1342,7 +1342,7 @@ considering it complete."
 - Create: `commands/query.md`
 - Create: `tests/test-commands.sh`
 
-- [ ] **Step 1: Write test for commands**
+- [x] **Step 1: Write test for commands**
 
 ```bash
 cat > tests/test-commands.sh << 'TESTEOF'
@@ -1384,14 +1384,14 @@ TESTEOF
 chmod +x tests/test-commands.sh
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 ```bash
 cd /path/to/xgh && bash tests/test-commands.sh
 # Expected: all FAILs (no command files exist yet)
 ```
 
-- [ ] **Step 3: Create /xgh-query command**
+- [x] **Step 3: Create /xgh-query command**
 
 Write `commands/query.md`:
 
@@ -1488,7 +1488,7 @@ After presenting results, ask:
 - "Should I refine the search with different terms?"
 ```
 
-- [ ] **Step 4: Run test to check query command passes**
+- [x] **Step 4: Run test to check query command passes**
 
 ```bash
 cd /path/to/xgh && bash tests/test-commands.sh
@@ -1500,7 +1500,7 @@ cd /path/to/xgh && bash tests/test-commands.sh
 **Files:**
 - Create: `commands/curate.md`
 
-- [ ] **Step 1: Create /xgh-curate command**
+- [x] **Step 1: Create /xgh-curate command**
 
 Write `commands/curate.md`:
 
@@ -1619,7 +1619,7 @@ Verification:
 **Files:**
 - Create: `commands/status.md`
 
-- [ ] **Step 1: Create /xgh-status command**
+- [x] **Step 1: Create /xgh-status command**
 
 Write `commands/status.md`:
 
@@ -1733,7 +1733,7 @@ Detailed Entries:
 ```
 ```
 
-- [ ] **Step 2: Run full command tests to verify all pass**
+- [x] **Step 2: Run full command tests to verify all pass**
 
 ```bash
 cd /path/to/xgh && bash tests/test-commands.sh
@@ -1741,7 +1741,7 @@ cd /path/to/xgh && bash tests/test-commands.sh
 # Results: N passed, 0 failed
 ```
 
-- [ ] **Step 3: Commit commands**
+- [x] **Step 3: Commit commands**
 
 ```bash
 git add commands/query.md commands/curate.md commands/status.md tests/test-commands.sh
@@ -1769,7 +1769,7 @@ recency, stale entries, orphans) and Cipher connectivity."
 - Test: `tests/test-commands.sh`
 - Test: `tests/test-config.sh` (existing, should still pass)
 
-- [ ] **Step 1: Run all test suites**
+- [x] **Step 1: Run all test suites**
 
 ```bash
 cd /path/to/xgh
@@ -1781,7 +1781,7 @@ echo "=== Command Tests ===" && bash tests/test-commands.sh
 
 Expected output: all suites pass with 0 failures.
 
-- [ ] **Step 2: Verify hook JSON output manually**
+- [x] **Step 2: Verify hook JSON output manually**
 
 ```bash
 # Session start with no context tree
@@ -1797,7 +1797,7 @@ XGH_CONTEXT_TREE_PATH=/nonexistent bash hooks/session-start.sh | python3 -c "imp
 bash hooks/prompt-submit.sh | python3 -c "import sys,json; print('VALID' if 'result' in json.load(sys.stdin) else 'INVALID')"
 ```
 
-- [ ] **Step 3: Verify file structure matches techpack.yaml expectations**
+- [x] **Step 3: Verify file structure matches techpack.yaml expectations**
 
 The `techpack.yaml` expects:
 - `hooks/session-start.sh` -> installs as `xgh-session-start.sh` (checked)
@@ -1820,7 +1820,7 @@ for c in query curate status; do
 done
 ```
 
-- [ ] **Step 4: Final commit (if any loose changes)**
+- [x] **Step 4: Final commit (if any loose changes)**
 
 ```bash
 git status

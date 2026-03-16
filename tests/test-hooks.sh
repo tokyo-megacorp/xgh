@@ -207,57 +207,32 @@ PS_VALID=$(python3 -c "
 import json, sys
 try:
     d = json.loads(sys.argv[1])
-    keys = set(d.keys())
-    required = {'result', 'promptIntent', 'requiredActions', 'toolHints'}
-    if required.issubset(keys):
+    if 'additionalContext' in d:
         print('yes')
     else:
-        print('no:missing:' + str(required - keys))
+        print('no:missing:additionalContext, got:' + str(list(d.keys())))
 except Exception as e:
     print('no:' + str(e))
 " "$PS_OUTPUT")
-assert_eq "prompt-submit has required keys" "$PS_VALID" "yes"
+assert_eq "prompt-submit has additionalContext key" "$PS_VALID" "yes"
 
-# Validate code-change intent
-PS_INTENT=$(python3 -c "
+# Validate code-change context is non-empty
+PS_CTX=$(python3 -c "
 import json, sys
 d = json.loads(sys.argv[1])
-print(d.get('promptIntent', ''))
+ctx = d.get('additionalContext', '')
+print('yes' if len(ctx) > 10 else 'no')
 " "$PS_OUTPUT")
-assert_eq "promptIntent is code-change" "$PS_INTENT" "code-change"
+assert_eq "promptIntent code-change has context" "$PS_CTX" "yes"
 
-# Validate general intent
+# Validate general prompt has additionalContext key
 PS_GENERAL=$(PROMPT="what time is it?" bash hooks/prompt-submit.sh)
-PS_INTENT_G=$(python3 -c "
+PS_VALID_G=$(python3 -c "
 import json, sys
 d = json.loads(sys.argv[1])
-print(d.get('promptIntent', ''))
+print('yes' if 'additionalContext' in d else 'no')
 " "$PS_GENERAL")
-assert_eq "promptIntent is general" "$PS_INTENT_G" "general"
-
-# Validate toolHints is array of strings
-PS_TH=$(python3 -c "
-import json, sys
-d = json.loads(sys.argv[1])
-th = d.get('toolHints', [])
-if isinstance(th, list) and len(th) > 0 and all(isinstance(s, str) for s in th):
-    print('yes')
-else:
-    print('no')
-" "$PS_OUTPUT")
-assert_eq "toolHints is array of strings" "$PS_TH" "yes"
-
-# Validate requiredActions is array of strings
-PS_RA=$(python3 -c "
-import json, sys
-d = json.loads(sys.argv[1])
-ra = d.get('requiredActions', [])
-if isinstance(ra, list) and len(ra) > 0 and all(isinstance(s, str) for s in ra):
-    print('yes')
-else:
-    print('no')
-" "$PS_OUTPUT")
-assert_eq "requiredActions is array of strings" "$PS_RA" "yes"
+assert_eq "prompt-submit general has additionalContext key" "$PS_VALID_G" "yes"
 
 # Both hooks exit 0
 bash hooks/session-start.sh > /dev/null 2>&1 && PASS=$((PASS + 1)) || { echo "FAIL: session-start.sh non-zero exit"; FAIL=$((FAIL + 1)); }

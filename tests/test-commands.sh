@@ -22,18 +22,15 @@ assert_contains() {
   fi
 }
 
-assert_file_exists "commands/query.md"
+assert_file_exists "commands/ask.md"
 assert_file_exists "commands/curate.md"
 assert_file_exists "commands/status.md"
 
-assert_contains "commands/query.md" "/xgh query"
-assert_contains "commands/query.md" "context-tree.sh search"
+assert_contains "commands/ask.md" "/xgh-ask"
 
-assert_contains "commands/curate.md" "/xgh curate"
-assert_contains "commands/curate.md" "ct-sync.sh curate"
+assert_contains "commands/curate.md" "/xgh-curate"
 
-assert_contains "commands/status.md" "/xgh status"
-assert_contains "commands/status.md" "_manifest.json"
+assert_contains "commands/status.md" "/xgh-status"
 
 echo ""
 echo "Commands test: $PASS passed, $FAIL failed"

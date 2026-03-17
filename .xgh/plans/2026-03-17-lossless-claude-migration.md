@@ -308,29 +308,22 @@ Line 77: `Cipher MCP | Connected/Disconnected` row → `lossless-claude MCP | Co
 
 Apply all other substitutions.
 
-- [ ] **Step 4: Update `plugin/commands/help.md`**
-
-Lines 18-19: Update "Codebase indexed" check to use `lcm_search` instead of `cipher_memory_search`.
-Update "MCP connections" check to reference lossless-claude instead of Cipher.
-
-Apply all other substitutions.
-
-- [ ] **Step 5: Update `plugin/commands/setup.md`**
+- [ ] **Step 4: Update `plugin/commands/setup.md`**
 
 Update the supported MCP servers list (Cipher → lossless-claude). Apply all substitutions.
 
-- [ ] **Step 6: Update `plugin/commands/init.md`**
+- [ ] **Step 5: Update `plugin/commands/init.md`**
 
 Update MCP connection verification to check for lossless-claude instead of Cipher. Apply all substitutions.
 
-- [ ] **Step 7: Verify**
+- [ ] **Step 6: Verify**
 
 ```bash
 grep -l "cipher" plugin/commands/doctor.md plugin/commands/status.md plugin/commands/setup.md plugin/commands/init.md
 ```
 Expected: no files listed
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add plugin/commands/doctor.md plugin/commands/status.md plugin/commands/setup.md plugin/commands/init.md
@@ -503,14 +496,14 @@ git commit -m "feat: migrate end-of-task extraction commands from Cipher to loss
 
 ### Task 8: Mechanical-substitution commands
 
-**Files:** `ask.md`, `calibrate.md`, `index.md`, `profile.md`, `retrieve.md`, `help.md` (if not already done in Task 4)
+**Files:** `ask.md`, `calibrate.md`, `help.md`, `index.md`, `profile.md`, `retrieve.md`
 
 These files only use `cipher_memory_search` and similar read-path tools — no `cipher_extract_and_operate_memory` active call sites.
 
 - [ ] **Step 1: Verify cipher references**
 
 ```bash
-grep -l "cipher" plugin/commands/ask.md plugin/commands/calibrate.md plugin/commands/index.md plugin/commands/profile.md plugin/commands/retrieve.md
+grep -l "cipher" plugin/commands/ask.md plugin/commands/calibrate.md plugin/commands/help.md plugin/commands/index.md plugin/commands/profile.md plugin/commands/retrieve.md
 ```
 
 - [ ] **Step 2: Apply substitutions to each file**
@@ -525,6 +518,11 @@ For `plugin/commands/ask.md`:
 For `plugin/commands/calibrate.md`:
 - `cipher_memory_search` → `lcm_search` for memory sampling
 
+For `plugin/commands/help.md`:
+- Lines 18-19: Update "Codebase indexed" check → `lcm_search` instead of `cipher_memory_search`
+- Update "MCP connections" check to reference lossless-claude instead of Cipher
+- Apply all other substitutions
+
 For `plugin/commands/index.md`:
 - Apply mechanical substitutions; if `cipher_extract_and_operate_memory` appears as an active call, apply extraction pattern with `["workspace", "index"]` tag
 
@@ -538,14 +536,14 @@ For `plugin/commands/retrieve.md`:
 - [ ] **Step 3: Verify**
 
 ```bash
-grep "cipher" plugin/commands/ask.md plugin/commands/calibrate.md plugin/commands/index.md plugin/commands/profile.md plugin/commands/retrieve.md
+grep "cipher" plugin/commands/ask.md plugin/commands/calibrate.md plugin/commands/help.md plugin/commands/index.md plugin/commands/profile.md plugin/commands/retrieve.md
 ```
 Expected: no output
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add plugin/commands/ask.md plugin/commands/calibrate.md plugin/commands/index.md plugin/commands/profile.md plugin/commands/retrieve.md
+git add plugin/commands/ask.md plugin/commands/calibrate.md plugin/commands/help.md plugin/commands/index.md plugin/commands/profile.md plugin/commands/retrieve.md
 git commit -m "feat: migrate mechanical-substitution commands from Cipher to lossless-claude"
 ```
 
@@ -960,9 +958,9 @@ grep -rl "mcp__cipher__cipher_memory_search" plugin/skills/ plugin/commands/ && 
 # Active callers: analyze (×2 cmd+skill), implement (×2), investigate (×2), index (×2),
 #   briefing, collab, curate, design, knowledge-handoff, todo-killer, track = 13 files
 grep -rl "cipher_extract_and_operate_memory" plugin/skills/ plugin/commands/ && echo "WARNING: unreplaced extract calls remain" || echo "PASS"
-echo "--- '3-7 bullets' anchor count (expected 13) ---"
+echo "--- '3-7 bullets' anchor count (expected 15) ---"
 grep -rl "3-7 bullets" plugin/skills/ plugin/commands/ | wc -l
-echo "--- 'Do not pass raw conversation content to lcm_store' anchor count (expected 13) ---"
+echo "--- 'Do not pass raw conversation content to lcm_store' anchor count (expected 15) ---"
 grep -rl "Do not pass raw conversation content to lcm_store" plugin/skills/ plugin/commands/ | wc -l
 ```
 

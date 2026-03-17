@@ -2,7 +2,7 @@
 name: xgh:analyze
 description: >
   Headless analyzer loop. Reads ~/.xgh/inbox/, classifies content types, extracts
-  structured memories, deduplicates against Cipher, writes to workspace or personal
+  structured memories, deduplicates against lossless-claude, writes to workspace or personal
   collection, manages TTL, and generates Obsidian-compatible daily digest.
   Runs every 30 minutes via launchd/cron.
 type: rigid
@@ -11,8 +11,8 @@ triggers:
   - when invoked headlessly by launchd or cron
   - when ~/.xgh/inbox/.urgent exists (triggered by retriever on critical items)
 mcp_dependencies:
-  - mcp__cipher__cipher_memory_search
-  - mcp__cipher__cipher_extract_and_operate_memory
+  - mcp__lossless-claude__lcm_search
+  - mcp__lossless-claude__lcm_store
 ---
 
 # xgh:analyze — Analysis Loop
@@ -20,7 +20,7 @@ mcp_dependencies:
 Invoked headlessly:
 ```
 claude -p "/xgh-analyze" \
-  --allowedTools "mcp__cipher__*,Bash,Read,Write,Glob" \
+  --allowedTools "mcp__lossless-claude__*,Bash,Read,Write,Glob" \
   --max-turns 10
 ```
 
@@ -28,13 +28,13 @@ claude -p "/xgh-analyze" \
 
 All heavy processing (classification, dedup batching, payload extraction, digest generation) SHOULD be routed through `ctx_execute(language: "python", code: "...")` when the context-mode plugin is available. Only print the summary (counts, errors, top items) — never dump raw inbox content into context.
 
-MCP tool calls (cipher_memory_search for dedup) return directly into context and cannot be wrapped.
+MCP tool calls (lcm_search for dedup) return directly into context and cannot be wrapped.
 
 If context-mode is not available, use standard Bash but keep script output to summaries only.
 
 ## Guard checks
 
-**1. Cipher availability** — Check if the `mcp__cipher__cipher_memory_search` tool is available in the current tool list. Do NOT use file presence (`~/.cipher/cipher.yml`) or env vars as a proxy. If the tool is present and callable → Cipher ✓. If the tool is absent → skip all Cipher steps (Steps 5–8) and log a warning. Print `Cipher MCP ✓ available` or `Cipher MCP ⚠ not available — skipping vector ops`.
+**1. lossless-claude availability** — Check if the `mcp__lossless-claude__lcm_search` tool is available in the current tool list. If the tool is present and callable → lossless-claude ✓. If the tool is absent → skip all lossless-claude steps (Steps 5–8) and log a warning. Print `lossless-claude ✓ available` or `lossless-claude ⚠ not available — skipping vector ops`.
 
 **2. Config** — `~/.xgh/ingest.yaml` exists and parses.
 
@@ -115,7 +115,7 @@ For each classified item, build this payload:
 ## Step 5 — Deduplicate
 
 Before writing each payload:
-1. Call `cipher_memory_search` with the summary text as query
+1. Call `lcm_search(query)` with the summary text as query
 2. If any result has similarity score ≥ `analyzer.dedup_threshold` (default 0.85):
    - If the existing memory has lower urgency score, update it via Qdrant REST:
      ```bash
@@ -131,13 +131,13 @@ Before writing each payload:
 Track run count in `~/.xgh/logs/.analyzer-run-count` (increment each run, reset at 100).
 
 When count mod 5 == 0:
-1. Search Cipher for memories with `xgh_status: active` and non-null `xgh_ttl`
+1. Search lossless-claude for memories with `xgh_status: active` and non-null `xgh_ttl`
 2. For each where `xgh_ttl` < now: update Qdrant payload to `xgh_status: decayed`
 3. Check if any current inbox items reference the same project/topic as decayed memories — if so, reset their TTL to now + original duration
 
-## Step 7 — Write to Cipher
+## Step 7 — Write to lossless-claude
 
-> **Note:** Cipher writes are always allowed regardless of provider access levels. Cipher is internal memory, not an external provider — the `providers.<type>.access` setting only governs writes back to external services (Slack, Jira, Confluence, GitHub, Figma).
+> **Note:** lossless-claude writes are always allowed regardless of provider access levels. lossless-claude is internal memory, not an external provider — the `providers.<type>.access` setting only governs writes back to external services (Slack, Jira, Confluence, GitHub, Figma).
 
 Route based on `content_types.<type>.promote_to` from `ingest.yaml`:
 
@@ -151,7 +151,7 @@ node ~/.xgh/lib/workspace-write.js \
   --source "<source>"
 ```
 
-**personal** → call `cipher_extract_and_operate_memory` with the summary text. If it returns `extracted: 0`, retry via:
+**personal** → Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]. If the call fails, retry via:
 ```bash
 node ~/.xgh/lib/workspace-write.js --text "<summary>" --type "<content_type>" --project "<project>" --urgency <score>
 ```

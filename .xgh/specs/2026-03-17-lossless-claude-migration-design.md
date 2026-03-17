@@ -204,6 +204,7 @@ Same substitution table and extraction-before-store requirement as Phase 2.
 - Context tree structure or sync scripts
 - `lib/workspace-write.js` (does not call Cipher MCP tools)
 - Any files that mention "cipher" only in documentation/research context (e.g. `docs/research/cipher-mcp-deep-dive.md`)
+- **Historical data migration** — existing memories in Qdrant and `data/cipher-sessions.db` are abandoned; no migration of historical Cipher memories into lossless-claude's semantic layer is performed as part of this change
 
 ---
 

@@ -131,6 +131,16 @@ Available workflows:
 - `validation` — 2 agents: implement → validate → feedback loop
 - `security-review` — 2 agents: implement → security review → fix → re-review
 
+## Workflow Completion
+
+When a collaboration workflow reaches its completion state (all steps done, final result stored):
+
+Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the
+summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store.
+Use tags: ["workspace"]
+
+Content to capture: decisions made, patterns established, feedback incorporated, final outcome.
+
 ## Rules
 
 1. **Always include all protocol fields** — missing fields break routing

@@ -1,16 +1,16 @@
 ---
 name: xgh:subagent-pair-programming
-description: TDD via spec-writer + implementer subagents coordinating through Cipher memory
+description: TDD via spec-writer + implementer subagents coordinating through lossless-claude memory
 type: rigid
 ---
 
 # xgh:subagent-pair-programming — Subagent Pair Programming
 
-> Dispatch two subagents — a Spec Writer and an Implementer — that coordinate through Cipher memory. The Spec Writer writes failing tests; the Implementer writes minimal code to pass. TDD enforced by architecture, not willpower.
+> Dispatch two subagents — a Spec Writer and an Implementer — that coordinate through lossless-claude memory. The Spec Writer writes failing tests; the Implementer writes minimal code to pass. TDD enforced by architecture, not willpower.
 
 ## Iron Law
 
-> **THE SPEC WRITER AND IMPLEMENTER MUST NEVER BE THE SAME AGENT.** Separation of concerns is physical, not logical. The spec writer cannot see the implementation; the implementer cannot modify the tests. Cipher memory is the contract between them.
+> **THE SPEC WRITER AND IMPLEMENTER MUST NEVER BE THE SAME AGENT.** Separation of concerns is physical, not logical. The spec writer cannot see the implementation; the implementer cannot modify the tests. lossless-claude memory is the contract between them.
 
 ## Rationalization Table
 
@@ -19,7 +19,7 @@ type: rigid
 | "I can do TDD in a single agent — just write tests first" | Single agents cheat by peeking at implementation while writing specs |
 | "Two subagents is overkill for a small feature" | Small features are where TDD habits form. Skip it here, skip it everywhere |
 | "The spec writer doesn't have enough context to write good tests" | That's exactly the point — specs should be writeable from requirements alone |
-| "Coordinating through Cipher is slower than just coding" | Slower per-task, but catches design flaws that would cost 10x to fix later |
+| "Coordinating through lossless-claude is slower than just coding" | Slower per-task, but catches design flaws that would cost 10x to fix later |
 | "The implementer needs to modify tests for edge cases" | Edge cases go back to the spec writer. Round-trip is the feature, not the bug |
 
 ## When This Skill Activates
@@ -44,7 +44,7 @@ Break the work into TDD-sized units. Each unit should:
 ### Step 2: Initialize thread
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     Pair programming session started.
@@ -63,7 +63,7 @@ Parameters:
 
 Dispatch a fresh subagent with ONLY these inputs:
 - The unit description (what to test)
-- Team conventions from Cipher (testing patterns)
+- Team conventions from lossless-claude (testing patterns)
 - The thread ID for storing specs
 
 The spec writer has NO access to:
@@ -74,8 +74,8 @@ The spec writer has NO access to:
 ### Step 4: Dispatch Implementer (per unit)
 
 Dispatch a fresh subagent with ONLY these inputs:
-- The test specs from the Cipher thread
-- Team conventions from Cipher (coding patterns)
+- The test specs from the lossless-claude thread
+- Team conventions from lossless-claude (coding patterns)
 - The thread ID for storing implementation
 
 The implementer has NO access to:
@@ -94,7 +94,7 @@ The orchestrator reviews:
 ### Step 6: Iterate or advance
 
 If review finds issues:
-- Send feedback to the appropriate subagent via Cipher thread
+- Send feedback to the appropriate subagent via lossless-claude thread
 - Subagent re-does their work with the feedback
 
 If review passes:
@@ -110,7 +110,7 @@ The spec writer subagent follows this process:
 ### Phase 1: Context gathering
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "[domain] testing patterns conventions"
   scope: workspace
@@ -130,7 +130,7 @@ Write tests based ONLY on the unit description and requirements. Tests must:
 ### Phase 3: Store specs to thread
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     ## Test Spec: [unit name]
@@ -163,7 +163,7 @@ Parameters:
 Run the tests and confirm they fail:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: "Tests verified RED. [N] tests, [N] failures. Failures are for the right reason: [missing implementation]."
   metadata:
@@ -183,7 +183,7 @@ The implementer subagent follows this process:
 ### Phase 1: Read specs from thread
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "thread:pair-[session-id] unit:[unit-number] test-spec"
   scope: workspace
@@ -195,7 +195,7 @@ Parameters:
 ### Phase 2: Query conventions
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "[domain] implementation patterns conventions"
   scope: workspace
@@ -214,7 +214,7 @@ Write ONLY enough code to make the failing tests pass. Rules:
 ### Phase 4: Store implementation to thread
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     ## Implementation: [unit name]
@@ -242,7 +242,7 @@ Parameters:
 Run the tests and confirm they pass:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: "Tests verified GREEN. [N] tests, [N] passed."
   metadata:
@@ -262,7 +262,7 @@ When the implementer discovers an edge case not covered by tests:
 1. Implementer stores a request back to thread:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     Edge case discovered: [description]
@@ -292,7 +292,7 @@ The orchestrator runs the complete test suite to verify all units work together.
 ### Step 2: Curate learnings
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     Pair programming session complete.
@@ -314,9 +314,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| `cipher_store_reasoning_memory` | Store test specs (RED), implementations (GREEN), edge case requests, and session results |
-| `cipher_memory_search` | Read test specs (implementer), query conventions (both), discover edge case requests |
-| `cipher_extract_and_operate_memory` | Extract session learnings for context tree curation |
+| `lcm_store(text, ["reasoning"])` | Store test specs (RED), implementations (GREEN), edge case requests, and session results |
+| `lcm_search(query)` | Read test specs (implementer), query conventions (both), discover edge case requests |
+| Extract 3-7 bullet summary → `lcm_store(text, context-tag)` | Extract session learnings for context tree curation |
 
 ## Composability
 

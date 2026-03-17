@@ -1,12 +1,12 @@
 ---
 name: xgh:pr-context-bridge
-description: Auto-curate PR reasoning to Cipher workspace so reviewers get deep context without meetings
+description: Auto-curate PR reasoning to lossless-claude workspace so reviewers get deep context without meetings
 type: flexible
 ---
 
 # xgh:pr-context-bridge — PR Context Bridge
 
-> Auto-curate PR reasoning to Cipher workspace so reviewers get deep context without meetings.
+> Auto-curate PR reasoning to lossless-claude workspace so reviewers get deep context without meetings.
 
 ## Iron Law
 
@@ -33,14 +33,14 @@ type: flexible
 
 ### Phase 1: Continuous Reasoning Capture (during development)
 
-As the author works on a feature branch, the following reasoning is auto-curated to Cipher workspace:
+As the author works on a feature branch, the following reasoning is auto-curated to lossless-claude workspace:
 
 **Step 1: Initialize PR thread**
 
-When work begins on a feature branch, create a Cipher thread:
+When work begins on a feature branch, create a lossless-claude thread:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: "Starting work on [branch-name]: [ticket/description]"
   metadata:
@@ -56,7 +56,7 @@ Parameters:
 Whenever a non-trivial decision is made (approach selection, tradeoff, architecture choice):
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     Decision: [what was decided]
@@ -78,7 +78,7 @@ Parameters:
 When implementation involves non-obvious logic, subtle edge cases, or workarounds:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     Tricky part: [file:line or function name]
@@ -98,7 +98,7 @@ Parameters:
 When memory queries during development surface relevant past decisions:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     This PR relates to prior decision: [summary]
@@ -117,7 +117,7 @@ Before pushing (or when the author signals the PR is ready):
 **Step 5: Generate PR reasoning summary**
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
 Parameters:
   query: "thread:PR-[branch-name] reasoning decisions tradeoffs"
   scope: workspace
@@ -126,7 +126,7 @@ Parameters:
 Compile all thread entries into a structured summary and store:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     # PR Context Summary: [branch-name]
@@ -166,7 +166,7 @@ When a reviewer's Claude session detects PR review context (PR URL, `gh pr check
 **Step 1: Query for PR reasoning**
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
 Parameters:
   query: "thread:PR-[branch-name] context decisions tradeoffs tricky-parts summary"
   scope: workspace
@@ -205,7 +205,7 @@ Format the retrieved reasoning as a briefing:
 When the reviewer identifies issues, questions, or insights:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     Review feedback: [what was found]
@@ -230,9 +230,9 @@ When the author returns to address review comments, their Claude queries the thr
 
 | Tool | Usage |
 |---|---|
-| `cipher_store_reasoning_memory` | Store decisions, tricky parts, summaries, and review feedback to PR thread |
-| `cipher_memory_search` | Query PR thread for reasoning context (reviewer side) |
-| `cipher_extract_and_operate_memory` | Extract reasoning from session for auto-curation |
+| `lcm_store(text, ["reasoning"])` | Store decisions, tricky parts, summaries, and review feedback to PR thread |
+| `lcm_search` | Query PR thread for reasoning context (reviewer side) |
+| Extract 3-7 bullet summary → `lcm_store(text, ["workspace"])` | Extract reasoning from session for auto-curation |
 
 ## Composability
 

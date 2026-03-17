@@ -2,7 +2,7 @@
 
 > **Output format:** Follow the [xgh output style guide](../templates/output-style.md). Start with `## 🐴🤖 xgh collab`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. End with an italicized next step.
 
-Start a multi-agent collaboration workflow using Cipher workspace as the async communication bus.
+Start a multi-agent collaboration workflow using lossless-claude workspace as the async communication bus.
 
 ## Usage
 
@@ -50,64 +50,47 @@ Agent A → PLAN (store to thread) → Agent B → REVIEW (store feedback) → A
 1. **Agent A (Planner)** receives the task, queries memory for context, and writes a detailed plan:
 
 ```
-Tool: cipher_store_reasoning_memory
-Parameters:
-  content: |
-    ## Plan: [task description]
+Tool: lcm_store(text, ["workspace"])
+Content:
+  ## Plan: [task description]
 
-    ### Context gathered:
-    [relevant memory, conventions, past work]
+  ### Context gathered:
+  [relevant memory, conventions, past work]
 
-    ### Approach:
-    [detailed implementation plan]
+  ### Approach:
+  [detailed implementation plan]
 
-    ### Files to change:
-    [list with rationale]
+  ### Files to change:
+  [list with rationale]
 
-    ### Risks:
-    [identified risks]
-  metadata:
-    thread: [thread-id]
-    type: plan
-    status: pending
-    from_agent: claude-code
-    for_agent: reviewer
-    priority: normal
-    created_at: [ISO timestamp]
+  ### Risks:
+  [identified risks]
+Metadata: thread: [thread-id], type: plan, status: pending, from_agent: claude-code, for_agent: reviewer
 ```
 
 2. **Agent B (Reviewer)** queries the thread for the plan and stores review feedback:
 
 ```
-Tool: cipher_memory_search
-Parameters:
-  query: "thread:[thread-id] type:plan status:pending"
-  scope: workspace
+Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
+Query: "thread:[thread-id] type:plan status:pending"
 ```
 
 ```
-Tool: cipher_store_reasoning_memory
-Parameters:
-  content: |
-    ## Review: [task description]
+Tool: lcm_store(text, ["workspace"])
+Content:
+  ## Review: [task description]
 
-    ### Feedback:
-    [specific feedback on the plan]
+  ### Feedback:
+  [specific feedback on the plan]
 
-    ### Concerns:
-    [risks identified, gaps found]
+  ### Concerns:
+  [risks identified, gaps found]
 
-    ### Approved: [yes/no/with-changes]
+  ### Approved: [yes/no/with-changes]
 
-    ### Required changes:
-    [if applicable]
-  metadata:
-    thread: [thread-id]
-    type: review
-    status: completed
-    from_agent: reviewer
-    for_agent: claude-code
-    priority: normal
+  ### Required changes:
+  [if applicable]
+Metadata: thread: [thread-id], type: review, status: completed, from_agent: reviewer, for_agent: claude-code
 ```
 
 3. **Agent A** reads feedback, adjusts plan, and implements.
@@ -123,21 +106,13 @@ Agent A → SPLIT tasks → Agents B,C,D → IMPLEMENT (parallel) → Agent A �
 1. **Orchestrator** splits the task into independent units and stores each as a work item:
 
 ```
-Tool: cipher_store_reasoning_memory
-Parameters:
-  content: |
-    Work item [N]: [description]
-    Files: [file list]
-    Dependencies: [none / depends on item M]
-    Acceptance criteria: [criteria]
-  metadata:
-    thread: [thread-id]
-    type: plan
-    subtype: work-item
-    item_number: [N]
-    status: pending
-    from_agent: orchestrator
-    for_agent: [assigned agent]
+Tool: lcm_store(text, ["workspace"])
+Content:
+  Work item [N]: [description]
+  Files: [file list]
+  Dependencies: [none / depends on item M]
+  Acceptance criteria: [criteria]
+Metadata: thread: [thread-id], type: plan, subtype: work-item, item_number: [N], status: pending, from_agent: orchestrator, for_agent: [assigned agent]
 ```
 
 2. **Worker agents** pick up their assigned items, implement, and store results.
@@ -173,7 +148,7 @@ Agent A → IMPLEMENT → Agent B → SECURITY_REVIEW → Agent A → FIX → Ag
 
 ## Message Protocol
 
-All inter-agent messages in the Cipher workspace follow this structure:
+All inter-agent messages in the lossless-claude workspace follow this structure:
 
 ```yaml
 type: plan | review | feedback | result | decision | question
@@ -202,27 +177,21 @@ created_at: [ISO timestamp]
 
 The collaborate command dispatches the collaboration-dispatcher agent, which:
 
-1. Creates the thread in Cipher workspace
+1. Creates the thread in lossless-claude workspace
 2. Stores the initial task with workflow metadata
 3. Dispatches subagents according to the workflow template
 4. Monitors the thread for message progression
 5. Reports completion back to the user
 
 ```
-Tool: cipher_store_reasoning_memory
-Parameters:
-  content: |
-    Collaboration workflow started.
-    Workflow: [template name]
-    Task: [description]
-    Agents: [list]
-    Thread: [thread-id]
-  metadata:
-    thread: [thread-id]
-    type: orchestration
-    status: in_progress
-    from_agent: orchestrator
-    for_agent: "*"
+Tool: lcm_store(text, ["workspace"])
+Content:
+  Collaboration workflow started.
+  Workflow: [template name]
+  Task: [description]
+  Agents: [list]
+  Thread: [thread-id]
+Metadata: thread: [thread-id], type: orchestration, status: in_progress, from_agent: orchestrator, for_agent: "*"
 ```
 
 ---
@@ -231,9 +200,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| `cipher_store_reasoning_memory` | Store plans, reviews, feedback, results, decisions, and questions to thread |
-| `cipher_memory_search` | Query thread for messages, check for new responses |
-| `cipher_extract_and_operate_memory` | Extract learnings from completed collaboration |
+| `lcm_store(text, ["workspace"])` | Store plans, reviews, feedback, results, decisions, and questions to thread |
+| `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })` | Query thread for messages, check for new responses |
+| Extract 3-7 bullet summary → `lcm_store(summary, ["workspace"])` | Extract learnings from completed collaboration. Do not pass raw conversation content to lcm_store. |
 
 ## Composability
 

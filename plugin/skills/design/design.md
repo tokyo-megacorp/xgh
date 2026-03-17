@@ -7,7 +7,7 @@ mcp_dependencies:
   optional:
     - figma: "Figma MCP — read designs, screenshots, variables, Code Connect"
     - atlassian: "Atlassian MCP — find related tickets, acceptance criteria"
-    - cipher: "Cipher MCP — search UI conventions, component patterns"
+    - lossless-claude: "lossless-claude MCP — search UI conventions, component patterns"
     - slack: "Slack MCP — find design discussions"
 ---
 
@@ -35,7 +35,7 @@ Available integrations are discovered automatically on first invocation.
 
 **Graceful degradation rules (design-specific):**
 - No Figma MCP → Cannot auto-extract design. Ask user to describe the design, paste screenshots, or provide component specs manually. Skip Code Connect and variable extraction.
-- No Cipher MCP → Skip memory search for conventions. Rely on codebase scanning only.
+- No lossless-claude MCP → Skip memory search for conventions. Rely on codebase scanning only.
 - No task manager MCP → Skip ticket lookup. Ask user for acceptance criteria directly.
 - No Slack MCP → Skip design discussion search.
 
@@ -119,9 +119,9 @@ This tells us:
 
 Supplement Figma data with xgh memory and codebase analysis.
 
-### Step 2.1: Query xgh Memory (if Cipher MCP available)
+### Step 2.1: Query xgh Memory (if lossless-claude MCP available)
 
-Use `mcp__cipher__cipher_memory_search` to search for:
+Use `lcm_search(query)` to search for:
 - "How do we implement [component type] in this repo?"
 - Team conventions for UI components (naming, file structure, test patterns)
 - Past implementations of similar designs
@@ -320,7 +320,7 @@ Deviations from design:
 
 ### Step 5.1: Curate New Component Mappings
 
-Store new Figma → code mappings via `mcp__cipher__cipher_extract_and_operate_memory`:
+Store new Figma → code mappings — extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]. Content to store:
 - New components created and their Figma node IDs
 - Design token mappings established
 - Convention decisions made during implementation

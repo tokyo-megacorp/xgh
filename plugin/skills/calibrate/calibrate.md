@@ -2,14 +2,14 @@
 name: xgh:calibrate
 description: >
   Calibrate the dedup similarity threshold against real data. Pulls sample pairs from
-  Cipher workspace memory, evaluates them for semantic duplication, computes F1 scores
+  lossless-claude workspace memory, evaluates them for semantic duplication, computes F1 scores
   at multiple thresholds, and offers to update analyzer.dedup_threshold in ingest.yaml.
 type: flexible
 triggers:
   - when the user runs /xgh-calibrate
   - when the user says "calibrate dedup", "tune threshold", "calibrate memory"
 mcp_dependencies:
-  - mcp__cipher__cipher_memory_search
+  - mcp__lossless-claude__lcm_search
 ---
 
 # xgh:calibrate — Dedup Threshold Calibration
@@ -18,7 +18,7 @@ Modes: interactive (default), headless (`--auto`), comparison (`--compare`).
 
 ## Interactive mode (default)
 
-1. **Sample pairs**: Use `cipher_memory_search` with diverse queries to gather N memories (configurable via `calibration.sample_size`, default 50). Form random pairs from the results.
+1. **Sample pairs**: Use `lcm_search(query)` with diverse queries to gather N memories (configurable via `calibration.sample_size`, default 50). Form random pairs from the results.
 
 2. **For each pair**, show side by side:
    ```

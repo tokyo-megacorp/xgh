@@ -1,6 +1,6 @@
 ---
 name: xgh:ask
-description: "Tiered query routing: when to use Cipher semantic search vs context tree BM25 vs both. Query refinement patterns for maximum recall."
+description: "Tiered query routing: when to use lossless-claude semantic search vs context tree BM25 vs both. Query refinement patterns for maximum recall."
 type: flexible
 triggers:
   - before-code-write
@@ -21,9 +21,9 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 **When:** Starting a new task, exploring a domain, or unsure what exists.
 
 **Strategy:**
-1. `cipher_memory_search` with a natural-language description of the task
+1. `lcm_search(query)` with a natural-language description of the task
 2. Read context tree `_index.md` files for the relevant domain
-3. Merge results mentally — Cipher catches semantic matches, context tree catches keyword matches
+3. Merge results mentally — lossless-claude catches semantic matches, context tree catches keyword matches
 
 **Example queries:**
 - "How does our authentication system work?"
@@ -39,7 +39,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 **Strategy:**
 1. Check context tree `_manifest.json` for the specific domain/topic path
 2. Read the knowledge file directly
-3. Fall back to `cipher_memory_search` only if the context tree does not have it
+3. Fall back to `lcm_search(query)` only if the context tree does not have it
 
 **Example queries:**
 - "JWT refresh token rotation interval"
@@ -48,13 +48,13 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 
 **Expected:** One or two highly relevant results. The context tree's structured hierarchy makes this fast.
 
-### Tier 3: Reasoning Patterns (use Cipher reasoning tools)
+### Tier 3: Reasoning Patterns (use lossless-claude reasoning tools)
 
 **When:** Making a decision and wanting to learn from past decisions.
 
 **Strategy:**
-1. `cipher_search_reasoning_patterns` with the decision context
-2. `cipher_evaluate_reasoning` to check your current reasoning against stored patterns
+1. `lcm_search(query, { layers: ["semantic"], tags: ["reasoning"] })` with the decision context
+2. `lcm_search` to retrieve patterns → Claude evaluates inline
 3. Check context tree for files with category: decision in the relevant domain
 
 **Example queries:**
@@ -64,12 +64,12 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 
 **Expected:** Reasoning chains with outcomes — learn from what worked and what did not.
 
-### Tier 4: Debugging/Bug Investigation (use Cipher semantic search FIRST)
+### Tier 4: Debugging/Bug Investigation (use lossless-claude semantic search FIRST)
 
 **When:** Encountering an error or unexpected behavior.
 
 **Strategy:**
-1. `cipher_memory_search` with the error message or symptom description
+1. `lcm_search(query)` with the error message or symptom description
 2. Search context tree for files with category: bug-fix
 3. If nothing found, broaden the search to the general area (e.g., "authentication errors" instead of "401 on /api/refresh")
 
@@ -137,10 +137,10 @@ Combine results from all three for complete context.
 When results come from both engines, xgh ranks them using this BM25 + semantic scoring formula:
 
 ```
-score = (0.5 * cipher_similarity + 0.3 * bm25_score + 0.1 * importance + 0.1 * recency) * maturityBoost
+score = (0.5 * lcm_similarity + 0.3 * bm25_score + 0.1 * importance + 0.1 * recency) * maturityBoost
 ```
 
-- `cipher_similarity`: 0-1, vector cosine similarity from Cipher
+- `lcm_similarity`: 0-1, vector cosine similarity from lossless-claude
 - `bm25_score`: 0-1, keyword match score from context tree
 - `importance`: 0-100 normalized to 0-1
 - `recency`: 0-1, exponential decay with ~21-day half-life

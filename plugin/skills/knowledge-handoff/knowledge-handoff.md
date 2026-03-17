@@ -102,19 +102,15 @@ affectedFiles: [list of key files]
 When merge is detected:
 
 ```
-Tool: cipher_memory_search
-Parameters:
-  query: "[branch-name] decisions patterns implementation"
-  scope: workspace
+Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
+Query: "[branch-name] decisions patterns implementation"
 ```
 
 Also gather from the PR context bridge thread (if available):
 
 ```
-Tool: cipher_memory_search
-Parameters:
-  query: "thread:PR-[branch-name] context summary"
-  scope: workspace
+Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
+Query: "thread:PR-[branch-name] context summary"
 ```
 
 ### Step 2: Analyze affected files
@@ -127,10 +123,9 @@ Identify which domain areas were touched by the merge. Use git diff to find:
 ### Step 3: Extract learnings from session
 
 ```
-Tool: cipher_extract_and_operate_memory
-Parameters:
-  operation: extract
-  context: "Merge of [branch-name]. Extract patterns, gotchas, key files, architecture decisions, and warnings for the next developer."
+Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store.
+Use tags: ["workspace"]
+Context: "Merge of [branch-name]. Extract patterns, gotchas, key files, architecture decisions, and warnings for the next developer."
 ```
 
 ### Step 4: Generate and store handoff summary
@@ -138,16 +133,15 @@ Parameters:
 Compile the gathered information into the handoff structure above.
 
 ```
-Tool: cipher_store_reasoning_memory
-Parameters:
-  content: [compiled handoff summary in the structure above]
-  metadata:
-    type: handoff
-    scope: handoff
-    thread: handoff-[branch-name]
-    domain: [detected domain]
-    affectedFiles: [list of changed files]
-    status: completed
+Tool: lcm_store(text, ["workspace"])
+Content: [compiled handoff summary in the structure above]
+Metadata:
+  type: handoff
+  scope: handoff
+  thread: handoff-[branch-name]
+  domain: [detected domain]
+  affectedFiles: [list of changed files]
+  status: completed
 ```
 
 ### Step 5: Sync to context tree
@@ -162,13 +156,11 @@ Write the handoff to the context tree at the appropriate domain path:
 When any developer's Claude touches files that were part of a recent handoff, the session-start hook queries:
 
 ```
-Tool: cipher_memory_search
-Parameters:
-  query: "handoff [file-path] gotchas patterns warnings"
-  scope: workspace
-  filter:
-    type: handoff
-    affectedFiles: [current file]
+Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
+Query: "handoff [file-path] gotchas patterns warnings"
+Filter:
+  type: handoff
+  affectedFiles: [current file]
 ```
 
 The retrieved handoff context is injected into the developer's session automatically.
@@ -179,9 +171,9 @@ The retrieved handoff context is injected into the developer's session automatic
 
 | Tool | Usage |
 |---|---|
-| `cipher_extract_and_operate_memory` | Extract session learnings for handoff summary generation |
-| `cipher_store_reasoning_memory` | Store the compiled handoff summary to workspace |
-| `cipher_memory_search` | Query PR thread context; auto-query handoffs for next developer |
+| Extract 3-7 bullet summary → `lcm_store(text, ["workspace"])` | Extract session learnings for handoff summary generation. Do not pass raw conversation content to lcm_store. |
+| `lcm_store(text, ["workspace"])` | Store the compiled handoff summary to workspace |
+| `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })` | Query PR thread context; auto-query handoffs for next developer |
 
 ## Composability
 

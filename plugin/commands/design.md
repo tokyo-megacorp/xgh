@@ -21,7 +21,7 @@ Implement a UI component from a Figma design. Extracts ALL available context (de
 ## Behavior
 
 1. Load the `xgh:design` skill from `skills/design/design.md`
-2. Auto-detect available MCP integrations (Figma, Cipher, Jira, Slack)
+2. Auto-detect available MCP integrations (Figma, lossless-claude, Jira, Slack)
 3. If a Figma URL was provided, begin design mining immediately
 4. If no URL was provided, ask the user for a Figma file or node URL
 5. Execute all 5 phases of the implement-design workflow:

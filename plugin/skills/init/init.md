@@ -10,7 +10,7 @@ triggers:
   - when the user says "set up xgh" or "initialize xgh" or "get started"
 mcp_dependencies:
   required:
-    - cipher: "Cipher MCP — core memory (cipher_memory_search)"
+    - lossless-claude: "lossless-claude MCP — core memory (lcm_search)"
   optional:
     - slack: "Slack MCP — channel access (slack_read_channel)"
     - atlassian: "Atlassian MCP — Jira/Confluence (getJiraIssue)"
@@ -45,12 +45,12 @@ Let's get started.
 
 Check each dependency below in order. Respond per the instructions for each result.
 
-### Cipher MCP
+### lossless-claude MCP
 
-Run in Bash: `claude mcp list 2>/dev/null | grep -i cipher`
+Run in Bash: `claude mcp list 2>/dev/null | grep -i lossless-claude`
 
 - **Found** → continue
-- **Not found** → run `claude mcp add -s user cipher ~/.local/bin/cipher-mcp` and report: "Auto-configured Cipher MCP."
+- **Not found** → report: "lossless-claude MCP not configured. Run `install.sh` to configure it."
 
 ### Qdrant
 
@@ -70,7 +70,7 @@ Run in Bash: `curl -sf --max-time 3 "${XGH_REMOTE_URL:-http://localhost:11434}/v
 
 Proceed with scaffolding anyway. After completing, tell the user:
 
-> "xgh memory tools are not yet configured — context tree scaffolded successfully. Run `install.sh` or `/plugin install github:ipedro/xgh` to complete setup. Cipher search will not work until backends are running."
+> "xgh memory tools are not yet configured — context tree scaffolded successfully. Run `install.sh` or `/plugin install github:ipedro/xgh` to complete setup. lossless-claude search will not work until the daemon is running."
 
 ---
 
@@ -261,7 +261,7 @@ If **no** (or user skips): Continue to Step 6.
 Ask:
 
 ```
-Want to index your codebase into Cipher memory?
+Want to index your codebase into lossless-claude memory?
 This makes your code searchable for future tasks and investigations.
 You can skip this and do it later with /xgh-index.
 
@@ -327,17 +327,15 @@ xgh setup complete!
     - Run /xgh-setup to add any missing MCP integrations
 ```
 
-### Store in Cipher
+### Store in lossless-claude
 
-If Cipher is available, store the onboarding completion:
+If lossless-claude is available, store the onboarding completion:
 
 ```
-cipher_store_reasoning_memory:
-  type: setup
-  content: "xgh init completed for <name> (<role>, <squad>). Project: <project>. Team profiles: <yes/no>. Codebase indexed: <yes/no>."
-  metadata:
-    event: xgh-init-complete
-    timestamp: <now>
+Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the
+summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store.
+Use tags: ["session"]
+Content: "xgh init completed for <name> (<role>, <squad>). Project: <project>. Team profiles: <yes/no>. Codebase indexed: <yes/no>."
 ```
 
 ---

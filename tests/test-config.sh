@@ -52,8 +52,8 @@ assert_contains "config/hooks-settings.json" "xgh-prompt-submit.sh"
 # Template
 assert_file_exists "templates/instructions.md"
 assert_contains "templates/instructions.md" "xgh"
-assert_contains "templates/instructions.md" "cipher_memory_search"
-assert_contains "templates/instructions.md" "cipher_extract_and_operate_memory"
+assert_contains "templates/instructions.md" "lcm_search"
+assert_contains "templates/instructions.md" "lcm_store"
 assert_contains "templates/instructions.md" "__TEAM_NAME__"
 assert_contains "templates/instructions.md" "__CONTEXT_TREE_PATH__"
 

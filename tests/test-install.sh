@@ -68,9 +68,9 @@ assert_contains    "${XGH_LOCAL_PACK}/plugin/gemini-extension.json" '"name": "xg
 assert_contains    "${XGH_LOCAL_PACK}/plugin/gemini-extension.json" '"version"'
 
 # Verify MCP config (global: ~/.claude.json)
+# lossless-claude registers its MCP during `lossless-claude install`, which is
+# skipped in dry-run mode. We only assert the file exists (written by Claude CLI).
 assert_file_exists "${HOME}/.claude.json"
-assert_contains "${HOME}/.claude.json" "cipher"
-assert_contains "${HOME}/.claude.json" "cipher-mcp"
 
 # Verify hooks installed
 assert_file_exists ".claude/hooks/xgh-session-start.sh"

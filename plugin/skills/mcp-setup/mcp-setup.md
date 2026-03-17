@@ -16,7 +16,7 @@ When a workflow skill needs an MCP server that isn't configured, don't just skip
 Claude Code has two kinds of MCP servers:
 
 1. **Remote MCPs** — first-party, managed by Anthropic (`claude.ai *` in `claude mcp list`). Zero config, OAuth-based. Examples: Gmail, Google Calendar. These come and go as Anthropic adds them.
-2. **Local MCPs** — configured in `.claude/.mcp.json`, run via `npx` or a local binary. Require API keys. Examples: Slack, Atlassian, Figma, Linear.
+2. **Local MCPs** — configured in `.claude/mcp.json`, run via `npx` or a local binary. Require API keys. Examples: Slack, Atlassian, Figma, Linear.
 
 **Detection is runtime-only.** Don't assume which remote MCPs exist — check `claude mcp list` for what's actually connected. The landscape changes as Anthropic adds new connectors.
 
@@ -24,7 +24,7 @@ Claude Code has two kinds of MCP servers:
 
 | Service | Detection (tool name) | Required For | Setup |
 |---------|----------------------|-------------|-------|
-| **Cipher** | `cipher_memory_search` | All xgh skills (core) | Installed by xgh |
+| **lossless-claude** | `mcp__lossless-claude__lcm_search` | All xgh skills (core) | Installed by xgh |
 | **GitHub** | `gh` CLI or remote MCP | `implement`, `investigate` | `brew install gh && gh auth login` |
 | **Slack** | `slack_*` tools | `investigate`, `brief`, `retrieve` | Community MCP |
 | **Atlassian** | `getJiraIssue`, `confluence_*` | `implement`, `investigate` | Community MCP |
@@ -67,7 +67,7 @@ Available integrations:
 **Rules:**
 - Never hard-fail on a missing optional MCP — always degrade gracefully
 - Always report the integration status before starting work
-- Sentinel tools by integration: Figma → `get_design_context`, Cipher → `cipher_memory_search`, Atlassian/Jira → `getJiraIssue`, Slack → `slack_search_public`, Linear → `linear_*`
+- Sentinel tools by integration: Figma → `get_design_context`, lossless-claude → `mcp__lossless-claude__lcm_search`, Atlassian/Jira → `getJiraIssue`, Slack → `slack_search_public`, Linear → `linear_*`
 
 ## Setup Flow
 
@@ -112,13 +112,13 @@ For services that need a local MCP server:
 
 Steps:
   1. Get your API token from [specific URL]
-  2. I'll add the MCP config to .claude/.mcp.json
+  2. I'll add the MCP config to .claude/mcp.json
   3. Restart this session
 
 Ready? I'll need your [TOKEN_NAME]."
 ```
 
-Then add to `.claude/.mcp.json`:
+Then add to `.claude/mcp.json`:
 ```json
 {
   "mcpServers": {
@@ -145,10 +145,10 @@ Then add to `.claude/.mcp.json`:
 | Asana | `@anthropic/mcp-asana` | `ASANA_ACCESS_TOKEN` | https://app.asana.com/0/developer-console |
 | Shortcut | `@anthropic/mcp-shortcut` | `SHORTCUT_API_TOKEN` | https://app.shortcut.com/settings/account/api-tokens |
 
-### Cipher MCP
+### lossless-claude MCP
 
-Cipher should already be configured by xgh install. If missing:
-1. Check if `.claude/.mcp.json` exists with cipher config
+lossless-claude should already be configured by xgh install. If missing:
+1. Check if `.claude/mcp.json` exists with lossless-claude config
 2. If not: `XGH_LOCAL_PACK=. bash install.sh`
 
 ### GitHub
@@ -164,21 +164,18 @@ After setup instructions:
 1. If MCP requires session restart:
    ```
    "Setup complete! Restart Claude Code for the new MCP to load.
-   Run the same command again — I'll pick up where we left off via Cipher memory."
+   Run the same command again — I'll pick up where we left off via lossless-claude memory."
    ```
 2. If immediately available, try a simple tool call to verify.
 
 ### Step 5: Remember the Setup
 
-After successful setup, store in Cipher:
+After successful setup, store in lossless-claude:
 ```
-cipher_store_reasoning_memory:
-  type: setup
-  content: "[MCP name] configured for [user/team]"
-  metadata:
-    mcp: slack|figma|atlassian|linear|...
-    type: remote|community
-    configured_at: [timestamp]
+Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the
+summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store.
+Use tags: ["session"]
+Content: "[MCP name] configured for [user/team]"
 ```
 
 ## Composability
@@ -198,7 +195,7 @@ When triggered manually, audit ALL MCP integrations by running `claude mcp list`
 "🐴 xgh Integration Status:
 
   Connected:
-    ✅ Cipher        — core memory
+    ✅ lossless-claude — core memory
     ✅ Gmail         — remote MCP
     ✅ Calendar      — remote MCP
 

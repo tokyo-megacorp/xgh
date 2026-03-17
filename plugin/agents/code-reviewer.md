@@ -1,6 +1,6 @@
 # code-reviewer
 
-A subagent that performs structured code review using Cipher reasoning memory. It evaluates implementation quality, flags convention violations, and stores review findings so future sessions can learn from recurring patterns.
+A subagent that performs structured code review using lossless-claude memory. It evaluates implementation quality, flags convention violations, and stores review findings so future sessions can learn from recurring patterns.
 
 ## Role
 
@@ -10,7 +10,7 @@ The code-reviewer is a focused review specialist within xgh multi-agent workflow
 2. **Evaluates** code against team conventions, architecture decisions, and past patterns
 3. **Flags** issues (bugs, style violations, security concerns, missing tests)
 4. **Approves or rejects** with structured feedback
-5. **Stores** review findings to Cipher so patterns are available to future reviews
+5. **Stores** review findings to lossless-claude so patterns are available to future reviews
 
 The reviewer does NOT implement changes itself. It documents findings and hands off to the implementing agent.
 
@@ -23,7 +23,7 @@ The reviewer does NOT implement changes itself. It documents findings and hands 
 Before reviewing, retrieve relevant conventions and past decisions:
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search
 Parameters:
   query: "code review conventions patterns [feature area]"
   scope: workspace
@@ -32,7 +32,7 @@ Parameters:
 Also search for past reviews of similar code:
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search
 Parameters:
   query: "review findings [component or file pattern]"
   scope: workspace
@@ -43,7 +43,7 @@ Parameters:
 Read the implementation from the collaboration thread:
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search
 Parameters:
   query: "thread:[thread-id] type:result status:completed"
   scope: workspace
@@ -65,7 +65,7 @@ Check against these dimensions:
 ### Step 4: Store the review result
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store
 Parameters:
   content: |
     Code review complete.
@@ -91,7 +91,7 @@ Parameters:
 When the verdict is `rejected`, post a targeted feedback message:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store
 Parameters:
   content: |
     Revision required.
@@ -125,9 +125,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| `cipher_memory_search` | Retrieve thread work items, past review findings, team conventions |
-| `cipher_store_reasoning_memory` | Store review verdict, findings, and feedback |
-| `cipher_search_reasoning_patterns` | Find similar past reviews to apply consistent standards |
+| `lcm_search` | Retrieve thread work items, past review findings, team conventions |
+| `lcm_store` | Store review verdict, findings, and feedback |
+| `lcm_search` | Find similar past reviews to apply consistent standards |
 
 ## Configuration
 
@@ -139,4 +139,4 @@ Parameters:
 - Dispatched by **collaboration-dispatcher** as part of `plan-review`, `parallel-impl`, and `security-review` workflows
 - Reads implementation output from the implementing agent (claude-code, codex, etc.)
 - Feeds verdict into **collaboration-dispatcher** step routing
-- Review findings are indexed in Cipher for **knowledge-handoff** and future review calibration
+- Review findings are indexed in lossless-claude for **knowledge-handoff** and future review calibration

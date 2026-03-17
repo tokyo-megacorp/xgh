@@ -1,29 +1,9 @@
 {
   "mcpServers": {
-    "cipher": {
+    "lossless-claude": {
       "type": "stdio",
-      "command": "/Users/pedro/.local/bin/cipher-mcp",
-      "args": [],
-      "env": {
-        "MCP_SERVER_MODE": "aggregator",
-        "VECTOR_STORE_TYPE": "qdrant",
-        "VECTOR_STORE_URL": "http://localhost:6333",
-        "EMBEDDING_PROVIDER": "openai",
-        "EMBEDDING_MODEL": "mlx-community/nomicai-modernbert-embed-base-8bit",
-        "EMBEDDING_BASE_URL": "http://localhost:11434/v1",
-        "EMBEDDING_DIMENSIONS": "768",
-        "EMBEDDING_API_KEY": "placeholder",
-        "OPENAI_API_KEY": "placeholder",
-        "OPENAI_BASE_URL": "http://localhost:11434/v1",
-        "LLM_PROVIDER": "openai",
-        "LLM_MODEL": "mlx-community/Mistral-7B-Instruct-v0.3-4bit",
-        "LLM_BASE_URL": "http://localhost:11434/v1",
-        "LLM_API_KEY": "placeholder",
-        "CIPHER_LOG_LEVEL": "info",
-        "SEARCH_MEMORY_TYPE": "both",
-        "USE_WORKSPACE_MEMORY": "true",
-        "XGH_TEAM": "my-team"
-      }
+      "command": "lossless-claude",
+      "args": ["mcp"]
     }
   }
 }

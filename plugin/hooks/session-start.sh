@@ -36,9 +36,9 @@ else:
     briefing_trigger = "off"
 
 decision_table = [
-    "Before writing code: run cipher_memory_search first.",
-    "After significant work: run cipher_extract_and_operate_memory.",
-    "For architectural choices: store rationale with cipher_store_reasoning_memory."
+    "Before writing code: run lcm_search first.",
+    "After significant work: extract key learnings → lcm_store.",
+    "For architectural choices: store rationale with lcm_store(text, ['reasoning'])."
 ]
 
 # No context tree found

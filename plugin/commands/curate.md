@@ -2,7 +2,7 @@
 
 > **Output format:** Follow the [xgh output style guide](../templates/output-style.md). Start with `## 🐴🤖 xgh curate`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. End with an italicized next step.
 
-Store knowledge in Cipher memory and sync to the context tree.
+Store knowledge in lossless-claude memory and sync to the context tree.
 
 ## Usage
 
@@ -64,18 +64,19 @@ Use the `xgh:curate` skill to:
    - If the domain does not exist in the manifest, create it
    - Include: name, path, importance, maturity
 
-### Step 4: Store in Cipher
+### Step 4: Store in lossless-claude
 
-1. Call `cipher_extract_and_operate_memory` with the full knowledge content
-2. Include metadata: domain, topic, category, tags, keywords
-3. For decisions, also call `cipher_store_reasoning_memory` with the reasoning chain
+1. Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the
+   summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store.
+   Use tags: `["session"]`
+2. For decisions, also call `lcm_store(text, ["reasoning"])` with the reasoning chain
 
 ### Step 5: Verify Storage
 
 Verification is built into the curate workflow — see the Verification section of the `xgh:curate` skill.
 
-1. Run `cipher_memory_search` with the title keywords — entry must appear in top 5
-2. Run `cipher_memory_search` with a natural-language question — entry must appear in top 5
+1. Run `lcm_search(query)` with the title keywords — entry must appear in top 5
+2. Run `lcm_search(query)` with a natural-language question — entry must appear in top 5
 3. Verify the context tree file exists and has valid frontmatter
 4. Verify `_manifest.json` is updated
 
@@ -99,12 +100,12 @@ Stored: **"<title>"**
 
 | Check | Status |
 |-------|--------|
-| Cipher search (title) | ✅ rank #N / ❌ |
-| Cipher search (question) | ✅ rank #N / ❌ |
+| lossless-claude search (title) | ✅ rank #N / ❌ |
+| lossless-claude search (question) | ✅ rank #N / ❌ |
 | Context tree file | ✅ / ❌ |
 | Manifest updated | ✅ / ❌ |
 ```
 
 If any verification fails, show ❌ in the Status column and add a retry note below the table:
 
-*❌ Cipher search (title) failed — re-curating with improved keywords...*
+*❌ lossless-claude search (title) failed — re-curating with improved keywords...*

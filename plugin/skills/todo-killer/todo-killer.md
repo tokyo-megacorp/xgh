@@ -7,8 +7,8 @@ triggers:
   - when /xgh-index runs a full scan and comment harvesting is enabled
   - when the user says "kill todos", "fix todos", "clean up comments"
 mcp_dependencies:
-  - mcp__cipher__cipher_memory_search
-  - mcp__cipher__cipher_extract_and_operate_memory
+  - mcp__lossless-claude__lcm_search
+  - mcp__lossless-claude__lcm_store
 ---
 
 # xgh:todo-killer — Systematic TODO Resolution
@@ -158,13 +158,13 @@ Never write `status: deprecated` or higher directly — that's human intent.
 
 ## Deduplication
 
-Before writing to `patterns.yaml`, check Cipher memory for existing knowledge about the same pattern:
+Before writing to `patterns.yaml`, check lossless-claude memory for existing knowledge about the same pattern:
 
 ```
-cipher_memory_search: "TODO migration async/await [REPO]"
+lcm_search("TODO migration async/await [REPO]")
 ```
 
-If Cipher already has this as a team decision, use that context to set richer metadata.
+If lossless-claude already has this as a team decision, use that context to set richer metadata.
 
 ## When to Skip
 

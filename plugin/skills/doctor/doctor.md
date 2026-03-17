@@ -1,7 +1,7 @@
 ---
 name: xgh:doctor
 description: >
-  Pipeline health check. Validates config completeness, Slack/Jira/Qdrant/Cipher
+  Pipeline health check. Validates config completeness, Slack/Jira/lossless-claude
   connectivity, scheduler freshness, workspace stats, and codebase index status.
   Outputs a structured ✓/✗ report with fix suggestions.
 type: rigid
@@ -19,7 +19,7 @@ Run all checks and output a structured report. Use `✓` for pass, `✗` for fai
 - `~/.xgh/ingest.yaml` exists and parses: `python3 -c "import yaml; yaml.safe_load(open('...'))" 2>&1`
 - Required fields present: `profile.name`, `profile.slack_id`, `profile.platforms`
 - At least one active project under `projects:`
-- `cipher.workspace_collection` is set
+- lossless-claude is configured (check `.claude/mcp.json` has `lossless-claude` entry)
 
 ## Check 2 — Connectivity
 
@@ -46,7 +46,7 @@ curl -sf --max-time 5 "${XGH_REMOTE_URL}/v1/models"
     Fix: ensure the server is running and port is accessible from this machine
   ```
 
-Qdrant: `curl -sf http://localhost:6333/healthz` via Bash — show URL from `cipher.yml`
+Qdrant: `curl -sf http://localhost:6333/healthz` via Bash
 
 If Qdrant fails, run deeper diagnosis:
 ```bash
@@ -65,9 +65,11 @@ Common Qdrant failures and fixes:
 | Missing plist | Re-run `scripts/ingest-schedule.sh install` |
 | Binary missing | `brew install qdrant` or download to `~/.qdrant/bin/qdrant` |
 
-Cipher MCP availability: attempt `cipher_memory_search` with query `"xgh health check"`. If the tool is NOT in the available tool list → report `Cipher MCP ✗ not connected — check ~/.claude.json MCP config`. If the tool returns an error about the embedding service → report `Cipher MCP ✓ connected but ✗ Qdrant offline` with the Qdrant fix instructions above.
+lossless-claude MCP availability: check if `mcp__lossless-claude__lcm_search` is present in the available tool list:
+- Tool absent → lossless-claude MCP not registered. Fix: add lossless-claude entry to `.claude/mcp.json`
+- Tool present but call returns error → daemon not running. Fix: `lossless-claude daemon start`
 
-**Important:** Cipher MCP availability is determined by whether `mcp__cipher__cipher_memory_search` appears in the tool list, NOT by file presence at `~/.cipher/cipher.yml`.
+**Important:** lossless-claude MCP availability is determined by whether `mcp__lossless-claude__lcm_search` appears in the tool list, NOT by file presence on disk.
 
 ## Check 3 — Pipeline freshness
 
@@ -115,7 +117,7 @@ Connectivity
   ✗ Slack: #channel-missing — not found (check channel name in ingest.yaml)
   ✓ Jira: PTECH-31204 exists (23 open issues)
   ✓ Qdrant: localhost:6333 responding
-  ✓ Cipher MCP: connected (tool available)
+  ✓ lossless-claude: connected (tool available)
   # Remote inference (when XGH_BACKEND=remote):
   ✓ Remote inference server: http://macmini.local:11434 — reachable, 2 models available
   # OR if unreachable:
@@ -124,7 +126,7 @@ Connectivity
   # OR if issues:
   ✗ Qdrant: not responding — WAL lock detected
     Fix: pkill -f qdrant && rm -f ~/.qdrant/storage/storage/collections/*/0/wal/open-* && launchctl load ~/Library/LaunchAgents/com.qdrant.server.plist
-  ✗ Cipher MCP: not in tool list — check ~/.claude.json has cipher entry
+  ✗ lossless-claude: not in tool list — add to .claude/mcp.json (command: lossless-claude, args: [mcp])
 
 Pipeline
   ✓ Retriever: last run 3 min ago (healthy)

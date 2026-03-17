@@ -38,7 +38,7 @@ The briefing respects `XGH_TEAM` from the environment for workspace memory queri
 Before gathering data, check which MCPs are available. Call `xgh:mcp-setup` for any missing MCP the user wants to configure. Proceed with whatever is available — the briefing works with any combination.
 
 Available MCP tools by integration:
-- **Cipher**: `cipher_memory_search`, `cipher_extract_and_operate_memory`
+- **lossless-claude**: `lcm_search(query)`, `lcm_store`
 - **Slack**: `slack_search_public_and_private`, `slack_list_channels`
 - **Atlassian/Jira**: `searchJiraIssuesUsingJQL`, `getJiraIssue`
 - **GitHub**: `gh pr list`, `gh issue list`, `gh run list`
@@ -47,14 +47,14 @@ Available MCP tools by integration:
 
 ## Data Gathering
 
-### 1. xgh Memory (always — Cipher)
+### 1. xgh Memory (always — lossless-claude)
 
 Search for recent session state and pending work:
 
 ```
-cipher_memory_search("last session", limit=3)
-cipher_memory_search("in progress", limit=3)
-cipher_memory_search("blocked", limit=2)
+lcm_search("last session", { limit: 3 })
+lcm_search("in progress", { limit: 3 })
+lcm_search("blocked", { limit: 2 })
 ```
 
 ### 2. Slack (if available)
@@ -92,11 +92,11 @@ gmail_search_messages("subject:deadline OR subject:urgent is:unread", limit=5)
 figma_get_comments(file_key, limit=10)
 ```
 
-### 7. Team Pulse (always — from Cipher workspace)
+### 7. Team Pulse (always — from lossless-claude workspace)
 
 ```
-cipher_memory_search("team update", limit=3)
-cipher_memory_search("convention change", limit=2)
+lcm_search("team update", { limit: 3 })
+lcm_search("convention change", { limit: 2 })
 ```
 
 ## Prioritization Engine
@@ -161,13 +161,13 @@ If the user says `/xgh-briefing meeting [name]`, filter output to items relevant
 Once the briefing is delivered:
 1. Ask: "Ready to start on [SUGGESTED FOCUS]? Or pick a different item."
 2. If user confirms: load context for that ticket/PR and invoke `xgh:implement-ticket` or `xgh:investigate` as appropriate.
-3. Store the session start state: `cipher_extract_and_operate_memory` with chosen focus.
+3. Store the session start state: Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]
 
 ## Rationalization Table
 
 | If you see | Do this |
 |------------|---------|
-| Cipher unavailable | Skip memory sections, note "Run /xgh-setup to enable memory" |
+| lossless-claude unavailable | Skip memory sections, note "Run /xgh-setup to enable memory" |
 | No Slack/Jira | Skip those sections silently |
 | No items in any section | Output "🐴🤖 All clear — no urgent items. Pick something from your backlog." |
 | >5 items in a section | Show top 5, add "…and N more" |

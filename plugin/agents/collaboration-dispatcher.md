@@ -1,12 +1,12 @@
 # collaboration-dispatcher
 
-A subagent that orchestrates multi-agent workflows through Cipher workspace memory. It manages the lifecycle of collaboration threads: dispatching work, monitoring progress, routing messages, and reporting completion.
+A subagent that orchestrates multi-agent workflows through lossless-claude workspace memory. It manages the lifecycle of collaboration threads: dispatching work, monitoring progress, routing messages, and reporting completion.
 
 ## Role
 
 The collaboration-dispatcher is the traffic controller for multi-agent workflows. It:
 
-1. **Creates** collaboration threads in Cipher workspace
+1. **Creates** collaboration threads in lossless-claude workspace
 2. **Dispatches** work items to agents according to workflow templates
 3. **Monitors** thread progress and routes messages between agents
 4. **Enforces** workflow rules (ordering, dependencies, gates)
@@ -53,7 +53,7 @@ The dispatcher runs a simple loop:
 ### Step 1: Initialize thread
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store
 Parameters:
   content: |
     Collaboration thread initialized.
@@ -74,7 +74,7 @@ Parameters:
 Based on the workflow template, create the first work item:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store
 Parameters:
   content: |
     Work assignment: [description of what this agent should do]
@@ -96,7 +96,7 @@ Parameters:
 Poll the thread for responses:
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search
 Parameters:
   query: "thread:[thread-id] status:completed step:1"
   scope: workspace
@@ -118,7 +118,7 @@ If a step produces an error or rejection:
 3. Dispatch corrective action
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store
 Parameters:
   content: |
     Step [N] requires revision.
@@ -139,7 +139,7 @@ Parameters:
 When all steps complete:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store
 Parameters:
   content: |
     Collaboration workflow completed.
@@ -189,9 +189,9 @@ If a step does not complete within a reasonable time:
 
 | Tool | Usage |
 |---|---|
-| `cipher_store_reasoning_memory` | Store work items, status updates, failures, and completion reports |
-| `cipher_memory_search` | Monitor thread for completions, query agent responses |
-| `cipher_search_reasoning_patterns` | Analyze collaboration patterns across past workflows |
+| `lcm_store` | Store work items, status updates, failures, and completion reports |
+| `lcm_search` | Monitor thread for completions, query agent responses |
+| `lcm_search` | Analyze collaboration patterns across past workflows |
 
 ## Configuration
 

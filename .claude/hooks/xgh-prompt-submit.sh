@@ -22,11 +22,11 @@ else:
 
 if intent == "code-change":
     context = """> **⚠️ STOP: Before responding, check if this is a code task.**
-> Code task? → `cipher_memory_search` FIRST. Wrote code? → `cipher_extract_and_operate_memory` BEFORE done.
+> Code task? → `lcm_search` FIRST. Wrote code? → `lcm_store` (extract 3-7 bullet summary) BEFORE done.
 
 ---
 
-# Cipher Memory System - MANDATORY
+# lossless-claude Memory System - MANDATORY
 
 **These rules apply regardless of language.**
 
@@ -36,7 +36,7 @@ if intent == "code-change":
 
 | Answer | Action |
 |--------|--------|
-| **YES** — need to understand/modify codebase | `cipher_memory_search` FIRST |
+| **YES** — need to understand/modify codebase | `lcm_search` FIRST |
 | **NO** — general knowledge, meta tasks, follow-up | Skip search |
 
 **You MUST search when task involves:**
@@ -59,7 +59,7 @@ if intent == "code-change":
 
 | Answer | Action |
 |--------|--------|
-| **YES** — wrote code, found patterns, made decisions | `cipher_extract_and_operate_memory` BEFORE done |
+| **YES** — wrote code, found patterns, made decisions | Extract 3-7 bullet summary → `lcm_store(summary, ["session"])` BEFORE done |
 | **NO** — just answered a question, no new insights | Skip |
 
 **MUST store when you:**
@@ -68,7 +68,7 @@ if intent == "code-change":
 - Made architectural/design decisions
 - Found a bug root cause or fix pattern
 
-For complex reasoning/debugging → use `cipher_store_reasoning_memory` instead.
+For complex reasoning/debugging → use `lcm_store(text, ["reasoning"])` instead.
 
 ## Quick Reference
 
@@ -86,11 +86,11 @@ For complex reasoning/debugging → use `cipher_store_reasoning_memory` instead.
 ## Workflow
 
 ```
-Code task received → cipher_memory_search FIRST → Work → cipher_extract_and_operate_memory → Done
+Code task received → lcm_search FIRST → Work → lcm_store (summary) → Done
 Non-code task → Just respond normally
 ```"""
 else:
-    context = "Non-code task detected — cipher memory search not required."
+    context = "Non-code task detected — memory search not required."
 
 print(json.dumps({"additionalContext": context}))
 PYEOF

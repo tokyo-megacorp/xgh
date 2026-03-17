@@ -139,11 +139,11 @@ For each domain directory:
 1. Regenerate `_index.md` with a compressed summary of all active entries
 2. Update `_manifest.json` domain-level statistics
 
-### Step 5: Sync with Cipher
+### Step 5: Sync with lossless-claude
 
 For each modified entry:
-1. Update the corresponding Cipher memory via `cipher_extract_and_operate_memory`
-2. Delete Cipher memories for archived entries (or mark as archived)
+1. Update the corresponding memory via `lcm_store` (extract 3-7 bullet summary first)
+2. The lossless-claude deduplication layer handles archival automatically
 
 ## Health Metrics
 

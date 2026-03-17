@@ -15,8 +15,8 @@ Run these checks silently (do not show the checks, only the results):
 
 1. **Init status:** Check if `~/.xgh/ingest.yaml` exists and has a profile name that is NOT `YOUR_NAME`
 2. **Project tracking:** Check if `~/.xgh/ingest.yaml` has any entries under `projects:` (not empty `{}`)
-3. **Codebase indexed:** Run `cipher_memory_search` with query "repository architecture modules structure" and check if results exist
-4. **MCP connections:** Check if Cipher MCP responds (run a simple memory search)
+3. **Codebase indexed:** Run `lcm_search("repository architecture modules structure")` and check if results exist
+4. **MCP connections:** Check if lossless-claude MCP responds (run a simple memory search with `lcm_search`)
 
 ## Step 2: Generate Contextual "What to do next"
 

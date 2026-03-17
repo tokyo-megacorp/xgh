@@ -2,7 +2,7 @@
 name: xgh:index
 description: >
   Codebase architecture extraction. Scans a repository to extract modules, patterns,
-  navigation flows, naming conventions, and feature flags into Cipher memory.
+  navigation flows, naming conventions, and feature flags into lossless-claude memory.
   Supports quick (~5 min) and full (~30 min) modes.
 type: flexible
 triggers:
@@ -10,8 +10,8 @@ triggers:
   - when the user says "index repo", "index codebase", "scan the codebase"
   - when invoked by ingest-track after adding a GitHub repo
 mcp_dependencies:
-  - mcp__cipher__cipher_extract_and_operate_memory
-  - mcp__cipher__cipher_memory_search
+  - mcp__lossless-claude__lcm_store
+  - mcp__lossless-claude__lcm_search
 ---
 
 # xgh:index — Codebase Indexing
@@ -38,7 +38,7 @@ Target: `--max-turns 5`, stores 10–15 memories.
 1. **Directory structure**: Use `Glob` with `**/*` (depth 2) to map top-level layout
 2. **Key files**: Read manifests (Package.swift, package.json, build.gradle), main entry point, README
 3. **Naming conventions**: Sample 5–10 files, extract naming patterns (CamelCase types, snake_case functions, etc.)
-4. **Store per area**: For each top-level module/package, call `cipher_extract_and_operate_memory` with:
+4. **Store per area**: For each top-level module/package, extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["workspace", "index"]. Content to store:
    ```
    [REPO_NAME][MODULE] <module_name>: <one-sentence purpose>
    Key files: path1, path2
@@ -75,7 +75,7 @@ Everything in quick, plus:
 
 ## Memory format
 
-Each memory stored via `cipher_extract_and_operate_memory`:
+Each memory stored via `lcm_store(text, ["workspace", "index"])`:
 ```
 [REPO] [AREA] Title: one sentence
 Details: 2-3 key facts
@@ -102,7 +102,7 @@ Use python3 to safely update the YAML (read → modify → write).
 
 ```
 ✓ Indexed acme-ios (iOS/Swift) in quick mode
-  15 memories stored in Cipher
+  15 memories stored in lossless-claude
   Modules found: Auth, Home, Passcode, Payments, Settings
   Run /xgh-index --depth full for deeper extraction
 ```

@@ -77,13 +77,18 @@ xgh_has_github() {
 }
 
 # ---------------------------------------------------------------------------
-# xgh_has_cipher
-# Detects the Cipher MCP server.
-# Canonical tool: cipher_memory_search
+# xgh_has_lossless_claude
+# Detects the lossless-claude MCP server.
+# Canonical tool: lcm_search
 # ---------------------------------------------------------------------------
+xgh_has_lossless_claude() {
+  _xgh_tool_available "lcm_search" || \
+  _xgh_tool_available "mcp__lossless-claude__lcm_search"
+}
+
+# Backwards-compat alias
 xgh_has_cipher() {
-  _xgh_tool_available "cipher_memory_search" || \
-  _xgh_tool_available "mcp__cipher__cipher_memory_search"
+  xgh_has_lossless_claude
 }
 
 # ---------------------------------------------------------------------------
@@ -97,7 +102,7 @@ detect_mcps() {
   # Check .claude/.mcp.json for configured servers
   local mcp_json="${PWD}/.claude/.mcp.json"
   if [ -f "$mcp_json" ]; then
-    grep -qi '"cipher"' "$mcp_json" 2>/dev/null && XGH_AVAILABLE_MCPS+=("cipher")
+    grep -qi '"lossless-claude"' "$mcp_json" 2>/dev/null && XGH_AVAILABLE_MCPS+=("lossless-claude")
     grep -qi '"slack"' "$mcp_json" 2>/dev/null && XGH_AVAILABLE_MCPS+=("slack")
     grep -qi '"figma"' "$mcp_json" 2>/dev/null && XGH_AVAILABLE_MCPS+=("figma")
     grep -qi '"atlassian"' "$mcp_json" 2>/dev/null && XGH_AVAILABLE_MCPS+=("atlassian")
@@ -105,7 +110,7 @@ detect_mcps() {
   fi
 
   # Also detect via tool availability
-  xgh_has_cipher  && [[ ! " ${XGH_AVAILABLE_MCPS[*]} " =~ " cipher " ]]   && XGH_AVAILABLE_MCPS+=("cipher")
+  xgh_has_lossless_claude && [[ ! " ${XGH_AVAILABLE_MCPS[*]} " =~ " lossless-claude " ]] && XGH_AVAILABLE_MCPS+=("lossless-claude")
   xgh_has_slack   && [[ ! " ${XGH_AVAILABLE_MCPS[*]} " =~ " slack " ]]    && XGH_AVAILABLE_MCPS+=("slack")
   xgh_has_figma   && [[ ! " ${XGH_AVAILABLE_MCPS[*]} " =~ " figma " ]]    && XGH_AVAILABLE_MCPS+=("figma")
   xgh_has_jira    && [[ ! " ${XGH_AVAILABLE_MCPS[*]} " =~ " atlassian " ]] && XGH_AVAILABLE_MCPS+=("atlassian")

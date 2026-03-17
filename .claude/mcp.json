@@ -3,6 +3,7 @@
     "lossless-claude": {
       "type": "stdio",
       "command": "lossless-claude",
+      "type": "stdio",
       "args": ["mcp"]
     }
   }

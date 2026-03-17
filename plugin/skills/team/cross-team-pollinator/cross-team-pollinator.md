@@ -1,12 +1,12 @@
 ---
 name: xgh:cross-team-pollinator
-description: Break knowledge silos between teams via _shared/ directory auto-promotion to org-scope Cipher workspace
+description: Break knowledge silos between teams via _shared/ directory auto-promotion to org-scope lossless-claude workspace
 type: flexible
 ---
 
 # xgh:cross-team-pollinator — Cross-Team Pollinator
 
-> Break knowledge silos between teams. The `_shared/` directory in each team's context tree auto-promotes to `scope: org` in Cipher workspace. Other teams' hooks query org-scoped memories alongside their own.
+> Break knowledge silos between teams. The `_shared/` directory in each team's context tree auto-promotes to `scope: org` in lossless-claude workspace. Other teams' hooks query org-scoped memories alongside their own.
 
 ## Iron Law
 
@@ -15,7 +15,7 @@ type: flexible
 ## When This Skill Activates
 
 - **Promotion**: When knowledge is curated to the `_shared/` directory of the context tree
-- **Query enrichment**: On every `cipher_memory_search` call, org-scoped results are merged alongside team-scoped results
+- **Query enrichment**: On every `lcm_search` call, org-scoped results are merged alongside team-scoped results
 - **Discovery**: When implementation touches an API boundary, shared library, or cross-team contract
 
 ---
@@ -34,7 +34,7 @@ Knowledge qualifies for org-scope promotion when it:
 When a file is written to or moved to `_shared/`:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: [the shared knowledge content]
   metadata:
@@ -71,12 +71,12 @@ Parameters:
 
 ### How org-scope memories are included
 
-Every `cipher_memory_search` call in an xgh-enabled project includes BOTH scopes:
+Every `lcm_search(query)` call in an xgh-enabled project includes BOTH scopes:
 
 **Step 1: Team-scope query**
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "[the user's question or task context]"
   scope: workspace
@@ -88,7 +88,7 @@ Parameters:
 **Step 2: Org-scope query**
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "[the user's question or task context]"
   scope: workspace
@@ -133,13 +133,13 @@ Where:
 
 1. **Recognize it**: "This affects other teams" — API format changes, shared library updates, contract changes
 2. **Curate to `_shared/`**: Write or move the knowledge file to `_shared/[category]/`
-3. **Auto-promotion fires**: The file is stored to Cipher with `scope: org`
-4. **Other teams benefit**: Their next `cipher_memory_search` includes this knowledge
+3. **Auto-promotion fires**: The file is stored to lossless-claude with `scope: org`
+4. **Other teams benefit**: Their next `lcm_search` includes this knowledge
 
 ### Promoting existing team knowledge to org
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     [Existing team knowledge that should be shared]
@@ -159,9 +159,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| `cipher_memory_search` | Query both team-scope and org-scope memories |
-| `cipher_store_reasoning_memory` | Store org-promoted knowledge to workspace |
-| `cipher_extract_and_operate_memory` | Extract cross-team relevant learnings |
+| `lcm_search(query)` | Query both team-scope and org-scope memories |
+| `lcm_store(text, ["reasoning"])` | Store org-promoted knowledge to workspace |
+| Extract 3-7 bullet summary → `lcm_store(text, context-tag)` | Extract cross-team relevant learnings |
 
 ## Composability
 

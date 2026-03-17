@@ -14,7 +14,7 @@ type: flexible
 
 ## When This Skill Activates
 
-- First session for a new developer (detected by: no prior session history in Cipher, or explicit `/xgh onboard` command)
+- First session for a new developer (detected by: no prior session history in lossless-claude, or explicit `/xgh onboard` command)
 - When a developer explicitly asks for a project overview or team context
 - When session-start hook detects an unrecognized developer identifier
 
@@ -22,12 +22,12 @@ type: flexible
 
 ## Knowledge Categories
 
-The onboarding accelerator queries Cipher for five categories of team knowledge:
+The onboarding accelerator queries lossless-claude for five categories of team knowledge:
 
 ### 1. Architecture Decisions
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "architecture decisions design system structure"
   scope: workspace
@@ -41,7 +41,7 @@ Surfaces: major architecture choices, system design, module boundaries, data flo
 ### 2. Coding Conventions
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "convention rules patterns naming style"
   scope: workspace
@@ -56,7 +56,7 @@ Surfaces: code style rules, naming conventions, patterns to follow, patterns to 
 ### 3. Gotchas and Warnings
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "gotcha warning trap pitfall edge-case unexpected"
   scope: workspace
@@ -69,7 +69,7 @@ Surfaces: non-obvious behaviors, common mistakes, edge cases, "things that look 
 ### 4. Incidents and Fixes
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "incident bug fix root-cause investigation"
   scope: workspace
@@ -82,7 +82,7 @@ Surfaces: past production issues, root causes, fixes applied, prevention measure
 ### 5. Ownership Map
 
 ```
-Tool: cipher_memory_search
+Tool: lcm_search(query)
 Parameters:
   query: "ownership module area responsible team member"
   scope: workspace
@@ -206,7 +206,7 @@ After the briefing, prompt the new developer:
 I'll pull up the specific context you need."
 ```
 
-When the developer asks about a specific area, query Cipher for deep context on that domain and present it with full detail.
+When the developer asks about a specific area, query lossless-claude for deep context on that domain and present it with full detail.
 
 ---
 
@@ -215,7 +215,7 @@ When the developer asks about a specific area, query Cipher for deep context on 
 Track the onboarding session for future reference:
 
 ```
-Tool: cipher_store_reasoning_memory
+Tool: lcm_store(text, ["reasoning"])
 Parameters:
   content: |
     Onboarding session completed for [developer identifier].
@@ -235,9 +235,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| `cipher_memory_search` | Query all 5 knowledge categories for onboarding briefing |
-| `cipher_store_reasoning_memory` | Store onboarding session metadata and identified gaps |
-| `cipher_extract_and_operate_memory` | Extract session learnings if developer shares new context |
+| `lcm_search(query)` | Query all 5 knowledge categories for onboarding briefing |
+| `lcm_store(text, ["reasoning"])` | Store onboarding session metadata and identified gaps |
+| Extract 3-7 bullet summary → `lcm_store(text, context-tag)` | Extract session learnings if developer shares new context |
 
 ## Composability
 

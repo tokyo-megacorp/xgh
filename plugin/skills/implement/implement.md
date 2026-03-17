@@ -64,13 +64,13 @@ json.dump(p, open(path, 'w'), indent=2)
 1. Ask at most 2 essential clarifying questions in the main session.
 2. Collect context: user's request verbatim, current branch (`git branch --show-current`), recent log (`git log --oneline -5`), any relevant file paths mentioned.
 3. Dispatch via Agent tool with `run_in_background: true`. Prompt must be fully self-contained.
-4. Reply: "Investigation running in background — I'll post findings when done."
+4. Reply: "Implementation running in background — I'll post findings when done."
 5. When agent completes: post a ≤5-bullet summary to main session.
 
 **Background / fire-and-forget mode:**
 1. Collect context automatically (no questions).
 2. Dispatch via Agent tool with `run_in_background: true`.
-3. Reply: "Investigation running in background — I'll post findings when done."
+3. Reply: "Implementation running in background — I'll post findings when done."
 4. When agent completes: post a ≤5-bullet summary.
 
 ---

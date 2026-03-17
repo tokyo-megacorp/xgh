@@ -46,7 +46,7 @@ Run the `xgh:profile` skill to analyze an engineer's Jira history and produce ac
 
 - Full report written to `docs/research/<engineer-name-slug>-profile.md`
 - Summary printed to conversation
-- Profile cached to Cipher memory (if available) for future reference
+- Profile cached to lossless-claude memory (if available) for future reference
 
 ## Prerequisites
 

@@ -107,7 +107,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   fi
 
-  # Node.js and npm (required by Cipher MCP wrapper and helper scripts)
+  # Node.js and npm (required by lossless-claude and helper scripts)
   if ! command -v node &>/dev/null; then
     info "Node.js not found — installing via Homebrew"
     brew install node || warn "Could not install Node.js — install manually: brew install node"
@@ -466,7 +466,7 @@ print('yes' if '${1}' in ids else 'no')
   # Interactive model picker (skip if env vars are set)
   if [ -z "$XGH_LLM_MODEL" ]; then
     echo ""
-    echo -e "  ${BOLD}Pick an LLM${NC} ${DIM}(Cipher's reasoning brain)${NC}"
+    echo -e "  ${BOLD}Pick an LLM${NC} ${DIM}(lossless-claude's reasoning brain)${NC}"
     echo ""
     for i in "${!LLM_MODELS[@]}"; do
       IFS='|' read -r model_id model_desc <<< "${LLM_MODELS[$i]}"
@@ -691,20 +691,6 @@ if [ -f "$GLOBAL_MCP" ] && jq -e '.mcpServers.cipher' "$GLOBAL_MCP" &>/dev/null;
   jq 'del(.mcpServers.cipher)' "$GLOBAL_MCP" > "${GLOBAL_MCP}.tmp" \
     && mv "${GLOBAL_MCP}.tmp" "$GLOBAL_MCP"
   info "Removed stale cipher entry from ~/.claude/mcp.json"
-fi
-
-# Clean up any stale cipher entry from project-level .claude/.mcp.json
-PROJECT_CLAUDE_MCP="${PWD}/.claude/.mcp.json"
-if [ -f "$PROJECT_CLAUDE_MCP" ]; then
-  LEGACY_KEYS2=$(jq -r '.mcpServers | keys[]' "$PROJECT_CLAUDE_MCP" 2>/dev/null || echo "")
-  if [ "$LEGACY_KEYS2" = "cipher" ]; then
-    rm -f "$PROJECT_CLAUDE_MCP"
-    info "Removed legacy .claude/.mcp.json (cipher entry)"
-  elif echo "$LEGACY_KEYS2" | grep -q "cipher"; then
-    jq 'del(.mcpServers.cipher)' "$PROJECT_CLAUDE_MCP" > "${PROJECT_CLAUDE_MCP}.tmp" \
-      && mv "${PROJECT_CLAUDE_MCP}.tmp" "$PROJECT_CLAUDE_MCP"
-    info "Removed stale cipher entry from .claude/.mcp.json"
-  fi
 fi
 
 # ── 5. Hooks ────────────────────────────────────────────
@@ -1054,7 +1040,7 @@ if command -v claude &>/dev/null && [ "$XGH_DRY_RUN" -eq 0 ]; then
   done < <(claude mcp list 2>/dev/null)
 
   if [ -z "$CONNECTED_MCPS" ]; then
-    info "No MCPs detected (besides Cipher)"
+    info "No MCPs detected"
   fi
 
   # Save state for skills to read at runtime

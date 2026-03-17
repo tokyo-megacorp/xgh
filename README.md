@@ -98,7 +98,7 @@ After installation, every AI session automatically:
 ```
 your-project/
 ├── .claude/
-│   ├── .mcp.json                  # Cipher MCP server config
+│   ├── .mcp.json                  # lossless-claude MCP server config
 │   ├── settings.local.json        # Permissions + hook registrations
 │   ├── hooks/
 │   │   ├── xgh-session-start.sh   # Injects top-5 context files as JSON
@@ -194,8 +194,8 @@ xgh enforces one iron law:
 |----------------|-------------|
 | Session start | Top-5 core/validated files injected as structured JSON (`contextFiles[]`) |
 | Every prompt | Intent detection classifies prompt as `code-change` or `general`, injects relevant actions |
-| Significant work completed | `cipher_extract_and_operate_memory` captures learnings |
-| Architectural decision made | `cipher_store_reasoning_memory` records the reasoning chain |
+| Significant work completed | `lcm_store` captures learnings |
+| Architectural decision made | `lcm_store` records the reasoning chain |
 
 ---
 
@@ -214,10 +214,10 @@ xgh enforces one iron law:
 │         │                   │                   │          │
 │         ▼                   ▼                   ▼          │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │              Cipher MCP Server                      │   │
-│  │  memory_search · extract_and_operate_memory         │   │
-│  │  workspace_search · workspace_store                 │   │
-│  │  knowledge_graph · reasoning_traces                 │   │
+│  │              lossless-claude MCP Server             │   │
+│  │  lcm_search · lcm_store · lcm_grep                  │   │
+│  │  lcm_expand · lcm_describe                          │   │
+│  │  episodic (SQLite) · semantic (Qdrant)               │   │
 │  └──────────────────────┬──────────────────────────────┘   │
 │                         │                                  │
 │         ┌───────────────┼───────────────┐                  │

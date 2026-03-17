@@ -2,7 +2,7 @@
 <!-- mcs:begin xgh.instructions -->
 # xgh - eXtreme Go Horse for AI Teams
 
-You are an AI agent operating within the **my-team** team, enhanced by the xgh memory and reasoning system. xgh gives you persistent memory across sessions via the Cipher MCP server, enabling you to learn from past decisions, recall team context, and improve over time.
+You are an AI agent operating within the **my-team** team, enhanced by the xgh memory and reasoning system. xgh gives you persistent memory across sessions via the lossless-claude MCP server, enabling you to learn from past decisions, recall team context, and improve over time.
 
 ## Context Tree
 
@@ -10,25 +10,29 @@ Your team's context tree is located at: `.xgh/context-tree`
 
 The context tree is a structured knowledge base that captures your team's architecture, decisions, patterns, and conventions. Always consult it before making significant decisions.
 
-## Cipher MCP Tools
+## lossless-claude Memory Tools
 
-You have access to the following Cipher MCP tools for memory and reasoning. Use them proactively:
+You have access to lossless-claude MCP tools for memory storage and retrieval. lossless-claude uses a two-layer model:
 
-### Memory Tools
+**Episodic** (`layers: ["episodic"]`) — SQLite-backed per-session history. Fast full-text search. Use for recent in-session context. Access via `lcm_grep(query)` or `lcm_search(query, { layers: ["episodic"] })`.
 
-- **cipher_memory_search** - Search existing memories by semantic similarity. Use this at the start of every task to find relevant past decisions, patterns, and context.
-- **cipher_extract_and_operate_memory** - Extract structured memories from conversations and store them. Use this after completing significant work to capture what was learned.
-- **cipher_store_reasoning_memory** - Store a reasoning chain with its outcome. Use this when you make a non-trivial decision so future sessions can learn from it.
+**Semantic** (`layers: ["semantic"]`) — Qdrant-backed persistent cross-session memory. Vector similarity search. Use for past decisions, team conventions, reasoning patterns. Access via `lcm_search(query, { layers: ["semantic"] })`.
 
-### Reasoning Tools
+**Hybrid (default)** — `lcm_search(query)` with no `layers` arg searches both layers.
 
-- **cipher_search_reasoning_patterns** - Search for past reasoning patterns that match the current situation. Use this before making architectural or design decisions.
-- **cipher_extract_reasoning_steps** - Break down a complex reasoning process into discrete steps for analysis and storage.
-- **cipher_evaluate_reasoning** - Evaluate a reasoning chain against stored patterns to check for known pitfalls or improvements.
+### Tools
 
-### Utility Tools
+- **lcm_store** — Persist a memory. Signature: `lcm_store(text, tags?, metadata?)`
 
-- **cipher_bash** - Execute bash commands through the Cipher environment for data operations.
+  - Before storing: extract key learnings as a 3-7 bullet summary. Do not pass raw conversation content to lcm_store.
+
+- **lcm_search** — Hybrid or layer-targeted search. `lcm_search(query, { layers?, tags?, limit?, threshold? })`
+
+- **lcm_grep** — Fast FTS5 full-text search within the episodic layer. Prefer over `lcm_search` for exact strings (function names, error codes, commit hashes).
+
+- **lcm_expand** — Drill into a summary node to recover original messages.
+
+- **lcm_describe** — Describe a conversation or summary node by ID.
 
 ## Decision Protocol
 
@@ -36,13 +40,13 @@ When facing a decision, follow this table:
 
 | Situation | Action |
 |---|---|
-| Starting a new task | `cipher_memory_search` for related past work |
-| Making an architectural decision | `cipher_search_reasoning_patterns` for similar past decisions |
-| Choosing between approaches | `cipher_evaluate_reasoning` to check against known patterns |
-| Completing significant work | `cipher_extract_and_operate_memory` to capture learnings |
-| Solving a non-trivial problem | `cipher_store_reasoning_memory` to record the reasoning chain |
-| Encountering an error/bug | `cipher_memory_search` to check if this was seen before |
-| Before writing new code | `cipher_memory_search` for team conventions and patterns |
+| Starting a new task | `lcm_search(query)` for related past work |
+| Making an architectural decision | `lcm_search(query, { layers: ["semantic"], tags: ["reasoning"] })` for similar past decisions |
+| Choosing between approaches | `lcm_search` to retrieve patterns → evaluate inline |
+| Completing significant work | Extract 3-7 bullet summary → `lcm_store(summary, ["session"])` |
+| Solving a non-trivial problem | `lcm_store(text, ["reasoning"])` to record the reasoning chain |
+| Encountering an error/bug | `lcm_search(query)` to check if this was seen before |
+| Before writing new code | `lcm_search(query)` for team conventions and patterns |
 
 ## Document Locations
 

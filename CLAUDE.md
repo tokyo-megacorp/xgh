@@ -53,9 +53,9 @@ After installing xgh into this project with `XGH_LOCAL_PACK=. bash install.sh`, 
 
 ### Memory usage
 
-If Cipher MCP is configured in this project, use it proactively:
-- `cipher_memory_search` before starting any task
-- `cipher_extract_and_operate_memory` after completing significant work
-- `cipher_store_reasoning_memory` when making non-trivial architectural decisions
+If lossless-claude MCP is configured in this project, use it proactively:
+- `lcm_search(query)` before starting any task
+- `lcm_store(summary, ["session"])` after completing significant work (extract 3-7 bullet summary first)
+- `lcm_store(text, ["reasoning"])` when making non-trivial architectural decisions
 
 Refer to [`AGENTS.md`](./AGENTS.md) for the full decision protocol table.

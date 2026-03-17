@@ -5,7 +5,7 @@
 
 ## Summary
 
-xgh is a **Model Context Server (MCS) tech pack** for Claude Code that provides persistent, team-shared memory via Cipher MCP + a git-committed context tree. The tech stack is Bash + YAML + Markdown (no compiled runtime).
+xgh is a **Model Context Server (MCS) tech pack** for Claude Code that provides persistent, team-shared memory via lossless-claude MCP + a git-committed context tree. The tech stack is Bash + YAML + Markdown (no compiled runtime).
 
 ## Key conventions
 

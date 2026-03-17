@@ -6,7 +6,7 @@ Persistent memory and team context for AI-assisted development.
 
 ### Full install (recommended)
 
-Installs all components including Cipher MCP, hooks, and context tree:
+Installs all components including lossless-claude MCP, hooks, and context tree:
 
 ```bash
 XGH_LOCAL_PACK=. bash install.sh
@@ -28,4 +28,4 @@ After installing xgh, run the onboarding command in any project:
 /xgh-init
 ```
 
-This sets up the team name, context tree path, and Cipher collection for the project.
+This sets up the team name, context tree path, and lossless-claude collection for the project.

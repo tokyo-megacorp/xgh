@@ -44,11 +44,13 @@ From the manifest, calculate:
 | Orphaned entries | Entries in manifest whose files do not exist on disk |
 | Domains | Count unique domains |
 
-### Step 3: Test Cipher Connectivity
+### Step 3: Test lossless-claude Connectivity
 
-1. Run a simple `cipher_memory_search` with query "xgh health check"
-2. If it returns results (or returns empty without error): Cipher is connected
-3. If it errors: Cipher is disconnected
+Check if `mcp__lossless-claude__lcm_search` is present in the available tool list:
+- Tool absent → lossless-claude MCP not registered. Fix: add lossless-claude entry to `.claude/mcp.json`
+- Tool present but call returns error → daemon not running. Fix: `lossless-claude daemon start`
+
+Run `lcm_search("xgh health check")` to verify connectivity.
 
 ### Step 4: Display Status
 
@@ -74,7 +76,7 @@ Team: **<team-name>** · Context tree: `<path>`
 | Avg recency | <N> | ✅/⚠️/❌ |
 | Stale entries | <N>/<total> (<percent>%) | ✅/⚠️/❌ |
 | Orphaned | <N> | ✅/⚠️/❌ |
-| Cipher MCP | Connected/Disconnected | ✅/❌ |
+| lossless-claude | Connected/Disconnected | ✅/❌ |
 
 ### Domains
 

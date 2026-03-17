@@ -12,7 +12,7 @@ mcp_dependencies:
   required:
     - atlassian: "Atlassian MCP — searchJiraIssuesUsingJql for ticket history"
   optional:
-    - cipher: "Cipher MCP — store/recall profile data across sessions"
+    - lossless-claude: "lossless-claude MCP — store/recall profile data across sessions"
 ---
 
 # xgh:profile — Engineer Throughput & Affinity Analysis
@@ -40,7 +40,7 @@ Before starting, check which integrations are active:
 | Integration | Detection signal | Capability |
 |-------------|-----------------|------------|
 | Atlassian | `searchJiraIssuesUsingJql` tool available | Ticket history, open backlog |
-| Cipher | `cipher_memory_search` tool available | Cache profiles, recall past analyses |
+| lossless-claude | `mcp__lossless-claude__lcm_search` tool available | Cache profiles, recall past analyses |
 
 If Atlassian MCP is not available, abort with:
 
@@ -48,8 +48,8 @@ If Atlassian MCP is not available, abort with:
 Atlassian MCP is required for this skill. Run /xgh-setup to configure it.
 ```
 
-If Cipher is available, search for a cached profile before fetching:
-- Query: `cipher_memory_search` with "team-profile <engineer name>"
+If lossless-claude is available, search for a cached profile before fetching:
+- Query: `lcm_search("team-profile <engineer name>")`
 - If a profile exists from the last 7 days, offer to use cached data or refresh
 
 ---
@@ -349,9 +349,9 @@ Print a concise summary to the conversation with key highlights:
 - Top 3 recommended tickets (if project key provided)
 - Any notable findings (e.g., "cycle time has increased 40% in the last 30d vs 90d average")
 
-### Cipher Storage (if available)
+### lossless-claude Storage (if available)
 
-After generating the report, use `mcp__cipher__cipher_store_reasoning_memory` to store:
+After generating the report, use `lcm_store(text, ["reasoning"])` to store:
 - Engineer throughput baseline (for future comparison)
 - Sweet spot identification (for future assignment queries)
 - Estimation basis (so future sessions can reference without re-fetching)

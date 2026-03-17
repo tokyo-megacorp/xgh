@@ -21,7 +21,7 @@ No arguments. The skill walks you through everything interactively.
 
 ## What It Does
 
-1. **Verify MCP connections** — checks Cipher, Slack, Atlassian, Figma, GitHub CLI
+1. **Verify MCP connections** — checks lossless-claude, Slack, Atlassian, Figma, GitHub CLI
 2. **Profile setup** — name, role, squad, platforms
 3. **Add first project** — invokes `/xgh-track` for full project onboarding
 4. **Initial retrieval** — backfills recent Slack messages and linked resources
@@ -32,7 +32,7 @@ No arguments. The skill walks you through everything interactively.
 ## Prerequisites
 
 - `install.sh` must have been run first (`~/.xgh/ingest.yaml` must exist)
-- Cipher and Slack MCPs must be configured (run `/xgh-setup` if not)
+- lossless-claude and Slack MCPs must be configured (run `/xgh-setup` if not)
 
 ## Related Skills
 

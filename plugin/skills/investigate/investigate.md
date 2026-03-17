@@ -7,7 +7,7 @@ mcp_dependencies:
   optional:
     - slack: "Slack MCP — read threads, search discussions, post findings"
     - atlassian: "Atlassian MCP — search/create Jira tickets"
-    - cipher: "Cipher MCP — search past bugs, store findings"
+    - lossless-claude: "lossless-claude MCP — search past bugs, store findings"
 ---
 
 # xgh:investigate — Slack-Driven Debugging Workflow
@@ -35,7 +35,7 @@ Available integrations are discovered automatically on first invocation.
 **Graceful degradation rules (investigate-specific):**
 - No Slack MCP → Skip Slack thread reading. Ask user to paste the bug report content directly.
 - No task manager MCP → Skip ticket search/creation. Note in report that no ticket was created.
-- No Cipher MCP → Skip memory search. Proceed with codebase-only investigation. Save report to context tree only.
+- No lossless-claude MCP → Skip memory search. Proceed with codebase-only investigation. Save report to context tree only.
 - No MCPs at all → Still works. User provides context manually. Full Superpowers debug methodology applies.
 
 ---
@@ -72,9 +72,9 @@ Search queries to try:
 - "broken" or "bug" + feature name
 - Recent deploy notifications in engineering channels
 
-### Step 1.3: Query xgh Memory (if Cipher MCP available)
+### Step 1.3: Query xgh Memory (if lossless-claude MCP available)
 
-Use `mcp__cipher__cipher_memory_search` to search for:
+Use `lcm_search(query)` to search for:
 - Similar bugs that were investigated before
 - Past fixes in the affected code area
 - Architecture decisions that may be relevant
@@ -345,7 +345,7 @@ Generate a structured investigation report.
 1. **Context tree:** Save to `.xgh/context-tree/investigations/[YYYY-MM-DD]-[slug].md`
    - YAML frontmatter: `importance: 70`, `maturity: validated`, `tags: [bug, investigation, <component>]`
 
-2. **Cipher memory** (if available): Use `mcp__cipher__cipher_extract_and_operate_memory` to store:
+2. **lossless-claude memory** (if available): Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]. Store:
    - Root cause pattern (for future similar bug detection)
    - Fix pattern (for future similar fix suggestions)
    - Prevention learnings
@@ -364,6 +364,6 @@ Generate a structured investigation report.
 | 3 failed hypotheses hard gate | Prevents infinite rabbit holes. Forces the agent to seek human expertise. |
 | One hypothesis at a time | Forces focus. Prevents shotgun debugging. |
 | Report saved to context tree | Future investigations can reference past findings. Searchable by team. |
-| Curated to Cipher | Semantic search finds similar bugs even with different keywords. |
+| Curated to lossless-claude | Semantic search finds similar bugs even with different keywords. |
 | Interactive triage before debug | Avoids duplicate work. Connects to existing team workflows. |
 | Graceful degradation | Works for any team regardless of MCP configuration. |

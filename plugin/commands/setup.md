@@ -9,7 +9,7 @@ description: Audit and configure MCP integrations for xgh workflow skills
 
 Run the `xgh:mcp-setup` skill in **full audit mode**:
 
-1. Check all supported MCP servers (Cipher, Slack, Figma, Atlassian, GitHub CLI)
+1. Check all supported MCP servers (lossless-claude, Slack, Figma, Atlassian, GitHub CLI)
 2. Report which are configured and which are missing
 3. Offer interactive setup for each missing integration
 4. Verify each setup works before moving on

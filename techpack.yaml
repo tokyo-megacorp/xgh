@@ -1,7 +1,7 @@
 schemaVersion: 1
 identifier: xgh
 displayName: "XGH — eXtreme Go Horse"
-description: "Context-aware AI coding conventions powered by Cipher memory and a living context tree."
+description: "Context-aware AI coding conventions powered by lossless-claude memory and a living context tree."
 
 components:
   - id: vllm-mlx
@@ -35,20 +35,11 @@ components:
       - shellScript: "curl -sf --max-time 5 \"${XGH_REMOTE_URL}/v1/models\" >/dev/null 2>&1"
         label: "Remote inference server is reachable"
 
-  - id: qdrant
-    type: brew
-    package: qdrant
-    description: "Vector database for Cipher semantic memory"
-
-  - id: cipher
+  - id: lossless-claude
     type: mcpServer
-    command: "npx -y @byterover/cipher"
-    env:
-      QDRANT_URL: "http://localhost:6333"
-      CIPHER_COLLECTION: "__TEAM_NAME__-memory"
-      CIPHER_SCOPE: "project"
-    scope: project
-    description: "Cipher MCP server — structured reasoning memory with Qdrant backend"
+    command: "lossless-claude"
+    args: ["mcp"]
+    description: "Two-layer memory MCP server (episodic SQLite + semantic Qdrant)"
 
   - id: session-start-hook
     type: hook
@@ -100,7 +91,7 @@ components:
   - id: workspace-write
     type: script
     source: lib/workspace-write.js
-    description: "Direct Qdrant write helper — generates embeddings matching Cipher's config"
+    description: "Direct Qdrant write helper — generates embeddings for lossless-claude's semantic layer"
 
   - id: retrieve-skill
     type: skill
@@ -110,7 +101,7 @@ components:
   - id: analyze-skill
     type: skill
     source: plugin/skills/analyze/analyze.md
-    description: "Headless analyzer loop — classifies, deduplicates, writes to Cipher every 30 min"
+    description: "Headless analyzer loop — classifies, deduplicates, writes to lossless-claude every 30 min"
 
   - id: track-skill
     type: skill
@@ -191,7 +182,7 @@ optionalPlugins:
     integration: |
       Complements xgh by keeping raw tool output out of the context window.
       Route heavy operations (briefing fetches, log analysis) through ctx_execute.
-      FTS5 keyword search pairs with Cipher vector search for dual-engine retrieval.
+      FTS5 keyword search pairs with lossless-claude vector search for dual-engine retrieval.
 
   - id: superpowers
     marketplace: claude-plugins-official/superpowers
@@ -213,7 +204,7 @@ templates:
 prompts:
   - key: TEAM_NAME
     type: input
-    label: "Team name for Cipher collection namespace"
+    label: "Team name for lossless-claude memory namespace"
     default: "my-team"
   - key: CONTEXT_TREE_PATH
     type: input

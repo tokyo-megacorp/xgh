@@ -16,7 +16,8 @@
 
 `plugin/hooks/session-start.sh` already supports `XGH_BRIEFING=1` to auto-trigger the briefing skill. Add parallel support for `XGH_SCHEDULER` (default: `1`):
 
-- If `XGH_SCHEDULER` is `"on"` (default), inject a `scheduler_trigger` key into the JSON payload output by the hook. Uses `"on"`/`"off"` strings, consistent with the existing `XGH_BRIEFING` convention.
+- If `XGH_SCHEDULER` is `"on"`, inject a `scheduler_trigger` key into the JSON payload output by the hook. Uses `"on"`/`"off"` strings, consistent with the existing `XGH_BRIEFING` convention.
+- **Default is `"off"`** — consistent with `XGH_BRIEFING="${XGH_BRIEFING:-off}"`. Users opt in by setting `XGH_SCHEDULER=on` in their environment or `CLAUDE.local.md`. This is intentional: auto-scheduling on every session without consent would be disruptive.
 - The session-start hook instructions detect `scheduler_trigger` and call CronCreate twice:
   - retrieve: `cron: "*/5 * * * *"`, `prompt: "xgh:retrieve /xgh-retrieve"`, `recurring: true`
   - analyze: `cron: "*/30 * * * *"`, `prompt: "xgh:analyze /xgh-analyze"`, `recurring: true`
@@ -62,7 +63,9 @@ The skill is interactive (foreground), short, and always runs in the main sessio
 
 ### 2.1 Headless skills — always background
 
-Skills: `xgh:retrieve`, `xgh:analyze`, `xgh:briefing`, `xgh:brief`
+Skills: `xgh:retrieve`, `xgh:analyze`, `xgh:briefing`
+
+Note: `plugin/skills/brief/` does not exist on disk — `brief-skill` in `techpack.yaml` is a stale reference. No action needed here; that is a separate cleanup task.
 
 These never interact with the user. Their skill `.md` files are updated to dispatch via the `Agent` tool and return only a summary:
 
@@ -101,8 +104,15 @@ Each skill's `.md` file gains a **Preamble** section (before any existing conten
 
 3. **Write preference** using Bash:
    ```bash
+   mkdir -p ~/.xgh
    prefs=$(cat ~/.xgh/prefs.json 2>/dev/null || echo '{}')
-   echo "$prefs" | jq '.skill_mode.<skill_name> = {"mode":"<mode>","autonomy":"<autonomy>"}' \
+   # When mode is "interactive", omit autonomy key entirely:
+   if [ "<mode>" = "interactive" ]; then
+     entry='{"mode":"interactive"}'
+   else
+     entry='{"mode":"<mode>","autonomy":"<autonomy>"}'
+   fi
+   echo "$prefs" | jq --argjson e "$entry" '.skill_mode.<skill_name> = $e' \
      > ~/.xgh/prefs.json
    ```
 
@@ -159,7 +169,7 @@ Each skill's `.md` file gains a **Preamble** section (before any existing conten
 | `plugin/skills/retrieve/retrieve.md` | Add background Agent dispatch pattern |
 | `plugin/skills/analyze/analyze.md` | Add background Agent dispatch pattern |
 | `plugin/skills/briefing/briefing.md` | Add background Agent dispatch pattern |
-| `plugin/skills/brief/brief.md` | Does not exist — no change needed; brief is covered by the `brief-skill` component in techpack.yaml pointing to `plugin/skills/brief/brief.md`; verify at implementation time |
+| `plugin/skills/brief/brief.md` | Does not exist on disk — skip. `brief-skill` in `techpack.yaml` is a stale reference; out of scope here. |
 | `plugin/skills/investigate/investigate.md` | Add preamble preference check |
 | `plugin/skills/implement/implement.md` | Add preamble preference check |
 | `plugin/skills/index/index.md` | Add preamble preference check |

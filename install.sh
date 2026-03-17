@@ -650,151 +650,29 @@ else
   fi
 fi
 
-# ── 4. Cipher MCP Server ────────────────────────────────
-lane "Configuring Cipher MCP 🔮"
+# ── 4. Legacy MCP cleanup ──────────────────────────────
 CLAUDE_DIR="${PWD}/.claude"
 mkdir -p "${CLAUDE_DIR}"
 
-# Read preset for env vars
-PRESET_FILE="${PACK_DIR}/config/presets/${XGH_PRESET}.yaml"
-if [ ! -f "$PRESET_FILE" ]; then
-  error "Unknown preset: ${XGH_PRESET}"
-  error "Available: local, local-light, openai, anthropic, cloud"
-  exit 1
-fi
-
-# Extract vector store type and URL from preset (simple parsing)
-VS_TYPE=$(grep 'type:' "$PRESET_FILE" | tail -1 | awk '{print $2}')
-VS_URL=$(grep 'url:' "$PRESET_FILE" | tail -1 | awk '{print $2}' || echo "")
-# Detect local vs cloud inference by checking if preset uses a localhost base URL
-PRESET_LLM_URL=$(grep 'baseUrl:\|base_url:' "$PRESET_FILE" | head -1 | awk '{print $2}' 2>/dev/null || echo "")
-
-# Register Cipher MCP globally — env vars differ per backend
-# vllm-mlx: provider=openai, localhost/v1 (OpenAI-compat)
-# ollama:   provider=ollama, localhost (no /v1), OLLAMA_BASE_URL, no OPENAI_* keys
-# remote:   provider=openai, XGH_REMOTE_URL/v1 (set by remote backend section)
-_INFERENCE_BASE="${XGH_REMOTE_URL:-http://localhost:${XGH_MODEL_PORT}}"
-
-if [ "$XGH_BACKEND" = "ollama" ]; then
-  # Native Ollama: no /v1 suffix, no OPENAI_* keys
-  _COMMON_ENV_ARGS=(
-    -e "MCP_SERVER_MODE=aggregator"
-    -e "VECTOR_STORE_TYPE=${VS_TYPE}"
-    -e "VECTOR_STORE_URL=${VS_URL}"
-    -e "EMBEDDING_PROVIDER=ollama"
-    -e "EMBEDDING_MODEL=${XGH_EMBED_MODEL}"
-    -e "EMBEDDING_BASE_URL=${_INFERENCE_BASE}"
-    -e "EMBEDDING_DIMENSIONS=768"
-    -e "OLLAMA_BASE_URL=${_INFERENCE_BASE}"
-    -e "LLM_PROVIDER=ollama"
-    -e "LLM_MODEL=${XGH_LLM_MODEL}"
-    -e "LLM_BASE_URL=${_INFERENCE_BASE}"
-    -e "CIPHER_LOG_LEVEL=info"
-    -e "SEARCH_MEMORY_TYPE=both"
-    -e "USE_WORKSPACE_MEMORY=true"
-    -e "XGH_TEAM=${XGH_TEAM}"
-  )
-  _COMMON_JSON_ENV=$(cat <<ENVEOF
-{
-  "MCP_SERVER_MODE": "aggregator",
-  "VECTOR_STORE_TYPE": "${VS_TYPE}",
-  "VECTOR_STORE_URL": "${VS_URL}",
-  "EMBEDDING_PROVIDER": "ollama",
-  "EMBEDDING_MODEL": "${XGH_EMBED_MODEL}",
-  "EMBEDDING_BASE_URL": "${_INFERENCE_BASE}",
-  "EMBEDDING_DIMENSIONS": "768",
-  "OLLAMA_BASE_URL": "${_INFERENCE_BASE}",
-  "LLM_PROVIDER": "ollama",
-  "LLM_MODEL": "${XGH_LLM_MODEL}",
-  "LLM_BASE_URL": "${_INFERENCE_BASE}",
-  "CIPHER_LOG_LEVEL": "info",
-  "SEARCH_MEMORY_TYPE": "both",
-  "USE_WORKSPACE_MEMORY": "true",
-  "XGH_TEAM": "${XGH_TEAM}"
-}
-ENVEOF
-)
-else
-  # vllm-mlx or remote: OpenAI-compat with /v1 suffix
-  _BASE_URL="${_INFERENCE_BASE}/v1"
-  _COMMON_ENV_ARGS=(
-    -e "MCP_SERVER_MODE=aggregator"
-    -e "VECTOR_STORE_TYPE=${VS_TYPE}"
-    -e "VECTOR_STORE_URL=${VS_URL}"
-    -e "EMBEDDING_PROVIDER=openai"
-    -e "EMBEDDING_MODEL=${XGH_EMBED_MODEL}"
-    -e "EMBEDDING_BASE_URL=${_BASE_URL}"
-    -e "EMBEDDING_DIMENSIONS=768"
-    -e "EMBEDDING_API_KEY=placeholder"
-    -e "OPENAI_API_KEY=placeholder"
-    -e "OPENAI_BASE_URL=${_BASE_URL}"
-    -e "LLM_PROVIDER=openai"
-    -e "LLM_MODEL=${XGH_LLM_MODEL}"
-    -e "LLM_BASE_URL=${_BASE_URL}"
-    -e "LLM_API_KEY=placeholder"
-    -e "CIPHER_LOG_LEVEL=info"
-    -e "SEARCH_MEMORY_TYPE=both"
-    -e "USE_WORKSPACE_MEMORY=true"
-    -e "XGH_TEAM=${XGH_TEAM}"
-  )
-  _COMMON_JSON_ENV=$(cat <<ENVEOF
-{
-  "MCP_SERVER_MODE": "aggregator",
-  "VECTOR_STORE_TYPE": "${VS_TYPE}",
-  "VECTOR_STORE_URL": "${VS_URL}",
-  "EMBEDDING_PROVIDER": "openai",
-  "EMBEDDING_MODEL": "${XGH_EMBED_MODEL}",
-  "EMBEDDING_BASE_URL": "${_BASE_URL}",
-  "EMBEDDING_DIMENSIONS": "768",
-  "EMBEDDING_API_KEY": "placeholder",
-  "OPENAI_API_KEY": "placeholder",
-  "OPENAI_BASE_URL": "${_BASE_URL}",
-  "LLM_PROVIDER": "openai",
-  "LLM_MODEL": "${XGH_LLM_MODEL}",
-  "LLM_BASE_URL": "${_BASE_URL}",
-  "LLM_API_KEY": "placeholder",
-  "CIPHER_LOG_LEVEL": "info",
-  "SEARCH_MEMORY_TYPE": "both",
-  "USE_WORKSPACE_MEMORY": "true",
-  "XGH_TEAM": "${XGH_TEAM}"
-}
-ENVEOF
-)
-fi
-
-if command -v claude &>/dev/null && [ "$XGH_DRY_RUN" -eq 0 ]; then
-  claude mcp remove cipher -s user 2>/dev/null || true
-  claude mcp add -s user cipher "${HOME}/.local/bin/cipher-mcp" "${_COMMON_ENV_ARGS[@]}"
-  info "Cipher MCP ✓ registered globally (backend: ${XGH_BACKEND})"
-else
-  # Fallback: write ~/.claude.json directly (dry-run or claude not yet in PATH)
-  _GLOBAL_CLAUDE_JSON="${HOME}/.claude.json"
-  _CIPHER_ENV="$_COMMON_JSON_ENV"
-  _CIPHER_ENTRY=$(echo "$_CIPHER_ENV" | jq \
-    --arg cmd "${HOME}/.local/bin/cipher-mcp" \
-    '{"type":"stdio","command":$cmd,"args":[],"env":.}')
-  if [ -f "$_GLOBAL_CLAUDE_JSON" ] && [ -s "$_GLOBAL_CLAUDE_JSON" ]; then
-    jq --argjson e "$_CIPHER_ENTRY" '.mcpServers.cipher = $e' \
-      "$_GLOBAL_CLAUDE_JSON" > "${_GLOBAL_CLAUDE_JSON}.tmp" \
-      && mv "${_GLOBAL_CLAUDE_JSON}.tmp" "$_GLOBAL_CLAUDE_JSON"
-  else
-    echo '{"mcpServers":{}}' | jq --argjson e "$_CIPHER_ENTRY" \
-      '.mcpServers.cipher = $e' > "$_GLOBAL_CLAUDE_JSON"
-  fi
-  info "Cipher MCP → ~/.claude.json"
-fi
-
-# Clean up any legacy project-level .mcp.json
+# Clean up any legacy project-level cipher entries from .mcp.json
 if [ -f "${PWD}/.mcp.json" ]; then
   LEGACY_KEYS=$(jq -r '.mcpServers | keys[]' "${PWD}/.mcp.json" 2>/dev/null || echo "")
   if [ "$LEGACY_KEYS" = "cipher" ]; then
     rm -f "${PWD}/.mcp.json"
-    info "Removed legacy .mcp.json (cipher now global)"
+    info "Removed legacy .mcp.json (cipher entry)"
   elif echo "$LEGACY_KEYS" | grep -q "cipher"; then
     jq 'del(.mcpServers.cipher)' "${PWD}/.mcp.json" > "${PWD}/.mcp.json.tmp" \
       && mv "${PWD}/.mcp.json.tmp" "${PWD}/.mcp.json"
-    info "Removed cipher from project .mcp.json (now global)"
+    info "Removed stale cipher entry from project .mcp.json"
   fi
+fi
+
+# Clean up any stale cipher entry from global ~/.claude/mcp.json
+GLOBAL_MCP="${HOME}/.claude/mcp.json"
+if [ -f "$GLOBAL_MCP" ] && jq -e '.mcpServers.cipher' "$GLOBAL_MCP" &>/dev/null; then
+  jq 'del(.mcpServers.cipher)' "$GLOBAL_MCP" > "${GLOBAL_MCP}.tmp" \
+    && mv "${GLOBAL_MCP}.tmp" "$GLOBAL_MCP"
+  info "Removed stale cipher entry from ~/.claude/mcp.json"
 fi
 
 # ── 5. Hooks ────────────────────────────────────────────

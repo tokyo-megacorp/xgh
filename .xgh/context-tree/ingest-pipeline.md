@@ -34,9 +34,8 @@ Sources (Slack, GitHub, Jira, Confluence, Figma)
 - Budget: max 10 turns, 300s timeout, sonnet model
 
 ## Scheduler
-- launchd plists: `com.xgh.retriever.plist`, `com.xgh.analyzer.plist`
+- Session scheduler via CronCreate (`XGH_SCHEDULER=on`). Managed via `/xgh-schedule`.
 - Quiet hours: 22:00–07:00, weekends off
-- Managed via `scripts/ingest-schedule.sh`
 
 ## Content Types
 

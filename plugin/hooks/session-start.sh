@@ -66,11 +66,35 @@ if scheduler_trigger == "on":
 else:
     scheduler_instructions = None
 
+# Context-mode availability check
+ctx_mode_available = Path.home().joinpath(
+    ".claude", "plugins", "cache", "context-mode"
+).exists()
+
 decision_table = [
     "Before writing code: run lcm_search first.",
     "After significant work: extract key learnings → lcm_store.",
     "For architectural choices: store rationale with lcm_store(text, ['reasoning'])."
 ]
+if ctx_mode_available:
+    decision_table.insert(0, "For file analysis: use ctx_execute_file, not Read. Read is only for files about to be Edited.")
+
+# Initialize context-mode tracking state for this session
+if ctx_mode_available:
+    import hashlib, subprocess as sp
+    try:
+        proj = sp.check_output(
+            ["git", "rev-parse", "--show-toplevel"],
+            stderr=sp.DEVNULL
+        ).decode().strip()
+    except Exception:
+        proj = os.getcwd()
+    h = hashlib.sha1(proj.encode()).hexdigest()[:8]
+    state_p = f"/tmp/xgh-ctx-health-{h}.json"
+    json.dump(
+        {"reads": 0, "edits": 0, "ctx_calls": 0, "files_read": []},
+        open(state_p, "w")
+    )
 
 # No context tree found
 if not context_tree or not os.path.isdir(context_tree):
@@ -81,7 +105,8 @@ if not context_tree or not os.path.isdir(context_tree):
         "briefingTrigger": briefing_trigger,
         "schedulerTrigger": scheduler_trigger,
         "schedulerInstructions": scheduler_instructions,
-        "dispatchContext": dispatch_context
+        "dispatchContext": dispatch_context,
+        "ctxModeAvailable": ctx_mode_available
     }
     print(json.dumps(output))
     sys.exit(0)
@@ -165,7 +190,8 @@ output = {
     "briefingTrigger": briefing_trigger,
     "schedulerTrigger": scheduler_trigger,
     "schedulerInstructions": scheduler_instructions,
-    "dispatchContext": dispatch_context
+    "dispatchContext": dispatch_context,
+    "ctxModeAvailable": ctx_mode_available
 }
 
 print(json.dumps(output))

@@ -58,7 +58,7 @@ For each active project, for each Slack channel in its `slack:` list:
 
 **Thread reply pass** (runs after the main channel scan, for each channel):
 
-After scanning new messages, perform a thread reply pass to catch replies on already-indexed messages:
+After scanning new messages, perform a thread reply pass to catch replies on recently-active threads:
 
 1. Call `slack_read_channel` again for the same channel with:
    - `oldest` = cursor minus `retriever.thread_lookback_hours` hours (default: 24) — to look back at recent threads
@@ -71,6 +71,8 @@ After scanning new messages, perform a thread reply pass to catch replies on alr
 3. Count thread-reply items as additional items stashed in the Step 10 log line
 
 > **Config:** `retriever.thread_lookback_hours` (default: `24`) controls how far back to look for threads with new replies.
+
+> **Coverage note:** This pass covers threads whose parent is within the last `thread_lookback_hours`. Threads on older messages — including messages that had no replies when first seen — are handled by `xgh:deep-retrieve`, which runs hourly and scans the full `thread_lookback_days` window. Dedup between these two passes is filename-based: inbox filenames encode the reply `ts`, so a reply stashed here will not be re-stashed by the deep scan.
 
 **Rate limiting:** Apply the same back-off rules (2s → 4s → 8s, up to `retriever.max_retries`) for this pass as for the main channel scan.
 
@@ -221,4 +223,23 @@ This skill runs in the main session turn (triggered by CronCreate or manually). 
    ```
    Retrieve complete: <N> new items stashed, <M> critical, <K> channels scanned.
    ```
-   Nothing else after this line.
+
+## Scheduler nudge (manual runs only)
+
+If this skill was invoked manually (not by CronCreate), check after the summary line whether scheduling is active:
+
+```bash
+python3 -c "import os; print(os.environ.get('XGH_SCHEDULER', ''))"
+```
+
+Also call CronList and look for jobs with prompt `/xgh-retrieve` or `/xgh-analyze`.
+
+If CronList is unavailable, fall back to the env var check alone.
+
+If neither `XGH_SCHEDULER=on` nor active CronCreate jobs are found, append:
+
+```
+⚠️ Running manually — enable background scheduling to automate this:
+   /xgh-schedule resume                                        (this session)
+   echo 'export XGH_SCHEDULER=on' >> ~/.zshrc && source ~/.zshrc  (persistent)
+```

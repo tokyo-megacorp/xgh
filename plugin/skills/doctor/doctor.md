@@ -83,8 +83,21 @@ Check `~/.xgh/logs/analyzer.log` similarly:
 
 ## Check 4 — Scheduler
 
-macOS: `launchctl list 2>/dev/null | grep "com.xgh"` — show loaded/unloaded per agent
-Linux: `crontab -l 2>/dev/null | grep "xgh"` — show installed entries
+Call CronList. Find jobs where prompt is `/xgh-retrieve` or `/xgh-analyze`.
+
+Also check `XGH_SCHEDULER` in the environment:
+```bash
+python3 -c "import os; print(os.environ.get('XGH_SCHEDULER', 'not set'))"
+```
+
+Report each job found:
+- Job present → `✓ retrieve: active (*/5 * * * *)` / `✓ analyze: active (*/30 * * * *)`
+- Job missing → `✗ retrieve: not scheduled` / `✗ analyze: not scheduled`
+- `XGH_SCHEDULER=on` set → `✓ XGH_SCHEDULER=on (jobs will auto-register each session)`
+- `XGH_SCHEDULER` not set → `⚠ XGH_SCHEDULER not set — jobs won't persist across sessions`
+
+**Fix (if jobs missing):** Run `/xgh-schedule resume` to register jobs now.
+**Fix (if XGH_SCHEDULER not set):** `echo 'export XGH_SCHEDULER=on' >> ~/.zshrc && source ~/.zshrc`
 
 ## Check 5 — Workspace stats
 
@@ -133,8 +146,14 @@ Pipeline
   ✗ Analyzer: last run 52 min ago (overdue — threshold: 45 min)
 
 Scheduler
-  ✓ com.xgh.retriever: loaded
-  ✓ com.xgh.analyzer: loaded
+  ✓ XGH_SCHEDULER=on (jobs auto-register each session)
+  ✓ retrieve: active (*/5 * * * *)
+  ✓ analyze: active (*/30 * * * *)
+  # OR if not configured:
+  ⚠ XGH_SCHEDULER not set — jobs won't persist across sessions
+  ✗ retrieve: not scheduled
+  ✗ analyze: not scheduled
+    Fix: /xgh-schedule resume  (now) | export XGH_SCHEDULER=on >> ~/.zshrc  (persistent)
 
 Workspace
   ✓ Collection "xgh-workspace" exists (142 vectors)

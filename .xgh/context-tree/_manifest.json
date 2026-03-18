@@ -44,6 +44,26 @@
       "tags": ["architecture", "tech-stack"]
     }
   ],
+  "decisions": [
+    {
+      "file": "decisions/key-design-decisions.md",
+      "title": "Key Design Decisions",
+      "type": "decision",
+      "status": "validated",
+      "importance": 90,
+      "tags": ["architecture", "decision", "design", "byop", "dual-engine", "bash-first"]
+    }
+  ],
+  "gotchas": [
+    {
+      "file": "gotchas/known-issues.md",
+      "title": "Known Gotchas & Issues",
+      "type": "constraint",
+      "status": "validated",
+      "importance": 85,
+      "tags": ["gotcha", "bug", "constraint", "mcp-config", "plugin", "deduplication"]
+    }
+  ],
   "ecosystem": [
     {
       "file": "ecosystem/claude-code-community-insights-2026-03-16.md",

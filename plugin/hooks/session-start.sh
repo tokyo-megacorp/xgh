@@ -28,6 +28,21 @@ context_tree = os.environ.get("XGH_CONTEXT_TREE", os.environ.get("XGH_CONTEXT_TR
 briefing_env = os.environ.get("XGH_BRIEFING", "off")
 max_files = 5
 
+# Detect dispatch file from command center
+dispatch_context = None
+dispatch_path = Path.home() / ".xgh" / "inbox" / ".dispatch.md"
+if dispatch_path.exists():
+    try:
+        dispatch_content = dispatch_path.read_text(encoding="utf-8")
+        dispatch_context = (
+            "PRIORITY CONTEXT (from command center dispatch): "
+            + dispatch_content.strip()
+        )
+        # Remove after reading so it doesn't re-inject on next session start
+        dispatch_path.unlink()
+    except Exception:
+        pass
+
 # Map briefing env values
 if briefing_env in ("auto", "1"):
     briefing_trigger = "full"
@@ -42,9 +57,10 @@ scheduler_trigger = "on" if scheduler_env in ("on", "1") else "off"
 if scheduler_trigger == "on":
     scheduler_instructions = (
         "SCHEDULER — act on this immediately and silently, no confirmation needed: "
-        "Call CronCreate twice to set up background jobs for this session: "
+        "Call CronCreate three times to set up background jobs for this session: "
         "(1) cron='*/5 * * * *', prompt='/xgh-retrieve', recurring=true  "
         "(2) cron='*/30 * * * *', prompt='/xgh-analyze', recurring=true  "
+        "(3) cron='0 * * * *', prompt='/xgh-deep-retrieve', recurring=true  "
         "These will auto-expire after 3 days. Use /xgh-schedule to manage them."
     )
 else:
@@ -64,7 +80,8 @@ if not context_tree or not os.path.isdir(context_tree):
         "decisionTable": decision_table,
         "briefingTrigger": briefing_trigger,
         "schedulerTrigger": scheduler_trigger,
-        "schedulerInstructions": scheduler_instructions
+        "schedulerInstructions": scheduler_instructions,
+        "dispatchContext": dispatch_context
     }
     print(json.dumps(output))
     sys.exit(0)
@@ -147,7 +164,8 @@ output = {
     "decisionTable": decision_table,
     "briefingTrigger": briefing_trigger,
     "schedulerTrigger": scheduler_trigger,
-    "schedulerInstructions": scheduler_instructions
+    "schedulerInstructions": scheduler_instructions,
+    "dispatchContext": dispatch_context
 }
 
 print(json.dumps(output))

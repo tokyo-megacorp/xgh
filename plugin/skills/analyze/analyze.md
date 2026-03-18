@@ -228,3 +228,23 @@ xgh_usage_log "analyzer" "<actual turns>" 0
    ```
    Analyze complete: <N> items processed, <M> stored, <K> duplicates skipped.
    ```
+
+## Scheduler nudge (manual runs only)
+
+If this skill was invoked manually (not by CronCreate), check after the summary line whether scheduling is active:
+
+```bash
+python3 -c "import os; print(os.environ.get('XGH_SCHEDULER', ''))"
+```
+
+Also call CronList and look for jobs with prompt `/xgh-retrieve` or `/xgh-analyze`.
+
+If CronList is unavailable, fall back to the env var check alone.
+
+If neither `XGH_SCHEDULER=on` nor active CronCreate jobs are found, append:
+
+```
+⚠️ Running manually — enable background scheduling to automate this:
+   /xgh-schedule resume                                        (this session)
+   echo 'export XGH_SCHEDULER=on' >> ~/.zshrc && source ~/.zshrc  (persistent)
+```

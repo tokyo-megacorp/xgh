@@ -35,6 +35,7 @@ I'll walk you through first-time setup. This takes about 5 minutes and covers:
   5. (Optional) Profile your team
   6. (Optional) Index your codebase
   7. (Optional) Curate initial knowledge
+  8. Enable background scheduling
 
 Let's get started.
 ```
@@ -295,7 +296,54 @@ If **yes**:
 2. Let the user capture as many items as they want.
 3. When done, show a summary of what was stored.
 
-If **no** (or user skips): Continue to Step 8.
+If **no** (or user skips): Continue to Step 7b.
+
+---
+
+## Step 7b — Scheduler Setup
+
+Check if background scheduling is configured:
+
+1. Check `XGH_SCHEDULER` in the environment:
+   ```bash
+   python3 -c "import os; print(os.environ.get('XGH_SCHEDULER', ''))"
+   ```
+2. Call CronList — check for jobs where prompt is `/xgh-retrieve` or `/xgh-analyze`.
+
+**If already configured** (env var is `on` OR both cron jobs exist): show `✅ Scheduler active` and continue to Step 8.
+
+**If not configured**: Ask:
+
+```
+Enable background scheduling?
+  retrieve: every 5 min  (scans Slack, GitHub for new items)
+  analyze:  every 30 min (classifies and stores to memory)
+
+Jobs auto-expire after 3 days and are re-created each session when XGH_SCHEDULER=on.
+
+Enable? [Y/n]
+```
+
+If **yes**:
+1. Detect shell profile (prefer `~/.zshrc`, fall back to `~/.zprofile`, then `~/.bash_profile`):
+   ```bash
+   python3 -c "
+   import os
+   for f in ['~/.zshrc', '~/.zprofile', '~/.bash_profile', '~/.profile']:
+       p = os.path.expanduser(f)
+       if os.path.exists(p): print(p); break
+   "
+   ```
+2. Append `export XGH_SCHEDULER=on` if not already present:
+   ```bash
+   grep -q 'XGH_SCHEDULER=on' <profile_file> || echo 'export XGH_SCHEDULER=on' >> <profile_file>
+   ```
+3. Register CronCreate jobs immediately:
+   - retrieve: `cron: "*/5 * * * *"`, `prompt: "/xgh-retrieve"`, `recurring: true`
+   - analyze: `cron: "*/30 * * * *"`, `prompt: "/xgh-analyze"`, `recurring: true`
+4. Report: `✅ Scheduler enabled — retrieve (*/5) and analyze (*/30) registered. Added XGH_SCHEDULER=on to <profile>.`
+
+If **no**: `⚠️ Scheduler not enabled. Run /xgh-schedule resume anytime, or add export XGH_SCHEDULER=on to your shell profile.`
 
 ---
 
@@ -320,10 +368,10 @@ xgh setup complete!
 
   Team Profiles: [generated for Alice, Bob / skipped]
   Codebase Index: [indexed / skipped]
+  Scheduler:     [✅ active (*/5, */30) / ⚠️ not enabled]
 
   Next steps:
     - Run /xgh-brief to get your first daily briefing
-    - Run /xgh-retrieve to trigger a manual retrieval cycle
     - Run /xgh-setup to add any missing MCP integrations
 ```
 
@@ -344,7 +392,7 @@ Content: "xgh init completed for <name> (<role>, <squad>). Project: <project>. T
 
 - **install.sh not run:** Detect by missing `~/.xgh/ingest.yaml`. Tell user to run install first.
 - **MCP not responding:** If a tool call times out or errors, retry once. If it fails again, mark that integration as unavailable and continue.
-- **User wants to stop mid-flow:** At any point, if the user says "stop" or "skip the rest", jump to Step 7 with whatever was completed so far.
+- **User wants to stop mid-flow:** At any point, if the user says "stop" or "skip the rest", jump to Step 8 (Summary) with whatever was completed so far.
 - **Partial completion:** If the user has already done some steps (profile filled, project exists), detect that and skip with a note. Never re-do work that's already been done unless the user asks.
 
 ---
@@ -361,3 +409,4 @@ This skill chains together existing skills rather than duplicating their logic:
 | Step 5 — Team profiles | `xgh:profile` per engineer |
 | Step 6 — Index codebase | `xgh:index` quick mode |
 | Step 7 — Initial curation | `xgh:curate` interactive |
+| Step 7b — Scheduler | CronList + CronCreate + shell profile write |

@@ -33,8 +33,18 @@ urgency:
 schedule:
   retriever: "*/5 * * * *"
   analyzer: "*/30 * * * *"
+  deep_retriever: "0 * * * *"
   quiet_hours: "22:00-07:00"
   quiet_days: [saturday, sunday]
+
+command_center:
+  dispatch_mode: auto_triage   # alert_only | auto_triage | auto_dispatch
+  schedule:
+    morning_briefing: "0 8 * * 1-5"   # full briefing weekdays 8am
+    pulse: "*/15 * * * *"              # quick pulse every 15 min
+  quiet_hours: null                    # null = inherit from schedule.quiet_hours
+  session_name_template: "{project}: {action} {ref}"
+  scope: all                           # always global for command center
 
 models:
   retriever: haiku
@@ -45,9 +55,11 @@ models:
 budget:
   retriever_max_turns: 3
   analyzer_max_turns: 10
+  deep_retriever_max_turns: 10
   indexer_max_turns: 20
   retriever_timeout: 60s
   analyzer_timeout: 300s
+  deep_retriever_timeout: 300s
   indexer_timeout: 600s
   daily_token_cap: 2000000
   warn_at_percent: 80
@@ -61,6 +73,9 @@ retriever:
   stale_cursor_reset: 7d
   backoff_on_rate_limit: true
   max_retries: 3
+  thread_lookback_hours: 24      # fast retrieve: look back this far for recent thread activity
+  thread_lookback_days: 7        # deep retrieve: full lookback window for thread scanning
+  deep_scan_max_pages: 5         # max pagination pages per channel per deep scan run
 
 analyzer:
   max_inbox_items: 50

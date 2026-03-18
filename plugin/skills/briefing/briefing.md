@@ -163,6 +163,26 @@ Once the briefing is delivered:
 2. If user confirms: load context for that ticket/PR and invoke `xgh:implement-ticket` or `xgh:investigate` as appropriate.
 3. Store the session start state: Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]
 
+## Scheduler nudge
+
+After delivering the briefing, check if background scheduling is active:
+
+```bash
+python3 -c "import os; print(os.environ.get('XGH_SCHEDULER', ''))"
+```
+
+Also call CronList and look for jobs with prompt `/xgh-retrieve` or `/xgh-analyze`.
+
+If CronList is unavailable, fall back to the env var check alone.
+
+If neither `XGH_SCHEDULER=on` nor active CronCreate jobs are found, append to the briefing output:
+
+```
+⚠️ Scheduler not active — briefing data may be stale.
+   /xgh-schedule resume                                        (this session)
+   echo 'export XGH_SCHEDULER=on' >> ~/.zshrc && source ~/.zshrc  (persistent)
+```
+
 ## Rationalization Table
 
 | If you see | Do this |

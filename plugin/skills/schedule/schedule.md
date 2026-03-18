@@ -21,10 +21,17 @@ Parse the invocation text to determine the subcommand:
 | no args or `status` | → **Status** |
 | `pause retrieve` | → **Pause** retrieve |
 | `pause analyze` | → **Pause** analyze |
+| `pause deep-retrieve` | → **Pause** deep-retrieve |
+| `pause morning` | → **Pause** command-center morning briefing |
+| `pause pulse` | → **Pause** command-center pulse |
 | `resume retrieve` | → **Resume** retrieve |
 | `resume analyze` | → **Resume** analyze |
+| `resume deep-retrieve` | → **Resume** deep-retrieve |
+| `resume morning` | → **Resume** command-center morning briefing |
+| `resume pulse` | → **Resume** command-center pulse |
 | `run retrieve` | → **Run** retrieve now |
 | `run analyze` | → **Run** analyze now |
+| `run deep-retrieve` | → **Run** deep-retrieve now |
 | `off` | → **Off** (cancel all) |
 | `prefs reset <skill>` | → **Reset pref** for skill |
 | `prefs` | → **Show prefs** |
@@ -33,7 +40,7 @@ Parse the invocation text to determine the subcommand:
 
 ## Status
 
-Call CronList. Find jobs where prompt is exactly `/xgh-retrieve` or `/xgh-analyze`.
+Call CronList. Find jobs where prompt matches `/xgh-retrieve`, `/xgh-analyze`, `/xgh-command-center morning`, or `/xgh-command-center pulse`.
 
 If 0 matching jobs found:
 > ⚠️ No active xgh scheduler jobs. Enable with `XGH_SCHEDULER=on` or run `/xgh-schedule resume retrieve` and `/xgh-schedule resume analyze`.
@@ -47,15 +54,20 @@ If jobs found, display:
 |-----|------|--------|------|
 | retrieve | */5 * * * * | ✅ active | auto-expires in 3 days |
 | analyze | */30 * * * * | ✅ active | auto-expires in 3 days |
+| deep-retrieve | 0 * * * * | ✅ active | auto-expires in 3 days |
+| command-center morning | 0 8 * * 1-5 | ✅ active | weekdays 8am |
+| command-center pulse | */15 * * * * | ✅ active | every 15 min |
 ```
 
 Note: CronCreate jobs auto-expire after 3 days. They are re-created automatically on the next session start if `XGH_SCHEDULER=on`.
+
+Command-center cron jobs are registered by `/xgh-command-center` on first run.
 
 ---
 
 ## Pause
 
-Call CronDelete for the job whose prompt matches the target (`/xgh-retrieve` or `/xgh-analyze`).
+Call CronDelete for the job whose prompt matches the target (`/xgh-retrieve`, `/xgh-analyze`, or `/xgh-deep-retrieve`).
 
 To find the job ID: scan CronList output for the matching prompt, extract the job ID.
 
@@ -68,6 +80,9 @@ Report: `⏸ retrieve paused. Resume with /xgh-schedule resume retrieve.`
 Call CronCreate:
 - retrieve: `cron: "*/5 * * * *"`, `prompt: "/xgh-retrieve"`, `recurring: true`
 - analyze: `cron: "*/30 * * * *"`, `prompt: "/xgh-analyze"`, `recurring: true`
+- deep-retrieve: `cron: "0 * * * *"`, `prompt: "/xgh-deep-retrieve"`, `recurring: true`
+- morning: `cron: "0 8 * * 1-5"`, `prompt: "/xgh-command-center morning"`, `recurring: true`
+- pulse: `cron: "*/15 * * * *"`, `prompt: "/xgh-command-center pulse"`, `recurring: true`
 
 Report: `✅ retrieve resumed (*/5 * * * *).`
 
@@ -78,12 +93,13 @@ Report: `✅ retrieve resumed (*/5 * * * *).`
 Invoke the target skill directly in this session (not via cron):
 - `run retrieve` → invoke `/xgh-retrieve`
 - `run analyze` → invoke `/xgh-analyze`
+- `run deep-retrieve` → invoke `/xgh-deep-retrieve`
 
 ---
 
 ## Off
 
-Call CronDelete for both jobs. Report count of jobs cancelled.
+Call CronDelete for all jobs (`/xgh-retrieve`, `/xgh-analyze`, `/xgh-deep-retrieve`, and command-center jobs). Report count of jobs cancelled.
 
 ---
 

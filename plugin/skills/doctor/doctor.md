@@ -66,7 +66,7 @@ Common Qdrant failures and fixes:
 |---|---|
 | `WouldBlock` / WAL lock (exit 101) | `pkill -f qdrant; rm -f ~/.qdrant/storage/storage/collections/*/0/wal/open-*; launchctl load ~/Library/LaunchAgents/com.qdrant.server.plist` |
 | `jemalloc: background_thread` (warning only) | Add `MALLOC_CONF=background_thread:false` to the plist EnvironmentVariables (cosmetic, not the crash cause) |
-| Missing plist | Re-run `scripts/ingest-schedule.sh install` |
+| Missing plist | Enable session scheduler: add `export XGH_SCHEDULER=on` to your shell profile, then run `/xgh-schedule resume` |
 | Binary missing | `brew install qdrant` or download to `~/.qdrant/bin/qdrant` |
 
 lossless-claude MCP availability: check if `mcp__lossless-claude__lcm_search` is present in the available tool list:

@@ -33,10 +33,6 @@ export HOME="$_HOME_BAK"
 
 # Config template must exist in repo
 assert_file_exists "config/ingest-template.yaml"
-# Schedulers must exist
-assert_file_exists "scripts/schedulers/com.xgh.retriever.plist"
-assert_file_exists "scripts/schedulers/com.xgh.analyzer.plist"
-assert_file_exists "scripts/ingest-schedule.sh"
 # techpack references all ingest components
 assert_contains "techpack.yaml" "retrieve-skill"
 assert_contains "techpack.yaml" "analyze-skill"

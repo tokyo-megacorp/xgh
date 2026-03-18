@@ -12,6 +12,10 @@ mcp_dependencies:
   - mcp__claude_ai_Slack__slack_read_channel
   - mcp__claude_ai_Slack__slack_read_thread
 ---
+> **Context-mode:** Use `ctx_execute_file` for analysis reads; `Read` only for files you will
+> Edit within 1-2 tool calls. Use `ctx_batch_execute` for multi-command research. Full routing
+> rules: `plugin/references/context-mode-routing.md`
+
 
 # xgh:deep-retrieve — Deep Thread Scan
 

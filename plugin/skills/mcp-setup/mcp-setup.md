@@ -6,6 +6,10 @@ triggers:
   - when a workflow skill detects a missing MCP dependency
   - when the user runs /xgh-setup
 ---
+> **Context-mode:** Use `ctx_execute_file` for analysis reads; `Read` only for files you will
+> Edit within 1-2 tool calls. Use `ctx_batch_execute` for multi-command research. Full routing
+> rules: `plugin/references/context-mode-routing.md`
+
 
 # xgh:mcp-setup — Interactive MCP Setup Helper
 

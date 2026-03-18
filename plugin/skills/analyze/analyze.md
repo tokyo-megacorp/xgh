@@ -14,6 +14,22 @@ mcp_dependencies:
   - mcp__lossless-claude__lcm_search
   - mcp__lossless-claude__lcm_store
 ---
+> **Context-mode:** Use `ctx_execute_file` for analysis reads; `Read` only for files you will
+> Edit within 1-2 tool calls. Use `ctx_batch_execute` for multi-command research. Full routing
+> rules: `plugin/references/context-mode-routing.md`
+
+## Context-mode routing
+
+Follow these rules for this skill's file access patterns:
+
+| Phase | File access | Tool |
+|-------|-------------|------|
+| Investigation / context gathering | Understanding files | `ctx_execute_file(path)` |
+| Investigation / context gathering | Running commands, searching | `ctx_batch_execute(commands, queries)` |
+| Implementation | Reading a file to Edit it next | `Read` |
+| Implementation | Running builds, tests | `ctx_execute(language, code)` |
+
+See `plugin/references/context-mode-routing.md` for full rules and examples.
 
 # xgh:analyze — Analysis Loop
 

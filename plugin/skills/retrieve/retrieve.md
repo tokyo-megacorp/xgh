@@ -14,6 +14,10 @@ mcp_dependencies:
   - mcp__claude_ai_Atlassian__getConfluencePage
   - mcp__claude_ai_Figma__get_metadata
 ---
+> **Context-mode:** Use `ctx_execute_file` for analysis reads; `Read` only for files you will
+> Edit within 1-2 tool calls. Use `ctx_batch_execute` for multi-command research. Full routing
+> rules: `plugin/references/context-mode-routing.md`
+
 
 # xgh:retrieve — Retrieval Loop
 

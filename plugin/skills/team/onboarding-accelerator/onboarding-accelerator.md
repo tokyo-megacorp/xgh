@@ -3,6 +3,10 @@ name: xgh:onboarding-accelerator
 description: New dev first-session knowledge dump — architecture, conventions, gotchas, incidents, and ownership map
 type: flexible
 ---
+> **Context-mode:** Use `ctx_execute_file` for analysis reads; `Read` only for files you will
+> Edit within 1-2 tool calls. Use `ctx_batch_execute` for multi-command research. Full routing
+> rules: `plugin/references/context-mode-routing.md`
+
 
 # xgh:onboarding-accelerator — Onboarding Accelerator
 

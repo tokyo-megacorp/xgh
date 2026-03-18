@@ -168,7 +168,8 @@ heredoc) for consistency with the existing session-start and prompt-submit hooks
 
 **Hash consistency:** All hooks that compute the state file path must use the same algorithm:
 `SHA-1 of the worktree root path, first 8 hex chars`. In Python: `hashlib.sha1(path.encode()).hexdigest()[:8]`.
-In bash: `echo "$path" | shasum | cut -c1-8`. Both produce identical output.
+All hash computations must use Python — do NOT use bash `echo | shasum` as echo adds a
+trailing newline, producing a different hash.
 
 **New hook: `plugin/hooks/pre-read.sh`** (PreToolUse on Read)
 
@@ -235,8 +236,8 @@ Output format (UserPromptSubmit):
 On every user message, after existing intent detection logic:
 1. Read state file (skip if missing — context-mode may not be installed)
 2. If `ctx_calls >= 2`: skip nudge (agent is using context-mode)
-3. If `unedited_reads >= 3` AND `ctx_calls == 0`: append nudge to `additionalContext`
-4. Nudge text: "Session health: {reads} reads, {edits} edits, 0 context-mode calls. Switch to
+3. If `unedited_reads >= 3` AND `ctx_calls < 2`: append nudge to `additionalContext`
+4. Nudge text: "Session health: {reads} reads, {edits} edits, {ctx_calls} context-mode calls. Switch to
    ctx_execute_file for analysis reads."
 
 **Design choices:**

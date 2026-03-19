@@ -85,6 +85,87 @@ Check `~/.xgh/logs/retriever.log` for last timestamp (last line matching ISO dat
 Check `~/.xgh/logs/analyzer.log` similarly:
 - < 45 min: ✓ | 45–90 min: ⚠ | > 90 min: ✗
 
+## Check 3b — Context Efficiency
+
+Run both subsections in parallel.
+
+### RTK — output compression
+
+Instruct the agent to run these checks via `ctx_execute` (or Bash if ctx_execute unavailable):
+
+```bash
+RTK_BIN=$(command -v rtk 2>/dev/null || echo "${HOME}/.local/bin/rtk")
+if [ -x "$RTK_BIN" ]; then
+  echo "binary_found=true"
+  echo "binary_path=$RTK_BIN"
+  "$RTK_BIN" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 | xargs -I{} echo "version={}"
+  "$RTK_BIN" gain --json 2>/dev/null || echo "gain_unavailable=true"
+else
+  echo "binary_found=false"
+fi
+```
+
+Check hook registration:
+
+```bash
+python3 -c "
+import json, os
+for f in [os.path.expanduser('~/.claude/settings.json'),
+          '.claude/settings.local.json']:
+    if os.path.isfile(f):
+        d = json.load(open(f))
+        for e in d.get('hooks',{}).get('PreToolUse',[]):
+            for h in e.get('hooks',[]):
+                if 'rtk' in h.get('command','') and 'hook' in h.get('command',''):
+                    print('hook_registered=true')
+                    print('hook_command=' + h['command'])
+                    exit(0)
+print('hook_registered=false')
+"
+```
+
+Format output as:
+
+```
+#### RTK — output compression
+| Metric          | Value                                         |
+|-----------------|-----------------------------------------------|
+| Version         | v{version} {status}                           |
+| Binary          | {binary_path} {status}                        |
+| Hook            | PreToolUse·Bash {status}                      |
+| Avg compression | {avg}% (from rtk gain)                        |
+| Tokens saved    | ~{tokens} (this session)                      |
+| Top commands    | {cmd1} {pct1}% · {cmd2} {pct2}%              |
+```
+
+Status icons: ✅ present/active · ❌ missing · ⚠️ below minimum version (0.31.0).
+
+Degraded states:
+- Binary not found + `XGH_SKIP_RTK` unset → `❌ RTK not installed — re-run install.sh (or set XGH_SKIP_RTK=1 to suppress)`
+- Binary not found + `XGH_SKIP_RTK=1` → `⏭ RTK skipped (XGH_SKIP_RTK=1)`
+- Version below `0.31.0` → `⚠️ RTK vX.Y.Z — upgrade to v0.31.0+ recommended`
+- Binary missing but hook in settings → `❌ RTK binary missing at {path} — hook registered but inactive`
+- `rtk gain` returns no data → `✅ RTK active — no Bash calls compressed yet this session`
+
+### context-mode — context window protection
+
+Call the `mcp__plugin_context-mode_context-mode__ctx_stats` MCP tool (no parameters). Format its output as:
+
+```
+#### context-mode — context window protection
+| Metric          | Value                  |
+|-----------------|------------------------|
+| Version         | {version} ✅           |
+| Plugin          | registered ✅          |
+| Routing         | system-prompt active ✅|
+| Sandbox calls   | {calls}                |
+| Data sandboxed  | {kb} KB                |
+| Context savings | {ratio}x               |
+```
+
+If `ctx_stats` unavailable: `❌ context-mode not active — run /xgh-setup`
+If no calls yet: `✅ context-mode active — no sandbox calls yet this session`
+
 ## Check 4 — Scheduler
 
 Call CronList. Find jobs where prompt is `/xgh-retrieve` or `/xgh-analyze`.
@@ -148,6 +229,28 @@ Connectivity
 Pipeline
   ✓ Retriever: last run 3 min ago (healthy)
   ✗ Analyzer: last run 52 min ago (overdue — threshold: 45 min)
+
+## Context Efficiency
+
+### RTK — output compression
+| Metric          | Value                              |
+|-----------------|------------------------------------|
+| Version         | v0.31.0 ✅ (min: v0.31.0)         |
+| Binary          | ~/.local/bin/rtk ✅               |
+| Hook            | PreToolUse·Bash registered ✅     |
+| Avg compression | 73%                                |
+| Tokens saved    | ~12,400 (this session)            |
+| Top commands    | git log 91% · cargo build 84%     |
+
+### context-mode — context window protection
+| Metric          | Value                  |
+|-----------------|------------------------|
+| Version         | v1.0.22 ✅             |
+| Plugin          | registered ✅          |
+| Routing         | system-prompt active ✅|
+| Sandbox calls   | 14                     |
+| Data sandboxed  | 98.2 KB                |
+| Context savings | 12.4x                  |
 
 Scheduler
   ✓ XGH_SCHEDULER=on (jobs auto-register each session)

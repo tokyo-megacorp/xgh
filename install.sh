@@ -57,11 +57,10 @@ import json, os, sys
 
 rtk_bin = sys.argv[1]
 settings_file = sys.argv[2]
-hook_cmd = rtk_bin + ' hook --quiet'
 
 new_entry = {
     'matcher': 'Bash',
-    'hooks': [{'type': 'command', 'command': hook_cmd}]
+    'hooks': [{'type': 'command', 'command': rtk_bin + ' hook --quiet'}]
 }
 
 if os.path.isfile(settings_file) and os.path.getsize(settings_file) > 0:
@@ -72,11 +71,13 @@ else:
 hooks = data.get('hooks', {})
 pre = hooks.get('PreToolUse', [])
 
-# Dedup: skip if identical command already registered
-existing_cmds = {h['command'] for e in pre for h in e.get('hooks', [])}
-if hook_cmd not in existing_cmds:
-    pre.append(new_entry)
+# Remove any stale RTK hook entries (any path) before adding the fresh one
+pre = [
+    e for e in pre
+    if not any('rtk hook' in h.get('command', '') for h in e.get('hooks', []))
+]
 
+pre.append(new_entry)
 hooks['PreToolUse'] = pre
 data['hooks'] = hooks
 json.dump(data, open(settings_file, 'w'), indent=2)

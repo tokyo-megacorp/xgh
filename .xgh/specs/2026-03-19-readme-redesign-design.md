@@ -1,10 +1,37 @@
+# README Redesign — xgh as "The Developer's Cockpit"
+
+**Date:** 2026-03-19
+**Status:** Approved (post-review fixes applied)
+**Goal:** Reposition xgh from "persistent memory for AI agents" to "the glue layer / developer's cockpit that orchestrates best-in-class AI dev tools"
+
+---
+
+## Positioning Shift
+
+| Aspect | Old | New |
+|--------|-----|-----|
+| Identity | "The brain" — persistent memory system | "The glue" — orchestration layer |
+| Tagline | "Persistent memory for AI coding agents" | "One install wires memory, compression, context efficiency, and dev methodology into your AI agent" |
+| Analogy | None explicit | Fastlane for AI-assisted development |
+| Hero element | Self-learning loop diagram | Command table (cockpit controls) |
+| Dependency framing | lossless-claude is xgh's memory | lossless-claude is one of four best-in-class tools xgh wires together |
+
+## Full README Structure
+
+### Section 1 — Title + Positioning
+
+```markdown
 # xgh — The developer's cockpit
 
 **One install wires memory, compression, context efficiency, and dev methodology into your AI agent.** No glue code. No config drift. No re-setup per project.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-initial%20release-brightgreen)](#implementation-status)
+```
 
+### Section 2 — What xgh wires together + Your controls
+
+```markdown
 ## What xgh wires together
 
 | What you need | What does it | Installed by xgh |
@@ -44,10 +71,13 @@
 | `/xgh-schedule` | Manage background scheduler jobs |
 | `/xgh-calibrate` | Calibrate dedup threshold with F1 scoring |
 | `/xgh-status` | Memory stats and system health |
-| `/xgh-todo-killer` | Resolve TODO comments across the codebase |
 
 </details>
+```
 
+### Section 3 — Install
+
+```markdown
 ## Install
 
 <details open>
@@ -60,7 +90,7 @@ curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
 That single line:
 1. Installs [lossless-claude](https://github.com/ipedro/lossless-claude) (memory) and [RTK](https://github.com/rtk-ai/rtk) (compression)
 2. Offers [context-mode](https://github.com/mksglu/context-mode) and [superpowers](https://github.com/obra/superpowers) as optional plugins
-3. Registers hooks (session-start, prompt-submit, pre-read, post-edit, post-ctx-call)
+3. Registers 5 hooks (session-start, prompt-submit, pre-read, post-edit, post-ctx-call)
 4. Writes agent instructions for Claude Code, Cursor, Copilot, and Windsurf
 5. Sets up a context tree for git-committed knowledge
 6. Auto-detects your platform and picks the right LLM backend
@@ -83,7 +113,7 @@ XGH_PRESET=anthropic curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/mai
 # Ollama on any platform
 XGH_BACKEND=ollama bash install.sh
 
-# Remote inference server (e.g. Mac Mini -> another machine)
+# Remote inference server (e.g. Mac Mini → another machine)
 XGH_BACKEND=remote XGH_REMOTE_URL=http://192.168.1.x:11434 bash install.sh
 ```
 
@@ -124,7 +154,11 @@ curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/uninstall.sh | bash
 ```
 
 </details>
+```
 
+### Section 4 — What changes after install
+
+```markdown
 ## What changes after install
 
 | Before | After |
@@ -135,7 +169,13 @@ curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/uninstall.sh | bash
 | Four tools configured separately, if at all | One install, zero drift |
 
 All knowledge is stored as human-readable markdown in `.xgh/context-tree/` — reviewable in PRs, greppable in CI, readable without xgh.
+```
 
+### Section 5 — Try It
+
+Keep existing content verbatim — it's good as-is:
+
+```markdown
 ## Try It
 
 After installing, open a Claude Code session and try these:
@@ -159,79 +199,20 @@ After installing, open a Claude Code session and try these:
 # Debug a production issue
 /xgh-investigate "Users seeing 500 errors on /api/checkout"
 ```
-
-<details>
-<summary><b>BYOP — Bring Your Own Provider</b></summary>
-
-Backend (local inference) and provider (cloud API) are independent. Mix and match:
-
-| Preset | LLM | Embeddings | Vector Store | Cost |
-|--------|-----|-----------|-------------|------|
-| `local` *(default)* | vllm-mlx Llama-3.2-3B | vllm-mlx modernbert-embed | Qdrant (local) | Free |
-| `local-light` | vllm-mlx Llama-3.2-3B | vllm-mlx modernbert-embed | In-memory | Free |
-| `openai` | GPT-4o-mini | text-embedding-3-small | Qdrant (local) | ~$0.01/session |
-| `anthropic` | Claude Haiku | vllm-mlx modernbert-embed | Qdrant (local) | ~$0.01/session |
-| `cloud` | OpenRouter | OpenAI embeddings | Qdrant Cloud | ~$0.02/session |
-
-### Platform matrix
-
-| Platform | Auto-detected backend | What installs locally |
-|----------|----------------------|----------------------|
-| macOS Apple Silicon | `vllm-mlx` | vllm-mlx + Qdrant (Homebrew) |
-| Linux / Intel Mac | `ollama` | Ollama + Qdrant (binary) |
-| Any — remote server | `remote` | Qdrant only |
-
-Override with `XGH_BACKEND=<backend>`. Use `XGH_SERVE_NETWORK=1` on the server side to bind to `0.0.0.0` for remote clients.
-
-<details>
-<summary><b>Configuration Reference</b></summary>
-
-All environment variables, the backend/MCP env key matrix, cipher post-hook behavior, and the backend extension pattern are documented in [`docs/configuration-reference.md`](docs/configuration-reference.md).
-
-### Key environment variables
-
-| Variable | Purpose |
-|----------|---------|
-| `XGH_BACKEND` | Force backend: `vllm-mlx`, `ollama`, or `remote` |
-| `XGH_PRESET` | Cloud preset: `local`, `local-light`, `openai`, `anthropic`, `cloud` |
-| `XGH_REMOTE_URL` | Remote inference server URL |
-| `XGH_SERVE_NETWORK` | Bind model server to `0.0.0.0` (server-side) |
-| `XGH_TEAM` | Team name for shared workspace |
-| `XGH_DRY_RUN` | Run installer without writing files |
-| `XGH_LOCAL_PACK` | Use local xgh repo instead of fetching from GitHub |
-| `XGH_INSTALL_PLUGINS` | `all` or `skip` — control optional plugin installation |
-
-### Installed file structure
-
-```
-your-project/
-├── .claude/
-│   ├── .mcp.json                  # lossless-claude MCP server config
-│   ├── settings.local.json        # Permissions + hook registrations
-│   ├── hooks/
-│   │   ├── xgh-session-start.sh   # Injects top-5 context files as JSON
-│   │   └── xgh-prompt-submit.sh   # Intent detection + decision table
-│   ├── skills/                    # Workflow + collaboration skills
-│   ├── commands/                  # Slash commands
-│   └── agents/
-│       └── xgh-collaboration-dispatcher.md
-├── CLAUDE.local.md                # Agent instructions with team config
-└── .xgh/
-    └── context-tree/
-        └── _manifest.json         # Knowledge registry (grows over time)
 ```
 
-</details>
+### Section 6 — BYOP + Platform matrix
 
-</details>
+Keep existing content — the provider/backend tables are accurate and well-structured. Move inside a `<details>` fold to reduce top-level noise. Keep the Configuration Reference `<details>` nested inside.
 
-<details>
-<summary><b>Architecture</b></summary>
+### Section 7 — Architecture
+
+Update the ASCII diagram to position xgh as the orchestration layer. The key change: xgh sits at the top as the "cockpit", with the four tools as modules underneath.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    xgh — developer's cockpit                 │
-│               25 commands · 5 hooks · context tree           │
+│              25 commands · 5 hooks · context tree            │
 ├──────────┬──────────────┬───────────────┬───────────────────┤
 │          │              │               │                   │
 │  lossless-claude   context-mode      RTK          superpowers
@@ -256,104 +237,54 @@ your-project/
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Tech stack
+Keep the tech stack table and agent instruction files table inside the Architecture `<details>` fold.
 
-| Layer | Technology |
-|-------|-----------|
-| Install & hooks | Bash (`set -euo pipefail`) |
-| Config | YAML (presets), JSON (settings) |
-| Skills / commands / agents | Markdown (Claude Code format) |
-| Context tree search | Python 3 (BM25/TF-IDF) |
-| Vector memory | Cipher MCP + Qdrant |
-| Model server | vllm-mlx, Ollama, or remote URL |
-| LLM / embeddings | vllm-mlx, Ollama, OpenAI, Anthropic, OpenRouter (BYOP) |
-| Tests | Bash with `assert_*` helpers (33 test suites) |
+### Section 8 — Trust & Privacy
 
-### Agent instruction files
+Keep verbatim — it's concise and accurate.
 
-xgh writes platform-specific agent instructions for every major AI tool:
+### Section 9 — Contributing
 
-| Platform | File |
-|----------|------|
-| All agents (canonical) | [`AGENTS.md`](AGENTS.md) |
-| Claude Code | [`CLAUDE.md`](CLAUDE.md) |
-| GitHub Copilot | [`.github/copilot-instructions.md`](.github/copilot-instructions.md) |
-| Copilot Chat (VS Code) | [`.copilot/instructions.md`](.copilot/instructions.md) |
-| Cursor | [`.cursor/rules/xgh.md`](.cursor/rules/xgh.md) |
-| Windsurf | [`.windsurfrules`](.windsurfrules) |
+Keep verbatim.
 
-### Multi-agent support
+### Section 10 — Footer
 
-xgh's workspace acts as a message bus between agents. Any MCP-compatible agent can participate.
-
-| Workflow | Pattern | Agents |
-|----------|---------|--------|
-| `plan-review` | Plan -> review -> implement | 2 |
-| `parallel-impl` | Parallel implementation | N |
-| `validation` | Implement -> validate loop | 2 |
-| `security-review` | Implement -> review -> fix -> re-review | 2-3 |
-
-</details>
-
-<details>
-<summary><b>Implementation Status</b></summary>
-
-22 skills, 25 commands, 4 workflow templates, 33 test suites.
-
-| Plan | Scope | Status |
-|------|-------|--------|
-| 1 — Foundation | Scaffold, BYOP config, one-liner installer | Done |
-| 2 — Context Tree Engine | CRUD, BM25 search, scoring/maturity, archival, sync | Done |
-| 3 — Hooks & Core Skills | Session-start/prompt-submit hooks, 5 core skills, 3 commands | Done |
-| 4 — Team Collaboration | 6 team skills, collaborate command, dispatcher agent | Done |
-| 5 — Multi-Agent Bus | Agent registry, 4 workflow templates, message protocol | Done |
-| 6 — Workflow Skills | investigate, design, implement workflows | Done |
-| 7 — Best-of-Both Merge | Sourceable library architecture, flat manifest, structured JSON hooks | Done |
-| 8 — Ollama / Linux | Ollama backend, backend-aware cipher.yml + MCP env vars | In progress |
-| 9 — Remote Backend | `XGH_BACKEND=remote` — point at another machine's server | In progress |
-
-Plan documents are in `docs/plans/`.
-
-</details>
-
-## Trust & Privacy
-
-- **Nothing leaves your machine.** All memory, vectors, and context stay local. No telemetry, no cloud sync, no account.
-- **No vendor lock-in.** BYOP: swap backends and providers without reinstalling.
-- **Git-native knowledge.** The context tree is plain markdown committed to your repo. Review it in PRs, grep it in CI, read it without xgh.
-- **Fully open source.** MIT licensed. Read every line.
-
-## Contributing
-
-1. Read [`AGENTS.md`](AGENTS.md) for development conventions
-2. Write a failing test first (`tests/`)
-3. Implement the feature
-4. Run tests: `for t in tests/test-*.sh; do bash "$t"; done`
-5. Open a PR — context tree diffs are normal and expected
-
-<details>
-<summary><b>Development tips</b></summary>
-
-```bash
-# Dry-run installer without installing anything
-XGH_DRY_RUN=1 XGH_LOCAL_PACK=. bash install.sh
-
-# Test with a specific preset
-XGH_DRY_RUN=1 XGH_LOCAL_PACK=. XGH_PRESET=openai bash install.sh
-
-# Test with a specific backend
-XGH_DRY_RUN=1 XGH_LOCAL_PACK=. XGH_BACKEND=ollama bash install.sh
-
-# Run all tests
-for t in tests/test-*.sh; do echo -n "$(basename $t): "; bash "$t" 2>&1 | tail -1; done
-```
-
-</details>
-
-## License
-
-MIT — see [LICENSE](LICENSE).
-
+```markdown
 ---
 
 *xgh is inspired by [Fastlane](https://fastlane.tools), [ByteRover](https://byterover.dev), and the [Superpowers methodology](https://www.claudesuperpowers.com). It is an open, self-hosted, provider-agnostic alternative.*
+```
+
+Note: Added Fastlane to the inspiration credits since it's now the explicit analogy.
+
+### Section 11 — License
+
+```markdown
+## License
+
+MIT — see [LICENSE](LICENSE).
+```
+
+---
+
+## What's removed
+
+| Old section | Reason |
+|-------------|--------|
+| "The Problem" (zero memory narrative) | Replaced by "What changes after install" — shows the shift without lecturing |
+| "The self-learning loop" | Implementation detail, not a selling point for the cockpit framing |
+| "Dual-engine search" | Too deep for README — belongs in AGENTS.md or docs/ |
+| "Context tree knowledge" | Mentioned in architecture, no longer a hero section |
+| "Session Stats" table | Replaced by before/after table which is more concrete |
+| "Multi-agent support" section | Kept as part of Architecture fold, not a top-level section |
+
+## What's restructured
+
+| Change | Why |
+|--------|-----|
+| Commands table promoted to top-level hero | Cockpit framing — controls come first |
+| Top 10 commands visible, rest in fold | Avoid overwhelming first-time readers |
+| Install section moved below "Your controls" | Reader sees value before being asked to install |
+| BYOP/Platform matrix moved to `<details>` | Important but not first-impression material |
+| Architecture diagram shows xgh as orchestrator | Reflects new positioning as glue, not brain |
+| Plugins section removed as standalone | Absorbed into "What xgh wires together" table |

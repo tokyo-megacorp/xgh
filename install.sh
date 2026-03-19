@@ -70,12 +70,13 @@ fi
 # ── 3b. lossless-claude ────────────────────────────────
 lane "Wiring up the memory layer 🧬"
 
-if [ "$XGH_DRY_RUN" -eq 0 ]; then
+if [ "$XGH_DRY_RUN" -eq 0 ] && [ "${XGH_SKIP_LCM:-0}" -eq 0 ]; then
   if ! command -v lossless-claude &>/dev/null; then
     if command -v npm &>/dev/null; then
       info "Installing lossless-claude..."
+      command -v tsc &>/dev/null || npm install -g typescript &>/dev/null || warn "Could not install TypeScript (tsc) — lossless-claude build may fail"
       npm install -g github:ipedro/lossless-claude &>/dev/null || {
-        warn "Could not install lossless-claude — install manually: npm install -g github:ipedro/lossless-claude"
+        warn "Could not install lossless-claude — skipping (set XGH_SKIP_LCM=1 to suppress)"
       }
     else
       warn "npm not found — install Node.js first, then: npm install -g github:ipedro/lossless-claude"
@@ -87,8 +88,10 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   if command -v lossless-claude &>/dev/null; then
     lossless-claude install || warn "lossless-claude install failed — run manually: lossless-claude install"
   else
-    warn "lossless-claude not found — run manually once installed: lossless-claude install"
+    info "Skipping lossless-claude setup — memory features unavailable until installed"
   fi
+else
+  [ "${XGH_SKIP_LCM:-0}" -eq 1 ] && info "Skipping lossless-claude (XGH_SKIP_LCM=1)"
 fi
 
 # ── 3. Fetch xgh pack ───────────────────────────────────

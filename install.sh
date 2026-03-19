@@ -86,16 +86,14 @@ if [ "$XGH_DRY_RUN" -eq 0 ] && [ "${XGH_SKIP_LCM:-0}" -eq 0 ]; then
       warn "Could not download lossless-claude installer — skipping (set XGH_SKIP_LCM=1 to suppress)"
     fi
     rm -f "$_lcm_installer"
+    # Refresh PATH — installer may have added lossless-claude to ~/.local/bin or /opt/homebrew/bin
+    export PATH="${HOME}/.local/bin:/opt/homebrew/bin:/usr/local/bin:${PATH}"
+    hash -r 2>/dev/null || true
   else
     info "lossless-claude already installed: $(command -v lossless-claude)"
   fi
 
-  if command -v lossless-claude &>/dev/null; then
-    lossless-claude install || {
-      warn "lossless-claude install had issues — running diagnostics..."
-      lossless-claude doctor 2>/dev/null || warn "Some checks failed — run 'lossless-claude doctor' after fixing"
-    }
-  else
+  if ! command -v lossless-claude &>/dev/null; then
     info "Skipping lossless-claude setup — memory features unavailable until installed"
   fi
 else

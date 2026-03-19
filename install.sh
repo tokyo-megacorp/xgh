@@ -327,15 +327,35 @@ lane "Installing RTK 🗜️"
 if [ "$XGH_DRY_RUN" -eq 0 ] && [ "${XGH_SKIP_RTK:-0}" -eq 0 ]; then
   _RTK_BIN=""
 
-  if command -v rtk &>/dev/null; then
-    _installed_ver="$(rtk --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo '0.0.0')"
-    if python3 -c "
+  # Check xgh-managed binary first to avoid PATH-shadowing by e.g. Homebrew installs
+  _xgh_rtk="${RTK_INSTALL_DIR}/rtk"
+  _check_bin=""
+  if [ -x "$_xgh_rtk" ]; then
+    _check_bin="$_xgh_rtk"
+  elif command -v rtk &>/dev/null; then
+    _check_bin="$(command -v rtk)"
+  fi
+
+  if [ -n "$_check_bin" ]; then
+    _installed_ver="$("$_check_bin" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+    if [ -z "$_installed_ver" ]; then
+      # Can't parse version — trust the binary rather than clobbering it
+      warn "RTK: could not parse version from '$("$_check_bin" --version 2>/dev/null | head -1)' — skipping upgrade check"
+      _RTK_BIN="$_check_bin"
+    elif python3 -c "
 v=tuple(int(x) for x in '${_installed_ver}'.split('.'))
 m=tuple(int(x) for x in '${RTK_MIN_VERSION}'.split('.'))
 exit(0 if v >= m else 1)
 " 2>/dev/null; then
-      info "RTK already installed: $(command -v rtk) (${_installed_ver})"
-      _RTK_BIN="$(command -v rtk)"
+      info "RTK already installed: ${_check_bin} (${_installed_ver})"
+      _RTK_BIN="$_check_bin"
+    fi
+    # Warn if a different rtk shadows the one we're using
+    if [ -n "$_RTK_BIN" ] && command -v rtk &>/dev/null; then
+      _path_rtk="$(command -v rtk)"
+      if [ "$_path_rtk" != "$_RTK_BIN" ]; then
+        warn "RTK: also found at ${_path_rtk} — it may shadow ${_RTK_BIN} in PATH"
+      fi
     fi
   fi
 

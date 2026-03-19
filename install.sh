@@ -321,7 +321,7 @@ json.dump(merged, open('${SETTINGS_FILE}', 'w'), indent=2)
 " 2>/dev/null
 fi
 
-# ── 3a. RTK — output compression ─────────────────────────
+# ── 6b. RTK — output compression ─────────────────────────
 lane "Installing RTK 🗜️"
 
 if [ "$XGH_DRY_RUN" -eq 0 ] && [ "${XGH_SKIP_RTK:-0}" -eq 0 ]; then
@@ -380,12 +380,15 @@ print(assets[0] if assets else 'checksums.txt')
         if [ -s "${_tmpdir}/checksums.txt" ]; then
           _expected="$(grep "${_asset}" "${_tmpdir}/checksums.txt" | awk '{print $1}')"
           if [ -n "$_expected" ]; then
-            _actual="$(sha256sum "${_tmpdir}/${_asset}" 2>/dev/null | awk '{print $1}' || shasum -a 256 "${_tmpdir}/${_asset}" 2>/dev/null | awk '{print $1}')"
+            if command -v sha256sum &>/dev/null; then
+              _actual="$(sha256sum "${_tmpdir}/${_asset}" | awk '{print $1}')"
+            else
+              _actual="$(shasum -a 256 "${_tmpdir}/${_asset}" | awk '{print $1}')"
+            fi
             if [ "$_actual" = "$_expected" ]; then
               _verified=1
             else
               warn "RTK: SHA256 mismatch — aborting install (expected ${_expected}, got ${_actual})"
-              rm -rf "$_tmpdir"
               _asset=""
             fi
           else

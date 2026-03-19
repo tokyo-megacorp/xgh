@@ -29,9 +29,10 @@ Welcome the user to xgh and walk them through the full first-run setup. This is 
 Start with:
 
 ```
-Welcome to xgh — eXtreme Go Horse for AI Teams.
+Welcome to xgh — the developer's cockpit.
 
-I'll walk you through first-time setup. This takes about 5 minutes and covers:
+I'll walk you through first-time setup. This takes about 5 minutes:
+  0. Bootstrap (data dirs, dependencies)
   1. Verify MCP connections
   2. Set up your profile
   3. Add your first project
@@ -39,43 +40,93 @@ I'll walk you through first-time setup. This takes about 5 minutes and covers:
   5. (Optional) Profile your team
   6. (Optional) Index your codebase
   7. (Optional) Curate initial knowledge
-  8. Enable background scheduling
 
-Let's get started.
+Scheduler activates automatically after setup. Let's go.
 ```
 
 ---
 
-## Step 0: Dependency Check (run before scaffolding)
+## Step 0: Bootstrap (create data dirs + check dependencies)
 
-Check each dependency below in order. Respond per the instructions for each result.
+### 0a. Create data directory structure
 
-### lossless-claude MCP
+```bash
+mkdir -p ~/.xgh/inbox/processed ~/.xgh/logs ~/.xgh/digests ~/.xgh/calibration
+```
 
-Run in Bash: `claude mcp list 2>/dev/null | grep -i lossless-claude`
+### 0b. Create ingest.yaml from template (if missing)
+
+```bash
+if [ ! -f ~/.xgh/ingest.yaml ]; then
+  # Find the plugin cache directory
+  PLUGIN_DIR=$(find ~/.claude/plugins/cache -path "*/xgh/*/config/ingest-template.yaml" -print -quit 2>/dev/null | xargs dirname 2>/dev/null)
+  if [ -n "$PLUGIN_DIR" ]; then
+    cp "$PLUGIN_DIR/ingest-template.yaml" ~/.xgh/ingest.yaml
+    echo "Created ~/.xgh/ingest.yaml from template"
+  else
+    echo "Warning: ingest template not found — create ~/.xgh/ingest.yaml manually"
+  fi
+fi
+```
+
+### 0c. Install static instructions (@reference)
+
+```bash
+# Find xgh-instructions.md in plugin cache
+XGH_TMPL=$(find ~/.claude/plugins/cache -path "*/xgh/*/templates/xgh-instructions.md" -print -quit 2>/dev/null)
+if [ -n "$XGH_TMPL" ]; then
+  mkdir -p .xgh
+  cp "$XGH_TMPL" .xgh/xgh.md
+  # Add @reference to CLAUDE.local.md if not present
+  grep -q '@.xgh/xgh.md' CLAUDE.local.md 2>/dev/null || echo -e "\n@.xgh/xgh.md" >> CLAUDE.local.md
+fi
+```
+
+### 0d. Check dependencies
+
+**lossless-claude:**
+
+```bash
+command -v lossless-claude
+```
 
 - **Found** → continue
-- **Not found** → report: "lossless-claude MCP not configured. Run `install.sh` to configure it."
+- **Not found** → offer to install:
+  ```
+  lossless-claude not found. Install it?
 
-### Qdrant
+  curl -fsSL https://raw.githubusercontent.com/ipedro/lossless-claude/main/install.sh | bash
+  ```
+  If user says yes, run the installer. If no, continue — memory features will be unavailable.
 
-Run in Bash: `curl -sf --max-time 3 "${QDRANT_URL:-http://localhost:6333}/healthz"`
+**RTK (optional):**
 
-- **Responds** → continue
-- **Unreachable** → report: "Qdrant is not running. To fix: run `install.sh` to install it locally, or set `XGH_BACKEND=remote` and `XGH_REMOTE_URL=<url>` to use a remote endpoint."
+```bash
+command -v rtk
+```
 
-### Inference backend
+- **Found** → continue
+- **Not found** → offer to install:
+  ```
+  RTK not found. It saves 60-90% on token usage. Install it?
 
-Run in Bash: `curl -sf --max-time 3 "${XGH_REMOTE_URL:-http://localhost:11434}/v1/models"`
+  curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | bash
+  rtk init -g --auto-patch
+  ```
+  If user says yes, run both commands. If no, skip — everything works without RTK.
 
-- **Responds** → continue
-- **Unreachable** → report: "Inference backend not running. To fix: run `install.sh` to install vllm-mlx (macOS) or Ollama (Linux), or set `XGH_BACKEND=remote`."
+### 0e. Verify lossless-claude MCP registration
 
-### Partial mode (all three checks fail)
+```bash
+claude mcp list 2>/dev/null | grep -i lossless-claude
+```
 
-Proceed with scaffolding anyway. After completing, tell the user:
-
-> "xgh memory tools are not yet configured — context tree scaffolded successfully. Run `install.sh` or `/plugin install github:ipedro/xgh` to complete setup. lossless-claude search will not work until the daemon is running."
+- **Found** → continue
+- **Not found** → register it:
+  ```bash
+  claude mcp add lossless-claude -- lossless-claude mcp
+  ```
+  Report: "Registered lossless-claude MCP server."
 
 ---
 
@@ -111,18 +162,6 @@ Run the MCP detection protocol from the `xgh:mcp-setup` skill before proceeding.
 ---
 
 ## Step 2 — Profile Setup
-
-### Check prerequisites
-
-Check if `~/.xgh/ingest.yaml` exists. If not, stop:
-
-```
-~/.xgh/ingest.yaml not found. Run install.sh first:
-
-  XGH_LOCAL_PACK=. bash install.sh
-
-Then come back and run /xgh-init again.
-```
 
 ### Check if profile is already configured
 
@@ -357,7 +396,7 @@ Content: "xgh init completed for <name> (<role>, <squad>). Project: <project>. T
 
 ## Error Handling
 
-- **install.sh not run:** Detect by missing `~/.xgh/ingest.yaml`. Tell user to run install first.
+- **Missing ingest.yaml:** Step 0b creates it from template. If template not found, warn the user.
 - **MCP not responding:** If a tool call times out or errors, retry once. If it fails again, mark that integration as unavailable and continue.
 - **User wants to stop mid-flow:** At any point, if the user says "stop" or "skip the rest", jump to Step 8 (Summary) with whatever was completed so far.
 - **Partial completion:** If the user has already done some steps (profile filled, project exists), detect that and skip with a note. Never re-do work that's already been done unless the user asks.

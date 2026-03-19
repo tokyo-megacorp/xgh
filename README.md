@@ -57,15 +57,13 @@
 claude plugin install xgh@ipedro
 ```
 
-That installs:
-1. [lossless-claude](https://github.com/ipedro/lossless-claude) — persistent memory (hooks, MCP server, daemon)
-2. xgh — team context, skills, and dev methodology
+Then run first-time setup:
 
-Then configure the summarizer:
-
-```bash
-lossless-claude install
 ```
+/xgh-init
+```
+
+This creates data directories, checks dependencies (lossless-claude, RTK), sets up your profile, and adds your first project. Takes about 5 minutes.
 
 </details>
 
@@ -168,38 +166,24 @@ Override with `XGH_BACKEND=<backend>`. Use `XGH_SERVE_NETWORK=1` on the server s
 
 All environment variables, the backend/MCP env key matrix, cipher post-hook behavior, and the backend extension pattern are documented in [`docs/configuration-reference.md`](docs/configuration-reference.md).
 
-### Key environment variables
-
-| Variable | Purpose |
-|----------|---------|
-| `XGH_BACKEND` | Force backend: `vllm-mlx`, `ollama`, or `remote` |
-| `XGH_PRESET` | Cloud preset: `local`, `local-light`, `openai`, `anthropic`, `cloud` |
-| `XGH_REMOTE_URL` | Remote inference server URL |
-| `XGH_SERVE_NETWORK` | Bind model server to `0.0.0.0` (server-side) |
-| `XGH_TEAM` | Team name for shared workspace |
-| `XGH_DRY_RUN` | Run installer without writing files |
-| `XGH_LOCAL_PACK` | Use local xgh repo instead of fetching from GitHub |
-| `XGH_INSTALL_PLUGINS` | `all` or `skip` — control optional plugin installation |
-
-### Installed file structure
+### File structure after `/xgh-init`
 
 ```
 your-project/
-├── .claude/
-│   ├── .mcp.json                  # lossless-claude MCP server config
-│   ├── settings.local.json        # Permissions + hook registrations
-│   ├── hooks/
-│   │   ├── xgh-session-start.sh   # Injects top-5 context files as JSON
-│   │   └── xgh-prompt-submit.sh   # Intent detection + decision table
-│   ├── skills/                    # Workflow + collaboration skills
-│   ├── commands/                  # Slash commands
-│   └── agents/
-│       └── xgh-collaboration-dispatcher.md
-├── CLAUDE.local.md                # Agent instructions with team config
+├── CLAUDE.local.md                # @.xgh/xgh.md reference
 └── .xgh/
+    ├── xgh.md                     # Static agent instructions
     └── context-tree/
         └── _manifest.json         # Knowledge registry (grows over time)
+
+~/.xgh/                            # User data (created by /xgh-init)
+├── ingest.yaml                    # Project configuration
+├── inbox/                         # Retrieved context
+├── logs/                          # Skill execution logs
+└── digests/                       # Daily summaries
 ```
+
+Plugin files (skills, hooks, commands, agents) are managed by Claude Code at `~/.claude/plugins/cache/`.
 
 </details>
 
@@ -315,14 +299,9 @@ Plan documents are in `docs/plans/`.
 <summary><b>Development tips</b></summary>
 
 ```bash
-# Dry-run installer without installing anything
-XGH_DRY_RUN=1 XGH_LOCAL_PACK=. bash install.sh
-
-# Test with a specific preset
-XGH_DRY_RUN=1 XGH_LOCAL_PACK=. XGH_PRESET=openai bash install.sh
-
-# Test with a specific backend
-XGH_DRY_RUN=1 XGH_LOCAL_PACK=. XGH_BACKEND=ollama bash install.sh
+# Install from local repo for development
+claude plugin install .
+/xgh-init
 
 # Run all tests
 for t in tests/test-*.sh; do echo -n "$(basename $t): "; bash "$t" 2>&1 | tail -1; done

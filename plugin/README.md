@@ -4,28 +4,14 @@ Persistent memory and team context for AI-assisted development.
 
 ## Installation
 
-### Full install (recommended)
-
-Installs all components including lossless-claude MCP, hooks, and context tree:
-
 ```bash
-XGH_LOCAL_PACK=. bash install.sh
+claude plugin install xgh@ipedro
 ```
 
-### Lite install via Claude plugin
+This installs xgh and its dependency [lossless-claude](https://github.com/ipedro/lossless-claude) (hooks, MCP server, daemon).
 
-Lite install (assumes infra already running — once published to plugin registry):
-
-```
-/plugin install github:ipedro/xgh
-```
-
-### Per-project setup
-
-After installing xgh, run the onboarding command in any project:
+Then run the setup wizard in any project:
 
 ```
 /xgh-init
 ```
-
-This sets up the team name, context tree path, and lossless-claude collection for the project.

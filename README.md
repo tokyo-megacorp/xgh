@@ -54,37 +54,17 @@
 <summary><b>Claude Code</b> (recommended)</summary>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
+claude plugin install xgh@ipedro
 ```
 
-That single line:
-1. Installs [lossless-claude](https://github.com/ipedro/lossless-claude) (memory) and [RTK](https://github.com/rtk-ai/rtk) (compression)
-2. Offers [context-mode](https://github.com/mksglu/context-mode) and [superpowers](https://github.com/obra/superpowers) as optional plugins
-3. Registers hooks (session-start, prompt-submit, pre-read, post-edit, post-ctx-call)
-4. Writes agent instructions for Claude Code, Cursor, Copilot, and Windsurf
-5. Sets up a context tree for git-committed knowledge
-6. Auto-detects your platform and picks the right LLM backend
+That installs:
+1. [lossless-claude](https://github.com/ipedro/lossless-claude) — persistent memory (hooks, MCP server, daemon)
+2. xgh — team context, skills, and dev methodology
 
-**Prerequisites:** macOS or Linux, Bash 5+, Git. Everything else is installed automatically.
-
-#### Cloud presets
+Then configure the summarizer:
 
 ```bash
-# OpenAI (~$0.01/session)
-XGH_PRESET=openai curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
-
-# Anthropic (~$0.01/session)
-XGH_PRESET=anthropic curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
-```
-
-#### Force a specific backend
-
-```bash
-# Ollama on any platform
-XGH_BACKEND=ollama bash install.sh
-
-# Remote inference server (e.g. Mac Mini -> another machine)
-XGH_BACKEND=remote XGH_REMOTE_URL=http://192.168.1.x:11434 bash install.sh
+lossless-claude install
 ```
 
 </details>

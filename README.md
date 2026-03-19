@@ -21,17 +21,17 @@ Without xgh, you are paying for the same context over and over — in tokens, in
 #### Option 1: One-liner (fully local, free)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh -o /tmp/xgh-install.sh && bash /tmp/xgh-install.sh
+curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
 ```
 
 #### Option 2: Cloud preset
 
 ```bash
 # OpenAI (~$0.01/session)
-curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh -o /tmp/xgh-install.sh && XGH_PRESET=openai bash /tmp/xgh-install.sh
+XGH_PRESET=openai curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
 
 # Anthropic (~$0.01/session)
-curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh -o /tmp/xgh-install.sh && XGH_PRESET=anthropic bash /tmp/xgh-install.sh
+XGH_PRESET=anthropic curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
 ```
 
 #### Option 3: Force a specific backend

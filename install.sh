@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Reopen stdin from the terminal so interactive prompts work even when
+# the script is piped through bash (e.g. curl -fsSL url | bash)
+exec < /dev/tty 2>/dev/null || true
+
 XGH_VERSION="${XGH_VERSION:-latest}"
 XGH_TEAM="${XGH_TEAM:-my-team}"
 XGH_CONTEXT_TREE="${XGH_CONTEXT_TREE:-.xgh/context-tree}"
@@ -81,7 +85,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ] && [ "${XGH_SKIP_LCM:-0}" -eq 0 ]; then
     _lcm_installer="$(mktemp /tmp/lossless-claude-install-XXXXXX.sh)"
     if curl -fsSL https://raw.githubusercontent.com/ipedro/lossless-claude/main/install.sh -o "$_lcm_installer"; then
       chmod +x "$_lcm_installer"
-      bash "$_lcm_installer" < /dev/tty || warn "Could not install lossless-claude — skipping (set XGH_SKIP_LCM=1 to suppress)"
+      bash "$_lcm_installer" || warn "Could not install lossless-claude — skipping (set XGH_SKIP_LCM=1 to suppress)"
     else
       warn "Could not download lossless-claude installer — skipping (set XGH_SKIP_LCM=1 to suppress)"
     fi

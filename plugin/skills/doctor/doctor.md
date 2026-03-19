@@ -66,7 +66,7 @@ Common Qdrant failures and fixes:
 |---|---|
 | `WouldBlock` / WAL lock (exit 101) | `pkill -f qdrant; rm -f ~/.qdrant/storage/storage/collections/*/0/wal/open-*; launchctl load ~/Library/LaunchAgents/com.qdrant.server.plist` |
 | `jemalloc: background_thread` (warning only) | Add `MALLOC_CONF=background_thread:false` to the plist EnvironmentVariables (cosmetic, not the crash cause) |
-| Missing plist | Enable session scheduler: add `export XGH_SCHEDULER=on` to your shell profile, then run `/xgh-schedule resume` |
+| Missing plist | Enable session scheduler: run `/xgh-schedule resume` (removes `~/.xgh/scheduler-paused` and re-registers jobs) |
 | Binary missing | `brew install qdrant` or download to `~/.qdrant/bin/qdrant` |
 
 lossless-claude MCP availability: check if `mcp__lossless-claude__lcm_search` is present in the available tool list:
@@ -170,19 +170,18 @@ If no calls yet: `✅ context-mode active — no sandbox calls yet this session`
 
 Call CronList. Find jobs where prompt is `/xgh-retrieve` or `/xgh-analyze`.
 
-Also check `XGH_SCHEDULER` in the environment:
+Also check if the pause file exists:
 ```bash
-python3 -c "import os; print(os.environ.get('XGH_SCHEDULER', 'not set'))"
+test -f ~/.xgh/scheduler-paused && echo "paused" || echo "active"
 ```
 
 Report each job found:
 - Job present → `✓ retrieve: active (*/5 * * * *)` / `✓ analyze: active (*/30 * * * *)`
 - Job missing → `✗ retrieve: not scheduled` / `✗ analyze: not scheduled`
-- `XGH_SCHEDULER=on` set → `✓ XGH_SCHEDULER=on (jobs will auto-register each session)`
-- `XGH_SCHEDULER` not set → `⚠ XGH_SCHEDULER not set — jobs won't persist across sessions`
+- Pause file absent → `✓ Scheduler active (always-on)`
+- Pause file present → `⚠ Scheduler paused (~/.xgh/scheduler-paused exists)`
 
-**Fix (if jobs missing):** Run `/xgh-schedule resume` to register jobs now.
-**Fix (if XGH_SCHEDULER not set):** `echo 'export XGH_SCHEDULER=on' >> ~/.zshrc && source ~/.zshrc`
+**Fix (if jobs missing or paused):** Run `/xgh-schedule resume` to re-register jobs now.
 
 ## Check 5 — Workspace stats
 
@@ -253,14 +252,14 @@ Pipeline
 | Context savings | 12.4x                  |
 
 Scheduler
-  ✓ XGH_SCHEDULER=on (jobs auto-register each session)
+  ✓ Scheduler active (always-on)
   ✓ retrieve: active (*/5 * * * *)
   ✓ analyze: active (*/30 * * * *)
-  # OR if not configured:
-  ⚠ XGH_SCHEDULER not set — jobs won't persist across sessions
+  # OR if paused/missing:
+  ⚠ Scheduler paused (~/.xgh/scheduler-paused exists)
   ✗ retrieve: not scheduled
   ✗ analyze: not scheduled
-    Fix: /xgh-schedule resume  (now) | export XGH_SCHEDULER=on >> ~/.zshrc  (persistent)
+    Fix: /xgh-schedule resume
 
 Workspace
   ✓ Collection "xgh-workspace" exists (142 vectors)

@@ -3,7 +3,6 @@ name: xgh:briefing
 description: Intelligent session briefing. Aggregates Slack, Jira, GitHub, Gmail, Calendar, Figma, and xgh team memory into a prioritized executive summary with a suggested focus.
 type: flexible
 triggers:
-  - SessionStart (when XGH_BRIEFING=auto or XGH_BRIEFING=compact)
   - /xgh-briefing command
   - /xgh-briefing compact
   - /xgh-briefing focus
@@ -23,13 +22,7 @@ Give the user a **prioritized executive summary** of everything relevant to thei
 
 ## Configuration
 
-Controlled by `XGH_BRIEFING` environment variable:
-
-| Value | Behavior |
-|-------|----------|
-| `off` (default) | Never auto-trigger; `/xgh-briefing` still works on demand |
-| `auto` | Full briefing on every session start |
-| `compact` | One-line status on session start, full on demand |
+The briefing is always available on demand. Run `/xgh-briefing` at any time; it does not require any environment variable to be set.
 
 The briefing respects `XGH_TEAM` from the environment for workspace memory queries.
 
@@ -140,7 +133,7 @@ Hard cap: **5 items per section**. If a section is empty, omit it.
 > **[Single recommended task]** — [one sentence rationale]
 ```
 
-## Compact Mode (`XGH_BRIEFING=compact` or `/xgh-briefing compact`)
+## Compact Mode (`/xgh-briefing compact`)
 
 Single line:
 
@@ -169,22 +162,15 @@ Once the briefing is delivered:
 
 ## Scheduler nudge
 
-After delivering the briefing, check if background scheduling is active:
+After delivering the briefing, call CronList and look for jobs with prompt `/xgh-retrieve` or `/xgh-analyze`.
 
-```bash
-python3 -c "import os; print(os.environ.get('XGH_SCHEDULER', ''))"
-```
+Also check if the pause file exists: `~/.xgh/scheduler-paused`.
 
-Also call CronList and look for jobs with prompt `/xgh-retrieve` or `/xgh-analyze`.
-
-If CronList is unavailable, fall back to the env var check alone.
-
-If neither `XGH_SCHEDULER=on` nor active CronCreate jobs are found, append to the briefing output:
+If no active CronCreate jobs are found or the pause file exists, append to the briefing output:
 
 ```
 ⚠️ Scheduler not active — briefing data may be stale.
-   /xgh-schedule resume                                        (this session)
-   echo 'export XGH_SCHEDULER=on' >> ~/.zshrc && source ~/.zshrc  (persistent)
+   /xgh-schedule resume    (removes pause file and re-registers jobs)
 ```
 
 ## Rationalization Table

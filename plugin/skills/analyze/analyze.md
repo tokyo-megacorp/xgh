@@ -8,7 +8,7 @@ description: >
 type: rigid
 triggers:
   - when invoked via /xgh-analyze command
-  - when invoked by CronCreate (session scheduler, XGH_SCHEDULER=on)
+  - when invoked by CronCreate (session scheduler, always-on)
   - when ~/.xgh/inbox/.urgent exists (triggered by retriever on critical items)
 mcp_dependencies:
   - mcp__lossless-claude__lcm_search

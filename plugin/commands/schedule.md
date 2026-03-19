@@ -24,6 +24,6 @@ Run the `xgh:schedule` skill to manage the session scheduler and skill execution
 /xgh-schedule prefs reset <skill>    # clear saved preference for a skill
 ```
 
-## Enable auto-scheduling
+## Scheduler behavior
 
-Set `XGH_SCHEDULER=on` in your shell environment or `CLAUDE.local.md` to auto-create jobs at each session start.
+The scheduler is always-on — jobs are auto-created at each session start. To pause, create `~/.xgh/scheduler-paused`. To resume, run `/xgh-schedule resume` (which removes the pause file).

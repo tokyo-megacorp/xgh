@@ -163,14 +163,13 @@ Only register if not already present (check CronList first).
 
 ## Step 5 — Scheduler Nudge
 
-Check `XGH_SCHEDULER` env + CronList for `/xgh-retrieve` and `/xgh-analyze` jobs.
+Check CronList for `/xgh-retrieve` and `/xgh-analyze` jobs. The scheduler is always-on; if jobs are missing they may be paused.
 
 If neither is active:
 
 ```
 ⚠️ Background retriever not active — command center data may be stale.
-   /xgh-schedule resume                                           (this session)
-   echo 'export XGH_SCHEDULER=on' >> ~/.zshrc && source ~/.zshrc  (persistent)
+   /xgh-schedule resume    (removes ~/.xgh/scheduler-paused and re-registers jobs)
 ```
 
 ---

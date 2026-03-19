@@ -711,7 +711,7 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
     info "Unloading legacy OS scheduler (replaced by Claude-internal CronCreate)..."
     bash "$HOME/.xgh/lib/ingest-schedule.sh" uninstall 2>/dev/null || true
     rm -f "$HOME/.xgh/lib/ingest-schedule.sh"
-    info "Legacy scheduler removed. Enable session scheduling with XGH_SCHEDULER=on."
+    info "Legacy scheduler removed. Session scheduling is now always-on (run /xgh-schedule resume to register jobs)."
   fi
   info "Run /xgh-doctor to validate the pipeline"
 fi

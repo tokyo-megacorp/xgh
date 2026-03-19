@@ -7,7 +7,7 @@ description: >
 type: rigid
 triggers:
   - when invoked via /xgh-retrieve command
-  - when invoked by CronCreate (session scheduler, XGH_SCHEDULER=on)
+  - when invoked by CronCreate (session scheduler, always-on)
 mcp_dependencies:
   - mcp__claude_ai_Slack__slack_read_channel
   - mcp__claude_ai_Atlassian__getJiraIssue

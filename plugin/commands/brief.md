@@ -26,5 +26,5 @@ No arguments needed. Run it at the start of any work session to get oriented.
 
 ## Tips
 
-- Set `XGH_BRIEFING=1` in your shell environment to trigger the briefing automatically at every Claude Code session start.
+- The briefing is always available. Run `/xgh-brief` at the start of any session to get oriented.
 - Run `/xgh-setup` first if you haven't configured Slack, Jira, or GitHub integrations yet.

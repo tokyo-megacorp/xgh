@@ -18,15 +18,7 @@ Invoke the `xgh:briefing` skill.
 
 ## Auto-trigger
 
-Control with `XGH_BRIEFING` env var:
-- `off` (default) — manual only
-- `compact` — auto one-liner on session start
-- `auto` — full briefing on session start
-
-Add to your shell profile:
-```bash
-export XGH_BRIEFING=compact   # Recommended for daily use
-```
+The briefing is always available. Run it manually at session start or combine with `/xgh-brief` for a quick summary.
 
 ## Output sections
 

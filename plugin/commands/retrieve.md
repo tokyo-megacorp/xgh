@@ -19,6 +19,6 @@ No arguments. All configuration comes from `~/.xgh/ingest.yaml`.
 
 ## Notes
 
-- Invoked automatically each Claude session via CronCreate when `XGH_SCHEDULER=on`. Also run manually to test.
+- Invoked automatically each Claude session via CronCreate (scheduler is always-on; pause with `~/.xgh/scheduler-paused`). Also run manually to test.
 - Critical items (urgency ≥ 80) trigger an immediate Slack DM.
 - Run `/xgh-doctor` to check pipeline freshness.

@@ -96,43 +96,19 @@ if scheduler_trigger == "on" and custom_jobs:
                 f"prompt='{skill}', recurring=true "
             )
 
-# Context-mode availability check
-ctx_mode_available = Path.home().joinpath(
-    ".claude", "plugins", "cache", "context-mode"
-).exists()
-
-# Decision table moved to plugin/templates/xgh-instructions.md (static @reference)
-decision_table = None
-
-# Initialize context-mode tracking state for this session
-if ctx_mode_available:
-    import hashlib, subprocess as sp
-    try:
-        proj = sp.check_output(
-            ["git", "rev-parse", "--show-toplevel"],
-            stderr=sp.DEVNULL
-        ).decode().strip()
-    except Exception:
-        proj = os.getcwd()
-    h = hashlib.sha1(proj.encode()).hexdigest()[:8]
-    state_p = f"/tmp/xgh-ctx-health-{h}.json"
-    json.dump(
-        {"reads": 0, "edits": 0, "ctx_calls": 0, "files_read": []},
-        open(state_p, "w")
-    )
+# Context-mode enforcement delegated to context-mode plugin's own hooks.
+# No tracking state or decision table needed here.
 
 # No context tree found
 if not context_tree or not os.path.isdir(context_tree):
     output = {
         "result": "xgh: session-start loaded 0 context files",
         "contextFiles": [],
-        "decisionTable": decision_table,
         "briefingTrigger": briefing_trigger,
         "schedulerTrigger": scheduler_trigger,
         "schedulerInstructions": scheduler_instructions,
         "schedulerCustomJobs": custom_jobs,
         "dispatchContext": dispatch_context,
-        "ctxModeAvailable": ctx_mode_available
     }
     print(json.dumps(output))
     sys.exit(0)
@@ -212,13 +188,11 @@ for e in top:
 output = {
     "result": f"xgh: session-start loaded {len(context_files)} context files",
     "contextFiles": context_files,
-    "decisionTable": decision_table,
     "briefingTrigger": briefing_trigger,
     "schedulerTrigger": scheduler_trigger,
     "schedulerInstructions": scheduler_instructions,
     "schedulerCustomJobs": custom_jobs,
     "dispatchContext": dispatch_context,
-    "ctxModeAvailable": ctx_mode_available
 }
 
 print(json.dumps(output))

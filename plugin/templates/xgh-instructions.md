@@ -49,13 +49,6 @@ Code task → lcm_search FIRST → Work → lcm_store (summary) → Done
 Non-code task → Just respond normally
 ```
 
-## Tool Routing
-
-- **File analysis**: use `ctx_execute_file`, not `Read`. `Read` is only for files about to be `Edit`ed.
-- **Multi-command research**: use `ctx_batch_execute` — one call, many commands.
-- **Memory search**: `lcm_search(query)` for broad queries, `lcm_grep(query)` for exact strings.
-- **Cursor updates**: `bash plugin/scripts/update-cursor.sh "<channel>" "<timestamp>"`
-
 ## Scheduler
 
 The scheduler registers background jobs automatically on session start:

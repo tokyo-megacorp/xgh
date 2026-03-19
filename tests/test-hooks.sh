@@ -125,7 +125,7 @@ import json, sys
 try:
     d = json.loads(sys.argv[1])
     keys = set(d.keys())
-    required = {'result', 'contextFiles', 'decisionTable', 'briefingTrigger'}
+    required = {'result', 'contextFiles', 'briefingTrigger'}
     if required.issubset(keys):
         print('yes')
     else:
@@ -151,18 +151,6 @@ for f in files:
 print('yes')
 " "$SS_OUTPUT")
 assert_eq "contextFiles has correct structure" "$SS_CF_VALID" "yes"
-
-# Validate decisionTable is null (moved to static @xgh.md reference)
-SS_DT_VALID=$(python3 -c "
-import json, sys
-d = json.loads(sys.argv[1])
-dt = d.get('decisionTable')
-if dt is None:
-    print('yes')
-else:
-    print('no')
-" "$SS_OUTPUT")
-assert_eq "decisionTable is null (static @reference)" "$SS_DT_VALID" "yes"
 
 # Validate briefingTrigger is always full (no env var gate)
 SS_BT=$(python3 -c "
@@ -252,178 +240,12 @@ assert_eq "prompt-submit general emits valid JSON" "$PS_VALID_G" "yes"
 bash plugin/hooks/session-start.sh > /dev/null 2>&1 && PASS=$((PASS + 1)) || { echo "FAIL: session-start.sh non-zero exit"; FAIL=$((FAIL + 1)); }
 bash plugin/hooks/prompt-submit.sh > /dev/null 2>&1 && PASS=$((PASS + 1)) || { echo "FAIL: prompt-submit.sh non-zero exit"; FAIL=$((FAIL + 1)); }
 
-# ── Context-mode enforcement hooks ────────────────────────
-
-# Helper: create a state file with given values
-create_ctx_state() {
-  local reads="$1" edits="$2" ctx_calls="$3"
-  local state_file="/tmp/xgh-ctx-health-test-hooks.json"
-  python3 -c "
-import json
-json.dump({
-    'reads': $reads,
-    'edits': $edits,
-    'ctx_calls': $ctx_calls,
-    'files_read': []
-}, open('$state_file', 'w'))
-"
-  echo "$state_file"
-}
-
-# Helper: run a hook and capture its JSON output (returns empty JSON if hook missing)
-run_hook_with_state() {
-  local hook_script="$1"
-  local state_file="$2"
-  if [[ ! -f "$hook_script" ]]; then
-    echo '{}'
-    return 0
-  fi
-  XGH_CTX_STATE_OVERRIDE="$state_file" bash "$hook_script" < /dev/null 2>/dev/null
-}
-
-# Helper: extract additionalContext from hook output
-extract_context() {
-  local output="$1"
-  python3 -c "
-import json, sys
-try:
-    d = json.loads(sys.argv[1])
-    if 'hookSpecificOutput' in d:
-        print(d['hookSpecificOutput'].get('additionalContext', ''))
-    else:
-        print(d.get('additionalContext', ''))
-except:
-    print('')
-" "$output"
-}
-
-# ── pre-read.sh tests ────────────────────────────────────
-
-assert_file_exists "plugin/hooks/pre-read.sh"
-
-# Test: pre-read emits valid JSON with hookSpecificOutput
-PRE_READ_OUT=$(run_hook_with_state "plugin/hooks/pre-read.sh" "$(create_ctx_state 0 0 0)")
-PRE_READ_VALID=$(python3 -c "
-import json, sys
-try:
-    d = json.loads(sys.argv[1])
-    hso = d.get('hookSpecificOutput', {})
-    if hso.get('hookEventName') == 'PreToolUse' and 'additionalContext' in hso:
-        print('yes')
-    else:
-        print('no:' + json.dumps(d))
-except Exception as e:
-    print('no:' + str(e))
-" "$PRE_READ_OUT")
-assert_eq "pre-read emits hookSpecificOutput" "$PRE_READ_VALID" "yes"
-
-# Test: pre-read increments reads counter
-STATE_FILE=$(create_ctx_state 0 0 0)
-run_hook_with_state "plugin/hooks/pre-read.sh" "$STATE_FILE" > /dev/null
-READS_AFTER=$(python3 -c "import json; print(json.load(open('$STATE_FILE'))['reads'])")
-assert_eq "pre-read increments reads" "$READS_AFTER" "1"
-
-# Test: tier 1 (0-2 unedited reads) — gentle tip, no emoji escalation
-STATE_FILE=$(create_ctx_state 1 0 0)
-TIER1_OUT=$(run_hook_with_state "plugin/hooks/pre-read.sh" "$STATE_FILE")
-TIER1_CTX=$(extract_context "$TIER1_OUT")
-TIER1_OK=$(python3 -c "
-import sys
-ctx = sys.argv[1]
-print('yes' if 'ctx_execute_file' in ctx and '\U0001f6d1' not in ctx and '\u26a0\ufe0f' not in ctx else 'no:' + ctx)
-" "$TIER1_CTX")
-assert_eq "pre-read tier 1 is gentle tip" "$TIER1_OK" "yes"
-
-# Test: tier 2 (3-4 unedited reads) — warning emoji
-STATE_FILE=$(create_ctx_state 3 0 0)
-TIER2_OUT=$(run_hook_with_state "plugin/hooks/pre-read.sh" "$STATE_FILE")
-TIER2_CTX=$(extract_context "$TIER2_OUT")
-TIER2_OK=$(python3 -c "
-import sys
-ctx = sys.argv[1]
-print('yes' if '\u26a0\ufe0f' in ctx else 'no:' + repr(ctx))
-" "$TIER2_CTX")
-assert_eq "pre-read tier 2 has warning emoji" "$TIER2_OK" "yes"
-
-# Test: tier 3 (5+ unedited reads) — stop emoji + routing doc ref
-STATE_FILE=$(create_ctx_state 5 0 0)
-TIER3_OUT=$(run_hook_with_state "plugin/hooks/pre-read.sh" "$STATE_FILE")
-TIER3_CTX=$(extract_context "$TIER3_OUT")
-TIER3_OK=$(python3 -c "
-import sys
-ctx = sys.argv[1]
-print('yes' if '\U0001f6d1' in ctx and 'context-mode-routing' in ctx else 'no:' + repr(ctx))
-" "$TIER3_CTX")
-assert_eq "pre-read tier 3 has stop emoji + routing ref" "$TIER3_OK" "yes"
-
-# Test: suppressed when ctx_calls >= 2
-STATE_FILE=$(create_ctx_state 5 0 2)
-SUPPRESSED_OUT=$(run_hook_with_state "plugin/hooks/pre-read.sh" "$STATE_FILE")
-SUPPRESSED_CTX=$(extract_context "$SUPPRESSED_OUT")
-SUPPRESSED_OK=$(python3 -c "
-import sys
-ctx = sys.argv[1]
-print('yes' if '\U0001f6d1' not in ctx and '\u26a0\ufe0f' not in ctx else 'no:' + repr(ctx))
-" "$SUPPRESSED_CTX")
-assert_eq "pre-read suppressed when ctx_calls >= 2" "$SUPPRESSED_OK" "yes"
-
-# Test: missing state file is handled gracefully
-rm -f /tmp/xgh-ctx-health-test-missing.json
-MISSING_OUT=$(XGH_CTX_STATE_OVERRIDE="/tmp/xgh-ctx-health-test-missing.json" bash plugin/hooks/pre-read.sh < /dev/null 2>/dev/null || echo '{}')
-MISSING_VALID=$(python3 -c "
-import json, sys
-try:
-    d = json.loads(sys.argv[1])
-    print('yes' if 'hookSpecificOutput' in d else 'no')
-except:
-    print('no:invalid-json')
-" "$MISSING_OUT")
-assert_eq "pre-read handles missing state file" "$MISSING_VALID" "yes"
-
-# ── post-edit.sh tests ───────────────────────────────────
-
-assert_file_exists "plugin/hooks/post-edit.sh"
-
-# Test: post-edit increments edits counter
-STATE_FILE=$(create_ctx_state 3 0 0)
-XGH_CTX_STATE_OVERRIDE="$STATE_FILE" bash plugin/hooks/post-edit.sh < /dev/null 2>/dev/null || true
-EDITS_AFTER=$(python3 -c "import json; print(json.load(open('$STATE_FILE'))['edits'])")
-assert_eq "post-edit increments edits" "$EDITS_AFTER" "1"
-
-# ── post-ctx-call.sh tests ───────────────────────────────
-
-assert_file_exists "plugin/hooks/post-ctx-call.sh"
-
-# Test: post-ctx-call increments ctx_calls counter
-STATE_FILE=$(create_ctx_state 0 0 0)
-XGH_CTX_STATE_OVERRIDE="$STATE_FILE" bash plugin/hooks/post-ctx-call.sh < /dev/null 2>/dev/null || true
-CTX_AFTER=$(python3 -c "import json; print(json.load(open('$STATE_FILE'))['ctx_calls'])")
-assert_eq "post-ctx-call increments ctx_calls" "$CTX_AFTER" "1"
-
-# ── session-start ctx-mode integration tests ──────────────
-
-# Set up a fake HOME with context-mode cache to make tests deterministic
-FAKE_HOME=$(mktemp -d)
-mkdir -p "$FAKE_HOME/.claude/plugins/cache/context-mode"
-
-# Test: static instructions file exists with ctx_execute_file guidance
-SS_CTX_STATIC=$(grep -q 'ctx_execute_file' plugin/templates/xgh-instructions.md 2>/dev/null && echo "yes" || echo "no")
-assert_eq "xgh-instructions.md mentions ctx_execute_file" "$SS_CTX_STATIC" "yes"
-
-# Test: ctxModeAvailable key is present
-SS_CTX_OUT2=$(HOME="$FAKE_HOME" XGH_CONTEXT_TREE="$TMPDIR_CT" bash plugin/hooks/session-start.sh)
-SS_CTX_KEY=$(python3 -c "
-import json, sys
-d = json.loads(sys.argv[1])
-print('yes' if 'ctxModeAvailable' in d else 'no')
-" "$SS_CTX_OUT2")
-assert_eq "session-start has ctxModeAvailable key" "$SS_CTX_KEY" "yes"
-
-# Clean up fake home
-rm -rf "$FAKE_HOME"
+# ── Context-mode enforcement ──────────────────────────────
+# Context-mode plugin owns its own enforcement via PreToolUse hooks.
+# xgh no longer duplicates this — no pre-read, post-edit, or post-ctx-call hooks.
 
 # Test: schedulerInstructions mentions deep-retrieve
-SS_DEEP=$(XGH_CONTEXT_TREE="$TMPDIR_CT" XGH_SCHEDULER="on" bash plugin/hooks/session-start.sh)
+SS_DEEP=$(XGH_CONTEXT_TREE="$TMPDIR_CT" bash plugin/hooks/session-start.sh)
 SS_DEEP_OK=$(python3 -c "
 import json, sys
 d = json.loads(sys.argv[1])
@@ -431,30 +253,6 @@ si = d.get('schedulerInstructions', '')
 print('yes' if '/xgh-deep-retrieve' in (si or '') else 'no')
 " "$SS_DEEP")
 assert_eq "schedulerInstructions mentions deep-retrieve" "$SS_DEEP_OK" "yes"
-
-# ── prompt-submit nudge tests ────────────────────────────
-
-# Test: nudge fires when 3+ unedited reads and 0 ctx calls
-NUDGE_STATE=$(create_ctx_state 4 1 0)
-PS_NUDGE_OUT=$(XGH_CTX_STATE_OVERRIDE="$NUDGE_STATE" PROMPT="hello" bash plugin/hooks/prompt-submit.sh)
-PS_NUDGE_CTX=$(python3 -c "
-import json, sys
-d = json.loads(sys.argv[1])
-ctx = d.get('additionalContext', '')
-print('yes' if 'Session health' in ctx else 'no')
-" "$PS_NUDGE_OUT")
-assert_eq "prompt-submit nudge fires on high unedited reads" "$PS_NUDGE_CTX" "yes"
-
-# Test: nudge suppressed when ctx_calls >= 2
-NO_NUDGE_STATE=$(create_ctx_state 5 0 3)
-PS_NO_NUDGE=$(XGH_CTX_STATE_OVERRIDE="$NO_NUDGE_STATE" PROMPT="hello" bash plugin/hooks/prompt-submit.sh)
-PS_NO_NUDGE_CTX=$(python3 -c "
-import json, sys
-d = json.loads(sys.argv[1])
-ctx = d.get('additionalContext', '')
-print('yes' if 'Session health' not in ctx else 'no')
-" "$PS_NO_NUDGE")
-assert_eq "prompt-submit nudge suppressed when ctx active" "$PS_NO_NUDGE_CTX" "yes"
 
 echo ""
 echo "Hooks test: $PASS passed, $FAIL failed"

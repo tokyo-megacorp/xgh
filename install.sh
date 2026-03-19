@@ -78,9 +78,14 @@ lane "Wiring up the memory layer 🧬"
 if [ "$XGH_DRY_RUN" -eq 0 ] && [ "${XGH_SKIP_LCM:-0}" -eq 0 ]; then
   if ! command -v lossless-claude &>/dev/null; then
     info "Installing lossless-claude..."
-    curl -fsSL https://raw.githubusercontent.com/ipedro/lossless-claude/main/install.sh | bash 2>/dev/null || {
-      warn "Could not install lossless-claude — skipping (set XGH_SKIP_LCM=1 to suppress)"
-    }
+    _lcm_installer="$(mktemp /tmp/lossless-claude-install-XXXXXX.sh)"
+    if curl -fsSL https://raw.githubusercontent.com/ipedro/lossless-claude/main/install.sh -o "$_lcm_installer"; then
+      chmod +x "$_lcm_installer"
+      bash "$_lcm_installer" || warn "Could not install lossless-claude — skipping (set XGH_SKIP_LCM=1 to suppress)"
+    else
+      warn "Could not download lossless-claude installer — skipping (set XGH_SKIP_LCM=1 to suppress)"
+    fi
+    rm -f "$_lcm_installer"
   else
     info "lossless-claude already installed: $(command -v lossless-claude)"
   fi

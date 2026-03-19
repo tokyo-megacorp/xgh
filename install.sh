@@ -44,7 +44,7 @@ lane()  { echo ""; echo -e "  ${CYAN}━━━${NC} ${BOLD}$*${NC}"; echo ""; }
 
 # Merge RTK PreToolUse Bash hook into $SETTINGS_FILE using the same deep-merge
 # as the main hooks block. Idempotent: deduped by command string.
-# Produces entries with: "matcher": "Bash" and command: rtk hook --quiet
+# Produces entries with: "matcher": "Bash" and command: rtk hook copilot 2>/dev/null
 merge_rtk_hook() {
   local rtk_bin="$1"
   local settings_file="$2"
@@ -60,7 +60,7 @@ settings_file = sys.argv[2]
 
 new_entry = {
     'matcher': 'Bash',
-    'hooks': [{'type': 'command', 'command': rtk_bin + ' hook --quiet'}]
+    'hooks': [{'type': 'command', 'command': rtk_bin + ' hook copilot 2>/dev/null'}]
 }
 
 if os.path.isfile(settings_file) and os.path.getsize(settings_file) > 0:

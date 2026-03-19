@@ -162,7 +162,7 @@ assert_contains /tmp/rtk-skip-out.txt 'XGH_SKIP_RTK'
 # Hook registration code exists in install.sh
 assert_contains "${XGH_LOCAL_PACK}/install.sh" 'merge_rtk_hook'
 assert_contains "${XGH_LOCAL_PACK}/install.sh" '"matcher": "Bash"'
-assert_contains "${XGH_LOCAL_PACK}/install.sh" 'rtk hook --quiet'
+assert_contains "${XGH_LOCAL_PACK}/install.sh" 'rtk hook copilot'
 
 echo ""
 echo "Install test: $PASS passed, $FAIL failed"

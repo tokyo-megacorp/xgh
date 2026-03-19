@@ -21,8 +21,10 @@ assert_not_contains "$HOOK" 'XGH_BRIEFING'
 assert_contains "$HOOK" 'scheduler-paused'
 assert_contains "$HOOK" 'schedulerTrigger'
 
-# Gap 5: Retention cleanup (will be added in Task 2, should pass after Task 2)
-# assert_contains "$HOOK" 'find.*inbox/processed.*-delete'
+# Gap 5: Retention cleanup
+assert_contains "$HOOK" 'find.*inbox/processed.*-delete'
+assert_contains "$HOOK" 'find.*digests.*-delete'
+assert_contains "$HOOK" 'find.*logs.*-delete'
 
 echo ""
 echo "Session-start test: $PASS passed, $FAIL failed"

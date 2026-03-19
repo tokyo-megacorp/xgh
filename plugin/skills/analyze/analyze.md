@@ -193,8 +193,6 @@ node ~/.xgh/lib/workspace-write.js \
 ```bash
 mv ~/.xgh/inbox/*.md ~/.xgh/inbox/processed/ 2>/dev/null || true
 rm -f ~/.xgh/inbox/.urgent
-# Purge old processed files
-find ~/.xgh/inbox/processed/ -name "*.md" -mtime +7 -delete 2>/dev/null || true
 ```
 
 ## Step 10 — Generate/append digest

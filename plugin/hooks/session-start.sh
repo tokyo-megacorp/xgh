@@ -18,6 +18,18 @@ if [ -z "$CONTEXT_TREE" ]; then
   done
 fi
 
+# ── Retention cleanup ──
+_xgh_home="${HOME}/.xgh"
+if [ -d "${_xgh_home}/inbox/processed" ]; then
+  find "${_xgh_home}/inbox/processed/" -type f -mtime +7 -delete 2>/dev/null || true
+fi
+if [ -d "${_xgh_home}/digests" ]; then
+  find "${_xgh_home}/digests/" -type f -mtime +30 -delete 2>/dev/null || true
+fi
+if [ -d "${_xgh_home}/logs" ]; then
+  find "${_xgh_home}/logs/" -type f -mtime +7 -delete 2>/dev/null || true
+fi
+
 python3 << 'PYEOF'
 import json, os, sys, re
 from pathlib import Path

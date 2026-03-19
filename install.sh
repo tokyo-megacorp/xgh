@@ -42,6 +42,48 @@ warn()  { echo -e "  ${YELLOW}▸${NC} $*"; }
 error() { echo -e "  ${RED}▸${NC} $*" >&2; }
 lane()  { echo ""; echo -e "  ${CYAN}━━━${NC} ${BOLD}$*${NC}"; echo ""; }
 
+# Merge RTK PreToolUse Bash hook into $SETTINGS_FILE using the same deep-merge
+# as the main hooks block. Idempotent: deduped by command string.
+# Produces entries with: "matcher": "Bash" and command: rtk hook --quiet
+merge_rtk_hook() {
+  local rtk_bin="$1"
+  local settings_file="$2"
+
+  [ -z "$rtk_bin" ] && return 0
+  [ -z "$settings_file" ] && return 0
+
+  python3 -c "
+import json, os, sys
+
+rtk_bin = sys.argv[1]
+settings_file = sys.argv[2]
+hook_cmd = rtk_bin + ' hook --quiet'
+
+new_entry = {
+    'matcher': 'Bash',
+    'hooks': [{'type': 'command', 'command': hook_cmd}]
+}
+
+if os.path.isfile(settings_file) and os.path.getsize(settings_file) > 0:
+    data = json.load(open(settings_file))
+else:
+    data = {}
+
+hooks = data.get('hooks', {})
+pre = hooks.get('PreToolUse', [])
+
+# Dedup: skip if identical command already registered
+existing_cmds = {h['command'] for e in pre for h in e.get('hooks', [])}
+if hook_cmd not in existing_cmds:
+    pre.append(new_entry)
+
+hooks['PreToolUse'] = pre
+data['hooks'] = hooks
+json.dump(data, open(settings_file, 'w'), indent=2)
+print('RTK hook registered in ' + settings_file)
+" "$rtk_bin" "$settings_file" 2>/dev/null || warn "RTK: could not register hook in ${settings_file}"
+}
+
 echo ""
 echo -e "  ${BOLD}🐴🤖 xgh${NC} ${DIM}(eXtreme Go Horse)${NC}"
 echo -e "  ${DIM}Team: ${XGH_TEAM} · Preset: ${XGH_PRESET}${NC}"
@@ -377,6 +419,10 @@ print(assets[0] if assets else 'checksums.txt')
 
   if [ -n "$_RTK_BIN" ]; then
     "$_RTK_BIN" --version &>/dev/null || warn "RTK binary installed but --version failed"
+    # Register PreToolUse Bash hook — SETTINGS_FILE set in section 5
+    if [ -n "${SETTINGS_FILE:-}" ]; then
+      merge_rtk_hook "$_RTK_BIN" "$SETTINGS_FILE"
+    fi
   fi
 
 else

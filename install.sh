@@ -716,6 +716,9 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   info "Run /xgh-doctor to validate the pipeline"
 fi
 
+# Remove stale dual-memory hooks from older installs
+rm -f "${HOOKS_DIR}/continuous-learning-activator.sh" 2>/dev/null || true
+
 # ── Post-install validation ──────────────────────────────
 if [ "$XGH_DRY_RUN" -eq 0 ]; then
   lane "Post-install validation 🔍"

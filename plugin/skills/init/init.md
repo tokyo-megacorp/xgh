@@ -95,6 +95,7 @@ If any `xgh-*` entries are found:
 1. Remove them:
    ```bash
    rm -rf .claude/skills/xgh-* .claude/commands/xgh-* 2>/dev/null || true
+   rm -f .claude/hooks/continuous-learning-activator.sh 2>/dev/null || true
    ```
 
 2. Report: "Removed legacy per-project skill copies. Skills now load from the user-level plugin at `~/.claude/plugins/cache/ipedro/xgh/`."

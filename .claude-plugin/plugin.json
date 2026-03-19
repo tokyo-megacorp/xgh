@@ -1,0 +1,13 @@
+{
+  "name": "xgh",
+  "description": "Persistent memory and team context for AI-assisted development",
+  "version": "1.0.0",
+  "author": {
+    "name": "Pedro Alves",
+    "email": "ipedro@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/ipedro/xgh",
+  "repository": "https://github.com/ipedro/xgh",
+  "license": "MIT",
+  "keywords": ["memory", "context", "team", "workflow", "cipher"]
+}

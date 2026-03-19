@@ -1,0 +1,32 @@
+{
+  "name": "ipedro",
+  "owner": {
+    "name": "Pedro Alves",
+    "email": "ipedro@users.noreply.github.com"
+  },
+  "metadata": {
+    "description": "xgh — AI Team Memory and context tools",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "xgh",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/ipedro/xgh.git"
+      },
+      "description": "Persistent memory and team context for AI-assisted development",
+      "version": "1.0.0",
+      "strict": true
+    },
+    {
+      "name": "lossless-claude",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/ipedro/lossless-claude.git"
+      },
+      "description": "Lossless context management — DAG-based summarization that preserves every message",
+      "version": "0.3.0"
+    }
+  ]
+}

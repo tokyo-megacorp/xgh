@@ -18,7 +18,7 @@ updated: 2026-03-16
 | `skills/` | Skill definitions (one dir per skill) | 25 |
 | `commands/` | Slash command definitions (`/xgh-*`) | 18 |
 | `hooks/` | Claude Code hooks (session-start, prompt-submit) | 2 |
-| `lib/` | Runtime utilities (config reader, usage tracker, workspace writer) | 3 |
+| `lib/` | Runtime utilities (config reader, usage tracker) | 2 |
 | `scripts/` | Context tree CLI, search, scheduling, model management | ~12 |
 | `config/` | Templates for YAML/JSON config | 4 |
 | `agents/` | Multi-agent collaboration definitions | 1 |
@@ -33,7 +33,7 @@ updated: 2026-03-16
 - 12 `.yaml` files (config)
 - 2 `.json` files (settings)
 - 2 `.plist` files (launchd schedulers)
-- 1 `.py` (BM25 search), 1 `.js` (Qdrant writer)
+- 1 `.py` (BM25 search)
 
 ## Naming Conventions
 

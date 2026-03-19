@@ -98,7 +98,6 @@ curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
 ├── templates/
 │   └── instructions.md              # Template injected into target CLAUDE.local.md
 ├── scripts/
-│   └── configure.sh                 # Post-install context tree setup
 ├── tests/
 │   ├── test-install.sh
 │   ├── test-config.sh

@@ -685,7 +685,6 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   mkdir -p "$HOME/.xgh/lib"
 
   # Copy lib helpers
-  cp "${PACK_DIR}/lib/workspace-write.js"  "$HOME/.xgh/lib/"
   cp "${PACK_DIR}/lib/config-reader.sh"    "$HOME/.xgh/lib/"
   cp "${PACK_DIR}/lib/usage-tracker.sh"    "$HOME/.xgh/lib/"
   chmod +x "$HOME/.xgh/lib/config-reader.sh" "$HOME/.xgh/lib/usage-tracker.sh"

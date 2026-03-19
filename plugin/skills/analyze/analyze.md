@@ -157,21 +157,17 @@ When count mod 5 == 0:
 
 Route based on `content_types.<type>.promote_to` from `ingest.yaml`:
 
-**workspace** → call workspace-write.js:
-```bash
-node ~/.xgh/lib/workspace-write.js \
-  --text "<summary>" \
-  --type "<content_type>" \
-  --project "<project>" \
-  --urgency <score> \
-  --source "<source>"
+**workspace** → Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and tags: ["workspace"]. Do not pass raw conversation content to lcm_store.
+
+```
+lcm_store("<summary>", ["workspace"])
 ```
 
-**personal** → Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]. If the call fails, retry via:
-```bash
-node ~/.xgh/lib/workspace-write.js --text "<summary>" --type "<content_type>" --project "<project>" --urgency <score>
+**personal** → Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"].
+
 ```
-(workspace-write.js targets the workspace collection; for personal, the fallback is acceptable for PoC)
+lcm_store("<summary>", ["session"])
+```
 
 Cap total writes at `analyzer.max_memories_per_run`. If cap reached, leave remaining inbox files for the next run.
 
@@ -180,12 +176,8 @@ Cap total writes at `analyzer.max_memories_per_run`. If cap reached, leave remai
 If any inbox item contains a pattern like `Session [a-f0-9]{8,}` or a `/xgh-implement TICKET-123` invocation:
 1. Extract session ID and ticket association
 2. Write a session index entry:
-```bash
-node ~/.xgh/lib/workspace-write.js \
-  --text "Claude session <id> worked on <tickets>: <one-line summary>" \
-  --type session_index \
-  --project "<project>" \
-  --source "session-tracker"
+```
+lcm_store("Claude session <id> worked on <tickets>: <one-line summary>", ["workspace"])
 ```
 
 ## Step 9 — Move processed files

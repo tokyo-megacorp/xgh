@@ -8,7 +8,6 @@ assert_file_exists "skills/analyze/analyze.md"
 assert_file_exists "commands/analyze.md"
 
 assert_contains "skills/analyze/analyze.md" "xgh:analyze"
-assert_contains "skills/analyze/analyze.md" "workspace-write.js"
 assert_contains "skills/analyze/analyze.md" "dedup_threshold"
 assert_contains "skills/analyze/analyze.md" "cipher_memory_search"
 assert_contains "skills/analyze/analyze.md" "xgh_schema_version"

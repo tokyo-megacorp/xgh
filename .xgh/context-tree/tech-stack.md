@@ -18,7 +18,6 @@ updated: 2026-03-18
 | Skills/Commands | Markdown (Claude Code skill format) |
 | Context Tree Search | Python 3 (BM25/TF-IDF via `bm25.py`) |
 | Vector Memory | Cipher MCP + Qdrant |
-| Direct Qdrant Writes | Node.js (`lib/workspace-write.js`) |
 | Embeddings | vllm-mlx (macOS), Ollama (Linux/Intel), or OpenAI-compatible API |
 | LLM | Provider-agnostic: vllm-mlx, Ollama, OpenAI, Anthropic, OpenRouter |
 | Model Backend | `XGH_BACKEND=local|ollama|remote` (Plan 8/9) |

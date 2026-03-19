@@ -206,7 +206,13 @@ If the file exists, merge into the `pending` array. The analyzer reads and clear
 
 ## Step 9 — Update cursors
 
-Write `~/.xgh/inbox/.cursors.json` with the latest message timestamp per channel scanned.
+For each channel processed, update the cursor atomically:
+
+```bash
+bash plugin/scripts/update-cursor.sh "<channel-id>" "<latest-message-timestamp>"
+```
+
+This ensures cursors are always updated, even if the session is interrupted.
 
 ## Step 10 — Log completion
 

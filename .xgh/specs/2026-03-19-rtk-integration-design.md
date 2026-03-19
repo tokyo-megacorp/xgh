@@ -63,7 +63,7 @@ Mirrors the existing `XGH_SKIP_LCM=1` pattern. If set, no binary is downloaded, 
    - `x86_64-apple-darwin` → `rtk-x86_64-apple-darwin.tar.gz`
    - `aarch64-linux` → `rtk-aarch64-unknown-linux-gnu.tar.gz`
    - `x86_64-linux` → `rtk-x86_64-unknown-linux-musl.tar.gz`
-5. **Download binary + checksums.txt** — curl both files.
+5. **Download binary + checksum file** — curl the binary tarball and the checksum asset. The checksum asset name must be discovered from the GitHub API release response (look for an asset named `checksums.txt` in the `assets` array; if absent, look for a `.sha256` sidecar matching the binary asset name). Do not hardcode the checksum filename.
 6. **Verify SHA256** — abort and warn if checksum mismatch; do not install corrupt binary.
 7. **Install binary** — extract to `~/.local/bin/rtk`; `mkdir -p ~/.local/bin`; `chmod +x`.
 8. **Confirm** — run `rtk --version`; warn and continue if it fails (never block xgh install).
@@ -78,24 +78,28 @@ RTK_INSTALL_DIR="${HOME}/.local/bin"
 
 ---
 
-## Hook Registration (`settings.json`)
+## Hook Registration
 
-RTK registers one hook entry in the `PreToolUse` section of `settings.json`, using the **same scope** the user chose during xgh install (global `~/.claude/settings.json` or project `.claude/settings.json`).
+RTK registers one hook entry in the `PreToolUse` section of `$SETTINGS_FILE` (the variable resolved during xgh install — either `~/.claude/settings.json` for global scope or `.claude/settings.local.json` for project scope). RTK uses the same `$SETTINGS_FILE` and `$XGH_HOOKS_SCOPE` as all other xgh hooks.
 
 Hook entry:
 ```json
 {
   "matcher": "Bash",
-  "hooks": [{ "type": "command", "command": "<RTK_INSTALL_DIR>/rtk hook --quiet" }]
+  "hooks": [{ "type": "command", "command": "<absolute-path-to-rtk> hook --quiet" }]
 }
 ```
+
+The absolute path is captured at install time: `RTK_BIN="$(command -v rtk || echo "${RTK_INSTALL_DIR}/rtk")"`.
+
+**Merge method:** RTK's hook entry is injected via a dedicated step in `install.sh` using the same Python deep-merge function already used for xgh's other hooks. It is **not** added to `config/hooks-settings.json` (which uses `__HOOKS_DIR__` placeholder resolution for script-based hooks). RTK uses an absolute binary path, so it bypasses the template and merges directly. The implementer should add a `merge_rtk_hook()` function in `install.sh` parallel to the existing hooks merge step, called after binary install is confirmed.
 
 Rules:
 - **Full binary path** — no PATH dependency; Claude Code hook execution environment may not inherit user's shell PATH.
 - **`--quiet` flag** — suppresses RTK's advice output to keep context clean; context-mode's routing guidance is the primary signal.
 - **Placement** — appended after any existing `PreToolUse.Bash` entries in the merge; context-mode's system prompt fires before any tool call so ordering within `PreToolUse` is not a concern.
-- **Conditional registration** — only added if binary is confirmed present after install. If install failed or was skipped, settings.json is not modified.
-- **Idempotent** — xgh's existing Python deep-merge logic deduplicates hook entries; re-running install does not add duplicate hooks.
+- **Conditional registration** — only added if binary is confirmed present after install. If install failed or was skipped, `$SETTINGS_FILE` is not modified.
+- **Idempotent** — xgh's existing Python deep-merge logic deduplicates hook entries by `command` value; re-running install does not add duplicate hooks.
 
 ---
 
@@ -121,7 +125,7 @@ Data source: `rtk gain --json` piped via `ctx_execute`.
 
 ### context-mode subsection
 
-Data source: `ctx_stats` MCP tool.
+Data source: the agent calls the `ctx_stats` MCP tool at runtime (`mcp__plugin_context-mode_context-mode__ctx_stats`) and formats the returned JSON into the table below. The `doctor.md` skill instructions tell the agent to call this tool and render its output — there is no code-level execution in the skill file itself.
 
 ```
 #### context-mode — context window protection
@@ -187,12 +191,19 @@ Data source: `ctx_stats` MCP tool.
 
 ## Verification Checklist
 
-1. `XGH_DRY_RUN=1 XGH_LOCAL_PACK=. bash install.sh` — RTK lane visible, no errors
-2. Fresh install: `~/.local/bin/rtk --version` returns ≥ `RTK_MIN_VERSION`
-3. `settings.json` contains RTK `PreToolUse` Bash hook with full path
-4. `XGH_SKIP_RTK=1 bash install.sh` — RTK lane skipped, no hook added
-5. `/xgh-doctor` shows `### Context Efficiency` with both subsections
-6. After a `git log` Bash call: RTK gain > 0 in doctor dashboard
-7. After a `ctx_batch_execute` call: RTK gain unchanged (RTK did not fire)
-8. Corrupt binary test: tampered download → install aborts with checksum error
-9. `bash tests/test-install.sh` — all RTK assertions pass
+**Dry-run / structural (testable in `test-install.sh` with `XGH_DRY_RUN=1`):**
+1. `XGH_DRY_RUN=1 XGH_LOCAL_PACK=. bash install.sh` — RTK lane message visible, no errors
+2. `XGH_SKIP_RTK=1 XGH_DRY_RUN=1 bash install.sh` — RTK lane skipped, no hook added
+3. RTK lane code exists in `install.sh` (grep assertion)
+4. `XGH_SKIP_RTK=1`: doctor skill text contains `⏭ RTK skipped` (static assertion)
+
+**Live install (requires network; run outside dry-run in CI or manual test):**
+5. `~/.local/bin/rtk --version` returns ≥ `RTK_MIN_VERSION`
+6. `$SETTINGS_FILE` contains RTK `PreToolUse` Bash hook with full absolute path
+7. Checksum asset name is discovered dynamically from GitHub API (not hardcoded)
+8. Corrupt binary test: tampered tarball → install aborts with checksum error, no binary written
+
+**Runtime (manual, in a live Claude session):**
+9. `/xgh-doctor` shows `### Context Efficiency` with both RTK and context-mode subsections
+10. After a `git log` Bash call: RTK gain > 0 in doctor dashboard
+11. After a `ctx_batch_execute` call: RTK gain unchanged (RTK did not fire)

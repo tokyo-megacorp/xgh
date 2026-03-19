@@ -98,7 +98,7 @@ This creates data directories, checks dependencies (lossless-claude, RTK), sets 
 <summary><b>Uninstall</b></summary>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/uninstall.sh | bash
+claude plugin uninstall xgh
 ```
 
 </details>

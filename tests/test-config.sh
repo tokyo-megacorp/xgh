@@ -36,26 +36,6 @@ for d in plugin/skills plugin/commands plugin/agents; do
   fi
 done
 
-# Settings files
-assert_file_exists "config/settings.json"
-assert_file_exists "config/hooks-settings.json"
-
-# settings.json valid JSON
-if python3 -c "import json; json.load(open('config/settings.json'))" 2>/dev/null; then PASS=$((PASS+1)); else echo "FAIL: settings.json invalid JSON"; FAIL=$((FAIL+1)); fi
-
-# hooks-settings registers events
-assert_contains "config/hooks-settings.json" "SessionStart"
-assert_contains "config/hooks-settings.json" "UserPromptSubmit"
-assert_contains "config/hooks-settings.json" "xgh-session-start.sh"
-assert_contains "config/hooks-settings.json" "xgh-prompt-submit.sh"
-
-# Template
-assert_file_exists "templates/instructions.md"
-assert_contains "templates/instructions.md" "xgh"
-assert_contains "templates/instructions.md" "lcm_search"
-assert_contains "templates/instructions.md" "lcm_store"
-assert_contains "templates/instructions.md" "__TEAM_NAME__"
-assert_contains "templates/instructions.md" "__CONTEXT_TREE_PATH__"
 
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

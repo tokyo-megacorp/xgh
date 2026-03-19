@@ -31,7 +31,7 @@ No arguments. The skill walks you through everything interactively.
 
 ## Prerequisites
 
-- `install.sh` must have been run first (`~/.xgh/ingest.yaml` must exist)
+- xgh must be installed (`~/.xgh/ingest.yaml` must exist — created by `/xgh-init`)
 - lossless-claude and Slack MCPs must be configured (run `/xgh-setup` if not)
 
 ## Related Skills

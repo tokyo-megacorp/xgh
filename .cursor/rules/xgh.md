@@ -14,12 +14,17 @@ Bash/YAML/Markdown MCS tech pack. No compiled artifacts. No npm/cargo/maven.
 - Track progress with `- [x]` checkboxes in `docs/plans/`
 - Never commit secrets — env vars only
 
+## Install
+
+```bash
+claude plugin install xgh@ipedro
+/xgh-init
+```
+
 ## Test commands
 
 ```bash
-bash tests/test-install.sh
 bash tests/test-config.sh
-bash tests/test-uninstall.sh
 ```
 
 ## Implementation order

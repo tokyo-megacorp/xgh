@@ -27,8 +27,6 @@ jobs:
           - test-ct-search
           - test-ct-sync
           - test-hooks
-          - test-install
-          - test-uninstall
     steps:
       - name: Checkout
         uses: actions/checkout@v4

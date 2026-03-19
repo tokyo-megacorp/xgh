@@ -15,10 +15,11 @@ xgh is a **Model Context Server (MCS) tech pack** for Claude Code that gives AI 
 - **Inference backends** — `vllm-mlx` (macOS Apple Silicon), `ollama` (Linux/Intel Mac), or `remote` (external server URL); auto-detected at install time, overridable via `XGH_BACKEND`
 - **BYOP (Bring Your Own Provider)** — presets for OpenAI, Anthropic, OpenRouter, or cloud Qdrant (separate from the inference backend)
 
-One command installs everything into any project:
+Install via Claude Code plugin:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
+claude plugin install xgh@ipedro
+/xgh-init
 ```
 
 ---
@@ -45,11 +46,7 @@ curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
 ├── AGENTS.md                        # ← you are here — canonical agent instructions
 ├── CLAUDE.md                        # Claude Code pointer → AGENTS.md
 ├── README.md                        # Project README with roadmap + progress
-├── install.sh                       # One-liner installer
-├── uninstall.sh                     # Clean removal
 ├── config/
-│   ├── settings.json                # Claude Code tool permissions
-│   ├── hooks-settings.json          # Hook event registrations
 │   └── presets/                     # BYOP provider presets
 │       ├── local.yaml               # vllm-mlx + local Qdrant (default)
 │       ├── local-light.yaml         # vllm-mlx + in-memory vectors
@@ -95,13 +92,9 @@ curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
 │   ├── init.md
 │   └── help.md
 ├── agents/                          # Sub-agent definitions (Plan 5)
-├── templates/
-│   └── instructions.md              # Template injected into target CLAUDE.local.md
 ├── scripts/
 ├── tests/
-│   ├── test-install.sh
-│   ├── test-config.sh
-│   └── test-uninstall.sh
+│   └── test-config.sh
 └── docs/
     └── plans/                       # Design doc + 6 implementation plans
 ```
@@ -130,19 +123,12 @@ curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
 
 1. Copy an existing preset from `config/presets/` as a starting point
 2. Update `vector_store.type`, `vector_store.url`, `llm.*`, and `embeddings.*` fields
-3. Reference it in `install.sh`'s preset list (error message)
-4. Add a test in `tests/test-config.sh`
+3. Add a test in `tests/test-config.sh`
 
 ### Running tests
 
 ```bash
-# Individual test suites
-bash tests/test-install.sh      # Install script integration
 bash tests/test-config.sh       # Config files and presets
-bash tests/test-uninstall.sh    # Uninstall verification
-
-# Dry-run the installer (no external deps required)
-XGH_DRY_RUN=1 XGH_LOCAL_PACK=. bash install.sh
 ```
 
 No build step — this is a shell-based project with no compiled artifacts.

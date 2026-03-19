@@ -15,12 +15,17 @@ xgh is a **Model Context Server (MCS) tech pack** for Claude Code that provides 
 - Implementation is tracked in `docs/plans/` with `- [ ]` / `- [x]` checkboxes
 - Never commit API keys or secrets — use environment variables
 
+## Install
+
+```bash
+claude plugin install xgh@ipedro
+/xgh-init
+```
+
 ## Run tests
 
 ```bash
-bash tests/test-install.sh
 bash tests/test-config.sh
-bash tests/test-uninstall.sh
 ```
 
 ## Current status

@@ -9,11 +9,12 @@ xgh is a Bash/YAML/Markdown MCS tech pack — no compiled runtime. Work follows 
 ## Quick commands
 
 ```bash
-# Run tests
-bash tests/test-install.sh && bash tests/test-config.sh
+# Install
+claude plugin install xgh@ipedro
+/xgh-init
 
-# Dry-run installer (no external deps)
-XGH_DRY_RUN=1 XGH_LOCAL_PACK=. bash install.sh
+# Run tests
+bash tests/test-config.sh
 ```
 
 See [`AGENTS.md`](../AGENTS.md) for the complete guide.

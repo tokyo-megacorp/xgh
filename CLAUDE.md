@@ -9,15 +9,13 @@
 ### Run tests
 
 ```bash
-bash tests/test-install.sh
 bash tests/test-config.sh
-bash tests/test-uninstall.sh
 ```
 
-### Install for development
+### Install
 
 ```bash
-claude plugin install .
+claude plugin install xgh@ipedro
 /xgh-init
 ```
 

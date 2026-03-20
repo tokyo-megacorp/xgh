@@ -9,12 +9,11 @@
 
 xgh is a **Model Context Server (MCS) tech pack** for Claude Code that gives AI agents persistent, team-shared memory across sessions. It combines:
 
-- **lossless-claude** — persistent memory via SQLite (episodic) and optional Qdrant (semantic) for storing and querying past decisions, reasoning chains, and patterns
+- **lossless-claude** — persistent memory via SQLite + FTS5 for storing and querying past decisions, reasoning chains, and patterns
 - **Context Tree** — a git-committed markdown knowledge base (`.xgh/context-tree/`) that is human-readable, PR-reviewable, and shareable without shared infrastructure
-- **Dual-engine search** — lossless-claude vector similarity + BM25 keyword search merged with a scored ranking formula
+- **Context search** — BM25 keyword search over the context tree with scored ranking (importance, recency, maturity)
 - **Provider framework** — modular bash providers in `providers/` (Slack, Jira, GitHub, Figma, Confluence) for context retrieval from external services
 - **Inference backends** — `vllm-mlx` (macOS Apple Silicon), `ollama` (Linux/Intel Mac), or `remote` (external server URL); auto-detected at install time, overridable via `XGH_BACKEND`
-- **BYOP (Bring Your Own Provider)** — presets for OpenAI, Anthropic, OpenRouter, or cloud Qdrant (separate from the inference backend)
 
 Install via Claude Code plugin:
 
@@ -30,13 +29,13 @@ claude plugin install xgh@ipedro
 | Layer | Technology |
 |-------|-----------|
 | Install & hooks | Bash (`set -euo pipefail`) |
-| Config | YAML (presets), JSON (settings) |
+| Config | YAML, JSON (settings) |
 | Skills / commands / agents | Markdown (Claude Code format) |
 | Context tree search | Python 3 (BM25/TF-IDF, Plan 2) |
-| Vector memory | lossless-claude (SQLite + optional Qdrant) |
+| Persistent memory | lossless-claude (SQLite + FTS5) |
 | Provider framework | Bash modules in `providers/` (Slack, Jira, GitHub, Figma, Confluence) |
 | Model server | vllm-mlx (macOS arm64), Ollama (Linux/Intel), or remote URL |
-| LLM / embeddings | vllm-mlx, Ollama, OpenAI, Anthropic, or OpenRouter (BYOP) |
+| LLM | claude-process (via lossless-claude) |
 | Tests | Bash with `assert_*` helpers (same pattern throughout) |
 
 ---
@@ -49,12 +48,9 @@ claude plugin install xgh@ipedro
 ├── CLAUDE.md                        # Claude Code pointer → AGENTS.md
 ├── README.md                        # Project README with roadmap + progress
 ├── config/
-│   └── presets/                     # BYOP provider presets
-│       ├── local.yaml               # vllm-mlx + local Qdrant (default)
-│       ├── local-light.yaml         # vllm-mlx + in-memory vectors
-│       ├── openai.yaml              # OpenAI GPT-4o-mini + Qdrant
-│       ├── anthropic.yaml           # Claude Haiku + Qdrant
-│       └── cloud.yaml               # OpenRouter + Qdrant Cloud
+│   ├── agents.yaml                  # Agent registry
+│   ├── ingest-template.yaml         # Ingest config template
+│   └── workflows/                   # Multi-agent workflow templates
 ├── hooks/
 │   ├── session-start.sh             # Injects context tree at session start
 │   └── prompt-submit.sh             # Injects decision table on prompt submit
@@ -128,12 +124,6 @@ claude plugin install xgh@ipedro
 - Markdown skills: one directory per skill, markdown file matches directory name
 - Slash commands: markdown files in `commands/`, filename is the command name
 
-### Adding a new BYOP preset
-
-1. Copy an existing preset from `config/presets/` as a starting point
-2. Update `vector_store.type`, `vector_store.url`, `llm.*`, and `embeddings.*` fields
-3. Add a test in `tests/test-config.sh`
-
 ### Running tests
 
 ```bash
@@ -148,7 +138,7 @@ No build step — this is a shell-based project with no compiled artifacts.
 
 | Plan | Title | Status |
 |------|-------|--------|
-| Plan 1 | Foundation — scaffold, BYOP config, installer | ✅ Complete |
+| Plan 1 | Foundation — scaffold, installer | ✅ Complete |
 | Plan 2 | Context Tree Engine — CRUD, BM25 search, sync | ✅ Complete |
 | Plan 3 | Hooks & Core Skills — real hook implementations | ✅ Complete |
 | Plan 4 | Team Collaboration Skills | ✅ Complete |
@@ -157,12 +147,10 @@ No build step — this is a shell-based project with no compiled artifacts.
 | Plan 7 | Briefing | ✅ Complete |
 | Ingest | Context ingestion pipeline (25 files, 68 tests) | ✅ Complete |
 | Refresh | Command rename, output style, /xgh-help | ✅ Complete |
-| Plan 8 | Ollama / Linux Support — Ollama backend, backend-aware cipher.yml + MCP env vars | ✅ Complete |
+| Plan 8 | Ollama / Linux Support — Ollama backend, cross-platform support | ✅ Complete |
 | Plan 9 | Remote Backend — `XGH_BACKEND=remote`, `XGH_REMOTE_URL`, `XGH_SERVE_NETWORK` | ✅ Complete |
 
 See `docs/plans/` for detailed implementation plans with task checklists.
-
-For the full env var reference, backend/MCP matrix, and cipher post-hook behavior see [`docs/configuration-reference.md`](docs/configuration-reference.md).
 
 > **Note on plans directories:** `docs/plans/` tracks xgh's own development work (these checklists). `.xgh/plans/` is a template directory that xgh creates in user projects for their own work tracking.
 
@@ -192,9 +180,9 @@ xgh uses the **Superpowers** disciplined decision protocol. When working on this
 
 ## Key Design Decisions
 
-1. **Dual-engine search** — lossless-claude vectors (semantic) + BM25 (keyword) in parallel; results merged with weighted scoring
+1. **Context tree search** — BM25 keyword search with scored ranking (importance, recency, maturity boost)
 2. **Git-committed context tree** — knowledge stored as markdown so it's PR-reviewable and shareable without shared infra
-3. **BYOP architecture** — presets abstract provider details; the installer and lossless-claude are provider-agnostic
+3. **Provider framework** — modular bash/MCP providers for external services; lossless-claude handles memory internally
 4. **MCS tech pack format** — compatible with `mcs sync` (managed install) and `curl | bash` (standalone install)
 5. **Bash-first implementation** — no custom runtime language needed for Plans 1–3; Python only for BM25 (available on macOS/Linux without install)
 

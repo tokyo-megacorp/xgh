@@ -320,16 +320,51 @@ This is a new loop in the retrieve skill — the existing Slack/Jira/Figma handl
 
 ### Tool role conventions
 
-The `tools:` keys in MCP provider.yaml use **convention-based names** that the retrieve skill understands:
+The `tools:` keys in MCP provider.yaml use **convention-based names** that the retrieve skill understands. Roles map to **data patterns**, not specific tools — the same role works across many services.
 
-| Key | Role | Retrieve behavior |
-|-----|------|------------------|
-| `channels` | Channel/feed scan | Fetch messages since cursor, iterate all configured channels |
-| `threads` | Thread follow-up | For messages with `latest_reply > cursor`, fetch full thread replies |
-| `search` | Free-text search | Query for mentions, keywords, or specific items |
-| `list` | List items | Generic item listing (issues, PRs, etc.) |
+#### Communication
+
+| Key | Role | Retrieve behavior | Example tools |
+|-----|------|------------------|---------------|
+| `channels` | Channel/feed scan | Fetch messages since cursor, iterate all configured channels | Slack, Discord, Teams |
+| `threads` | Thread follow-up | For messages with `latest_reply > cursor`, fetch full thread replies | Slack threads, Discord threads |
+| `search` | Free-text search | Query for mentions, keywords, or specific items | Any service with search API |
+| `mail` | Email messages | Fetch recent emails matching filters (to:me, label, etc.) | Gmail, Outlook |
+
+#### Work items
+
+| Key | Role | Retrieve behavior | Example tools |
+|-----|------|------------------|---------------|
+| `list` | List items | Fetch items updated since cursor (issues, tickets, tasks) | Jira, Linear, Asana, GitHub Issues |
+| `comments` | Comments on items | Fetch new comments on tracked items (PRs, tickets, designs, docs) | GitHub PR comments, Jira comments, Figma comments |
+| `reviews` | Reviews/feedback | Fetch new reviews (code reviews, app store reviews, beta feedback) | GitHub PR reviews, App Store Connect, Google Play Console, TestFlight |
+
+#### Documents & design
+
+| Key | Role | Retrieve behavior | Example tools |
+|-----|------|------------------|---------------|
+| `files` | File/design feed | Fetch recently modified files/pages/designs since cursor | Figma, Confluence, Notion, Google Docs |
+| `versions` | Version history | Detect new versions/revisions since cursor | Figma version history, Confluence page versions |
+
+#### Operations & monitoring
+
+| Key | Role | Retrieve behavior | Example tools |
+|-----|------|------------------|---------------|
+| `alerts` | Errors/incidents | Fetch new errors, incidents, or security advisories since cursor | Sentry, PagerDuty, Datadog, Dependabot |
+| `deployments` | Build/deploy status | Fetch deployment or CI/CD run status since cursor | GitHub Actions, Vercel, Netlify, CircleCI |
+| `releases` | Published versions | Fetch new releases, tags, or published packages | GitHub Releases, npm, PyPI, crates.io, App Store Connect |
+
+#### Activity & analytics
+
+| Key | Role | Retrieve behavior | Example tools |
+|-----|------|------------------|---------------|
+| `feeds` | Activity/notification feed | Fetch notification or activity stream since cursor | GitHub notifications, GitLab activity |
+| `events` | Calendar/scheduled items | Fetch upcoming events within a time window | Google Calendar, Outlook Calendar |
+| `metrics` | Analytics snapshots | Fetch key metrics periodically (download counts, error rates, revenue) | PostHog, Mixpanel, Stripe, RevenueCat |
 
 The retrieve skill checks for these keys by name. If `threads` exists, it runs the thread-following logic (24h lookback pass in fast retrieve, 7-day scan in deep-retrieve). If not (e.g., a GitHub CLI provider has no thread concept), thread logic is skipped entirely.
+
+Keys are additive — a provider can declare any combination. A Slack provider might have `channels` + `threads` + `search`. A Sentry provider might have just `alerts`. An App Store Connect provider might have `reviews` + `releases` + `metrics`.
 
 This keeps orchestration logic in the skill and tool discovery in the provider config — providers declare capabilities, skills decide how to use them.
 

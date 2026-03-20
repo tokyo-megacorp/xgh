@@ -221,6 +221,8 @@ Evaluate triggers where urgency warrants immediate action — before analyze run
 Fast-path triggers should use `when.match:` patterns and `when.urgency_score:` thresholds,
 NOT `when.type:` (type is only available after analyze classification).
 
+> **Note:** Items that also qualify for the critical-urgency interrupt (Step 7, score >= 80) will still be evaluated here — the two paths are independent.
+
 ## Step 5 — Detect awaiting-reply items
 
 | Platform | Detection |

@@ -165,6 +165,39 @@ lcm_store("<summary>", ["session"])
 
 Cap total writes at `analyzer.max_memories_per_run`. If cap reached, leave remaining inbox files for the next run.
 
+## Step 7b: Standard-path trigger evaluation
+
+After classification and memory storage, evaluate standard-path triggers.
+
+**Skip this step entirely if:**
+- `~/.xgh/triggers.yaml` does not exist (triggers not configured)
+- `~/.xgh/triggers.yaml` has `enabled: false`
+- No files exist in `~/.xgh/triggers/` (no triggers defined)
+
+**Procedure:**
+
+1. Read `~/.xgh/triggers.yaml` (global config). Note `action_level`, `cooldown`, `fast_path`.
+2. Read all `~/.xgh/triggers/*.yaml` files (skip `.state.json`).
+   Filter to triggers where `path: standard` OR `path:` is not set (default = standard).
+   Skip `source: schedule` triggers (handled by schedule skill).
+3. Read `~/.xgh/triggers/.state.json` (or `{}` if missing).
+4. For each classified inbox item (use `ctx_execute_file` to read frontmatter):
+   For each standard-path trigger:
+   a. **Match check:** Evaluate all `when:` fields against the item.
+      - `source:` matches item frontmatter `source:` field (`*` = any)
+      - `type:` matches item frontmatter `type:` from classification (`*` = any)
+      - `project:` matches item frontmatter `project:` (`*` = any). If item has no `project:` field, treat as `project: *` — any trigger matches unless it specifies a non-wildcard project.
+      - `match:` regex patterns on item fields — `!` prefix means exclude
+   b. **Cooldown check:** See xgh:trigger evaluation logic (cooldown / backoff / dedup checks).
+      If any check fails → skip.
+   c. **Dedup check:** If item filename in `fired_items` array → skip.
+   d. **Execute steps:** For each `then:` step, enforce action_level cap, then execute.
+      Use declarative actions (notify, create_issue, dispatch) via appropriate MCP tools.
+      Inline `run:` blocks: execute via `ctx_execute(language: "shell", code: ...)` with
+      all `$ITEM_*` env vars set. Only stdout enters context.
+   e. **Update state:** Write updated `.state.json` after each trigger fires.
+5. Log: `Trigger engine: evaluated N triggers against M items — K fired`
+
 ## Step 8 — Session tracking
 
 If any inbox item contains a pattern like `Session [a-f0-9]{8,}` or a `/xgh-implement TICKET-123` invocation:
@@ -219,39 +252,6 @@ echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) analyzer: N items, M written, K duped, P de
 source ~/.xgh/lib/usage-tracker.sh
 xgh_usage_log "analyzer" "<actual turns>" 0
 ```
-
-## Step 8: Standard-path trigger evaluation
-
-After classification and memory storage, evaluate standard-path triggers.
-
-**Skip this step entirely if:**
-- `~/.xgh/triggers.yaml` does not exist (triggers not configured)
-- `~/.xgh/triggers.yaml` has `enabled: false`
-- No files exist in `~/.xgh/triggers/` (no triggers defined)
-
-**Procedure:**
-
-1. Read `~/.xgh/triggers.yaml` (global config). Note `action_level`, `cooldown`, `fast_path`.
-2. Read all `~/.xgh/triggers/*.yaml` files (skip `.state.json`).
-   Filter to triggers where `path: standard` OR `path:` is not set (default = standard).
-   Skip `source: schedule` triggers (handled by schedule skill).
-3. Read `~/.xgh/triggers/.state.json` (or `{}` if missing).
-4. For each classified inbox item (use `ctx_execute_file` to read frontmatter):
-   For each standard-path trigger:
-   a. **Match check:** Evaluate all `when:` fields against the item.
-      - `source:` matches item frontmatter `source:` field (`*` = any)
-      - `type:` matches item frontmatter `type:` from classification (`*` = any)
-      - `project:` matches item frontmatter `project:` (`*` = any)
-      - `match:` regex patterns on item fields — `!` prefix means exclude
-   b. **Cooldown check:** See xgh:trigger evaluation logic (cooldown / backoff / dedup checks).
-      If any check fails → skip.
-   c. **Dedup check:** If item filename in `fired_items` array → skip.
-   d. **Execute steps:** For each `then:` step, enforce action_level cap, then execute.
-      Use declarative actions (notify, create_issue, dispatch) via appropriate MCP tools.
-      Inline `run:` blocks: execute via `ctx_execute(language: "shell", code: ...)` with
-      all `$ITEM_*` env vars set. Only stdout enters context.
-   e. **Update state:** Write updated `.state.json` after each trigger fires.
-5. Log: `Trigger engine: evaluated N triggers against M items — K fired`
 
 ## Output discipline
 

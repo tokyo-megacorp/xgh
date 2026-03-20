@@ -138,56 +138,6 @@ After installing, open a Claude Code session and try these:
 /xgh-investigate "Users seeing 500 errors on /api/checkout"
 ```
 
-<details>
-<summary><b>BYOP — Bring Your Own Provider</b></summary>
-
-Backend (local inference) and provider (cloud API) are independent. Mix and match:
-
-| Preset | LLM | Embeddings | Vector Store | Cost |
-|--------|-----|-----------|-------------|------|
-| `local` *(default)* | vllm-mlx Llama-3.2-3B | vllm-mlx modernbert-embed | Qdrant (local) | Free |
-| `local-light` | vllm-mlx Llama-3.2-3B | vllm-mlx modernbert-embed | In-memory | Free |
-| `openai` | GPT-4o-mini | text-embedding-3-small | Qdrant (local) | ~$0.01/session |
-| `anthropic` | Claude Haiku | vllm-mlx modernbert-embed | Qdrant (local) | ~$0.01/session |
-| `cloud` | OpenRouter | OpenAI embeddings | Qdrant Cloud | ~$0.02/session |
-
-### Platform matrix
-
-| Platform | Auto-detected backend | What installs locally |
-|----------|----------------------|----------------------|
-| macOS Apple Silicon | `vllm-mlx` | vllm-mlx + Qdrant (Homebrew) |
-| Linux / Intel Mac | `ollama` | Ollama + Qdrant (binary) |
-| Any — remote server | `remote` | Qdrant only |
-
-Override with `XGH_BACKEND=<backend>`. Use `XGH_SERVE_NETWORK=1` on the server side to bind to `0.0.0.0` for remote clients.
-
-<details>
-<summary><b>Configuration Reference</b></summary>
-
-All environment variables, the backend/MCP env key matrix, cipher post-hook behavior, and the backend extension pattern are documented in [`docs/configuration-reference.md`](docs/configuration-reference.md).
-
-### File structure after `/xgh-init`
-
-```
-your-project/
-├── CLAUDE.local.md                # @.xgh/xgh.md reference
-└── .xgh/
-    ├── xgh.md                     # Static agent instructions
-    └── context-tree/
-        └── _manifest.json         # Knowledge registry (grows over time)
-
-~/.xgh/                            # User data (created by /xgh-init)
-├── ingest.yaml                    # Project configuration
-├── inbox/                         # Retrieved context
-├── logs/                          # Skill execution logs
-└── digests/                       # Daily summaries
-```
-
-Plugin files (skills, hooks, commands, agents) are managed by Claude Code at `~/.claude/plugins/cache/`.
-
-</details>
-
-</details>
 
 <details>
 <summary><b>Architecture</b></summary>
@@ -206,10 +156,9 @@ Plugin files (skills, hooks, commands, agents) are managed by Claude Code at `~/
 │          │              │               │                   │
 ├──────────┴──────────────┴───────────────┴───────────────────┤
 │                                                             │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐            │
-│  │  Vector DB │  │  SQLite    │  │  LLM + Emb │            │
-│  │  (Qdrant)  │  │ (sessions) │  │  (BYOP)    │            │
-│  └────────────┘  └────────────┘  └────────────┘            │
+│  ┌──────────────────────────────┐                           │
+│  │  SQLite + FTS5 (lossless-claude)                         │
+│  └──────────────────────────────┘                           │
 │                         │                                   │
 │  ┌──────────────────────┴────────────────────────────────┐  │
 │  │         .xgh/context-tree/  (git-committed)            │  │
@@ -225,13 +174,12 @@ Plugin files (skills, hooks, commands, agents) are managed by Claude Code at `~/
 | Layer | Technology |
 |-------|-----------|
 | Install & hooks | Bash (`set -euo pipefail`) |
-| Config | YAML (presets), JSON (settings) |
+| Config | YAML, JSON (settings) |
 | Skills / commands / agents | Markdown (Claude Code format) |
 | Context tree search | Python 3 (BM25/TF-IDF) |
-| Vector memory | lossless-claude (SQLite + optional Qdrant) |
+| Persistent memory | lossless-claude (SQLite + FTS5) |
 | Provider framework | Bash modules in `providers/` (Slack, Jira, GitHub, Figma, Confluence) |
-| Model server | vllm-mlx, Ollama, or remote URL |
-| LLM / embeddings | vllm-mlx, Ollama, OpenAI, Anthropic, OpenRouter (BYOP) |
+| LLM | claude-process (via lossless-claude) |
 | Tests | Bash with `assert_*` helpers (33 test suites) |
 
 ### Agent instruction files
@@ -267,14 +215,14 @@ xgh's workspace acts as a message bus between agents. Any MCP-compatible agent c
 
 | Plan | Scope | Status |
 |------|-------|--------|
-| 1 — Foundation | Scaffold, BYOP config, one-liner installer | Done |
+| 1 — Foundation | Scaffold, one-liner installer | Done |
 | 2 — Context Tree Engine | CRUD, BM25 search, scoring/maturity, archival, sync | Done |
 | 3 — Hooks & Core Skills | Session-start/prompt-submit hooks, 5 core skills, 3 commands | Done |
 | 4 — Team Collaboration | 6 team skills, collaborate command, dispatcher agent | Done |
 | 5 — Multi-Agent Bus | Agent registry, 4 workflow templates, message protocol | Done |
 | 6 — Workflow Skills | investigate, design, implement workflows | Done |
 | 7 — Best-of-Both Merge | Sourceable library architecture, flat manifest, structured JSON hooks | Done |
-| 8 — Ollama / Linux | Ollama backend, backend-aware cipher.yml + MCP env vars | Done |
+| 8 — Ollama / Linux | Ollama backend, cross-platform support | Done |
 | 9 — Remote Backend | `XGH_BACKEND=remote` — point at another machine's server | Done |
 
 Plan documents are in `docs/plans/`.
@@ -284,7 +232,7 @@ Plan documents are in `docs/plans/`.
 ## Trust & Privacy
 
 - **Nothing leaves your machine.** All memory, vectors, and context stay local. No telemetry, no cloud sync, no account.
-- **No vendor lock-in.** BYOP: swap backends and providers without reinstalling.
+- **No vendor lock-in.** Swap providers without reinstalling. Open standards, no proprietary formats.
 - **Git-native knowledge.** The context tree is plain markdown committed to your repo. Review it in PRs, grep it in CI, read it without xgh.
 - **Fully open source.** MIT licensed. Read every line.
 

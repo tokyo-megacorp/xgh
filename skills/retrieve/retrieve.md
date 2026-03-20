@@ -193,6 +193,34 @@ For each message:
 For `awaiting_my_reply`/`awaiting_their_reply` type items, apply aging boost:
 - < 2h: +0 | 2–8h: +15 | 8–24h: +30 | 24–48h: +50 | 48h+: +70 (then cap at 100)
 
+## Step 4b: Fast-path trigger evaluation
+
+Evaluate triggers where urgency warrants immediate action — before analyze runs.
+
+**Skip this step entirely if:**
+- `~/.xgh/triggers.yaml` does not exist or has `enabled: false`
+- `~/.xgh/triggers.yaml` has `fast_path: false`
+- No `~/.xgh/triggers/*.yaml` files have `path: fast`
+
+**Procedure:**
+
+1. Read only triggers with `path: fast` from `~/.xgh/triggers/*.yaml`.
+   Skip `source: local` and `source: schedule` triggers.
+2. For each newly scored inbox item with `urgency_score >= 70`:
+   For each fast-path trigger:
+   a. **Match check:**
+      - `source:` matches item's `source:` field
+      - `when.urgency_score:` threshold — evaluate if specified (e.g., `>= 90`)
+      - `match:` keyword patterns on item title/content (regex)
+      - NOTE: `when.type:` is NOT checked — classification has not run yet
+   b. **Cooldown + dedup check:** same logic as standard path (see xgh:trigger skill).
+   c. **Execute steps:** same execution as standard path.
+   d. **Update state.**
+3. Log: `Fast-path triggers: N evaluated, K fired`
+
+Fast-path triggers should use `when.match:` patterns and `when.urgency_score:` thresholds,
+NOT `when.type:` (type is only available after analyze classification).
+
 ## Step 5 — Detect awaiting-reply items
 
 | Platform | Detection |

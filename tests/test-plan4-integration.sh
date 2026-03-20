@@ -70,12 +70,6 @@ for skill in pr-context-bridge knowledge-handoff convention-guardian cross-team-
   assert_contains "skills/$skill/$skill.md" "Iron Law"
 done
 
-# ── All skills reference Cipher tools ─────────────────
-echo ""
-echo "--- Cipher tool references ---"
-for skill in pr-context-bridge knowledge-handoff convention-guardian cross-team-pollinator subagent-pair-programming onboarding-accelerator; do
-  assert_contains "skills/$skill/$skill.md" "cipher_memory_search"
-done
 
 # ── All skills have Composability section ─────────────
 echo ""

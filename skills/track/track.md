@@ -115,6 +115,13 @@ Ask each question below separately. Validate before moving to the next.
    - `auto` — fully autonomous writes (e.g., auto-post digests, transition tickets).
    Set all five providers (slack, jira, confluence, github, figma) to the chosen level. Note that the user can customize per-provider later in `~/.xgh/ingest.yaml`.
 
+10. **Project dependencies** (optional) — other tracked projects this project depends on.
+    Show a list of existing project names from `ingest.yaml` and let the user pick.
+    Example: "xgh depends on: lossless-claude, context-mode"
+    Store as `dependencies: [lossless-claude, context-mode]`.
+    Default: empty list. These are used by retrieval and briefing to scope data gathering
+    — when working in this project, data from its dependencies is also included.
+
 ## Step 2 — Initial backfill
 
 Read the last 200 messages from each Slack channel using `slack_read_channel`. For each message containing a Jira/Confluence/GitHub link, stash it to `~/.xgh/inbox/` and add the ref to the enrichment list.
@@ -135,6 +142,9 @@ projects:
     status: active
     my_role: ios-lead
     my_intent: "Own iOS implementation, delegate QA to platform team, coordinate backend API changes"
+    dependencies:            # from Q10 — other tracked projects
+      - lossless-claude
+      - context-mode
     providers:
       slack:      { access: read }
       jira:       { access: read }

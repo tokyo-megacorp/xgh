@@ -15,7 +15,7 @@ enabled: true
 
 when:
   source: jira               # fires on Jira inbox items
-  type: p0                   # content type from analyze classification
+  type: p0                   # content type from analyze — ignored on fast path (classification hasn't run)
   project: "*"               # any project (* = wildcard)
   match:
     title: "blocker|critical|P0|sev1"   # case-insensitive keyword match

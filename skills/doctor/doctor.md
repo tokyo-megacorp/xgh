@@ -221,6 +221,13 @@ Also check `~/.xgh/tokens.env`:
 - File exists → report which vars are set (without showing values)
 - File missing → `⚠ ~/.xgh/tokens.env not found — token-based providers will fail`
 
+### Project detection
+
+Run `bash ~/.xgh/scripts/detect-project.sh` and report:
+- If a project was detected: `✓ Project scope: <name> (+N dependencies)`
+- If no match: `ℹ No project detected — all-projects mode`
+- If script missing: `⚠ detect-project.sh not installed — run /xgh-init`
+
 ## Output format
 
 ```

@@ -112,6 +112,32 @@ After scanning new messages, perform a thread reply pass to catch replies on rec
 
 **Rate limiting:** Apply the same back-off rules (2s → 4s → 8s, up to `retriever.max_retries`) for this pass as for the main channel scan.
 
+## Step 2b — MCP Provider Dispatch (generic)
+
+For each provider in `~/.xgh/user_providers/` with `mode: mcp` in `provider.yaml`:
+
+1. Read `provider.yaml` to get the `tools:` section and `cursor_strategy`
+2. Read the cursor file (`~/.xgh/user_providers/<name>/cursor`) — if missing, use default lookback
+3. For each tool role declared in `tools:`:
+   - `channels` → Run channel scan pass (fetch messages since cursor for each configured channel)
+   - `threads` → Run thread reply pass (for messages with latest_reply > cursor, fetch full thread)
+   - `search` → Run search queries for mentions, keywords
+   - `list` → Fetch items updated since cursor
+   - `comments` → Fetch new comments on tracked items
+   - `files` → Fetch recently modified files/designs
+   - `alerts` → Fetch new errors/incidents
+   - `feeds` → Fetch notification/activity stream
+   - Other roles: call the declared MCP tool with cursor-substituted params
+4. For each tool call:
+   - Substitute `{cursor}` in params with the current cursor value
+   - Call the MCP tool
+   - Parse results into inbox items (standard YAML frontmatter + markdown body)
+   - Write to `~/.xgh/inbox/` with dedup by filename
+5. Update the cursor file with the timestamp of the most recent item
+
+This replaces the hardcoded per-service tool calls. The retrieve skill no longer needs to know
+about specific services — it reads what tools are available from the provider config.
+
 ## Step 3 — Follow links 1-hop
 
 > **Access level guard:** Before following links, check the relevant `providers.<type>.access` level for the target provider (jira, confluence, github, figma). If `read`, only fetch data. If `ask` or `auto`, write actions (e.g., transitioning Jira tickets, posting PR comments) may be performed in later steps.

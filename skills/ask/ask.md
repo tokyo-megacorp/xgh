@@ -78,7 +78,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 3. If nothing found, broaden the search to the general area (e.g., "authentication errors" instead of "401 on /api/refresh")
 
 **Example queries:**
-- "ECONNREFUSED on Qdrant connection"
+- "Connection refused on external service"
 - "Token refresh returns 401 intermittently"
 - "Race condition in concurrent database writes"
 
@@ -141,14 +141,13 @@ Combine results from all three for complete context.
 When results come from both engines, xgh ranks them using this BM25 + semantic scoring formula:
 
 ```
-score = (0.5 * lcm_similarity + 0.3 * bm25_score + 0.1 * importance + 0.1 * recency) * maturityBoost
+score = (0.6 * bm25_score + 0.2 * importance + 0.2 * recency) * maturityBoost
 ```
 
-- `lcm_similarity`: 0-1, vector cosine similarity from lossless-claude
 - `bm25_score`: 0-1, keyword match score from context tree
 - `importance`: 0-100 normalized to 0-1
 - `recency`: 0-1, exponential decay with ~21-day half-life
-- `maturityBoost`: core = 1.15, validated = 1.0, draft = 0.9
+- `maturityBoost`: core = 1.15, all others = 1.0
 
 ## Query refinement Stops
 

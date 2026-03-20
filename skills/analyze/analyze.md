@@ -133,13 +133,7 @@ For each classified item, build this payload:
 Before writing each payload:
 1. Call `lcm_search(query)` with the summary text as query
 2. If any result has similarity score ≥ `analyzer.dedup_threshold` (default 0.85):
-   - If the existing memory has lower urgency score, update it via Qdrant REST:
-     ```bash
-     curl -s -X PATCH "${QDRANT_URL}/collections/${COLLECTION}/points/payload" \
-       -H "Content-Type: application/json" \
-       -d '{"payload": {"xgh_urgency_score": <new_score>}, "points": ["<existing_id>"]}'
-     ```
-   - Either way, skip writing a new entry
+   - Skip writing a new entry (the existing memory covers this content)
 3. If no near-duplicate, proceed to Step 6
 
 ## Step 6 — TTL management (every 5 runs)
@@ -148,7 +142,7 @@ Track run count in `~/.xgh/logs/.analyzer-run-count` (increment each run, reset 
 
 When count mod 5 == 0:
 1. Search lossless-claude for memories with `xgh_status: active` and non-null `xgh_ttl`
-2. For each where `xgh_ttl` < now: update Qdrant payload to `xgh_status: decayed`
+2. For each where `xgh_ttl` < now: mark as `xgh_status: decayed` in the next digest
 3. Check if any current inbox items reference the same project/topic as decayed memories — if so, reset their TTL to now + original duration
 
 ## Step 7 — Write to lossless-claude

@@ -50,25 +50,6 @@ curl -sf --max-time 5 "${XGH_REMOTE_URL}/v1/models"
     Fix: ensure the server is running and port is accessible from this machine
   ```
 
-Qdrant: `curl -sf http://localhost:6333/healthz` via Bash
-
-If Qdrant fails, run deeper diagnosis:
-```bash
-# Check launchd status
-launchctl list | grep qdrant
-# Check for crash reason
-tail -20 /tmp/qdrant.log 2>/dev/null | grep -E "ERROR|WARN|Panic"
-tail -5 /tmp/qdrant.error.log 2>/dev/null
-```
-
-Common Qdrant failures and fixes:
-| Error | Fix |
-|---|---|
-| `WouldBlock` / WAL lock (exit 101) | `pkill -f qdrant; rm -f ~/.qdrant/storage/storage/collections/*/0/wal/open-*; launchctl load ~/Library/LaunchAgents/com.qdrant.server.plist` |
-| `jemalloc: background_thread` (warning only) | Add `MALLOC_CONF=background_thread:false` to the plist EnvironmentVariables (cosmetic, not the crash cause) |
-| Missing plist | Enable session scheduler: run `/xgh-schedule resume` (removes `~/.xgh/scheduler-paused` and re-registers jobs) |
-| Binary missing | `brew install qdrant` or download to `~/.qdrant/bin/qdrant` |
-
 lossless-claude MCP availability: check if `mcp__lossless-claude__lcm_search` is present in the available tool list:
 - Tool absent → lossless-claude MCP not registered. Fix: add lossless-claude entry to `.claude/.mcp.json`
 - Tool present but call returns error → daemon not running. Fix: `lossless-claude daemon start`
@@ -183,22 +164,14 @@ Report each job found:
 
 **Fix (if jobs missing or paused):** Run `/xgh-schedule resume` to re-register jobs now.
 
-## Check 5 — Workspace stats
-
-Query Qdrant collection stats:
-```bash
-curl -sf "${QDRANT_URL}/collections/${WORKSPACE_COLLECTION}"
-```
-Show: exists ✓/✗, vector count, approximate size.
-
-## Check 6 — Codebase index
+## Check 5 — Codebase index
 
 For each project with `github:` entries, check `index.last_full` against `index.schedule`:
 - Never indexed: ✗ (suggest `/xgh-index`)
 - Overdue per schedule: ⚠
 - Current: ✓
 
-## Check 7 — Providers
+## Check 6 — Providers
 
 List all directories in `~/.xgh/providers/`. For each:
 
@@ -243,16 +216,12 @@ Connectivity
   ✓ Slack: #channel-1 accessible
   ✗ Slack: #channel-missing — not found (check channel name in ingest.yaml)
   ✓ Jira: PTECH-31204 exists (23 open issues)
-  ✓ Qdrant: localhost:6333 responding
   ✓ lossless-claude: connected (tool available)
   # Remote inference (when XGH_BACKEND=remote):
   ✓ Remote inference server: http://macmini.local:11434 — reachable, 2 models available
   # OR if unreachable:
   ✗ Remote inference server: http://192.168.1.100:11434 — unreachable (timeout)
     Fix: ensure the server is running and port 11434 is accessible from this machine
-  # OR if issues:
-  ✗ Qdrant: not responding — WAL lock detected
-    Fix: pkill -f qdrant && rm -f ~/.qdrant/storage/storage/collections/*/0/wal/open-* && launchctl load ~/Library/LaunchAgents/com.qdrant.server.plist
   ✗ lossless-claude: not in tool list — add to .claude/.mcp.json (command: lossless-claude, args: [mcp])
 
 Pipeline
@@ -290,9 +259,6 @@ Scheduler
   ✗ retrieve: not scheduled
   ✗ analyze: not scheduled
     Fix: /xgh-schedule resume
-
-Workspace
-  ✓ Collection "xgh-workspace" exists (142 vectors)
 
 Codebase Index
   ✓ acme-ios: indexed 2 days ago (schedule: weekly — OK)

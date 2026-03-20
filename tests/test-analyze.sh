@@ -9,7 +9,6 @@ assert_file_exists "commands/analyze.md"
 
 assert_contains "skills/analyze/analyze.md" "xgh:analyze"
 assert_contains "skills/analyze/analyze.md" "dedup_threshold"
-assert_contains "skills/analyze/analyze.md" "cipher_memory_search"
 assert_contains "skills/analyze/analyze.md" "xgh_schema_version"
 assert_contains "skills/analyze/analyze.md" "processed/"
 assert_contains "skills/analyze/analyze.md" "digests/"

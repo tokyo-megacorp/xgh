@@ -159,6 +159,49 @@ projects:
     last_scan: null
 ```
 
+## Step 3b — Generate provider scripts
+
+For each source type configured in the project, generate fetch scripts:
+
+1. **Identify configured sources** — check which fields are non-empty in the project config:
+   - `github:` non-empty → generate GitHub provider
+   - `slack:` non-empty → generate Slack provider
+   - `jira:` non-null → generate Jira provider
+   - `confluence:` non-empty → generate Confluence provider
+   - `figma:` non-empty → generate Figma provider
+   - Any other key not in the above list → generate from `_template` spec
+
+2. **For each source type:**
+   a. Check if `~/.xgh/providers/<name>/provider.yaml` already exists
+      - If exists: update `provider.yaml` with new project sources (merge, don't replace)
+      - If not: read `providers/<name>/spec.md` from the plugin cache and follow its instructions
+   b. **Determine mode:** The spec offers both bash and mcp modes. Ask the user:
+      - "Do you have an API token / CLI auth for `<name>`, or is it connected via MCP/OAuth?"
+      - API token / CLI → `mode: bash`, generate `fetch.sh` + `provider.yaml`
+      - MCP / OAuth → `mode: mcp`, generate `provider.yaml` with `mcp` section (no `fetch.sh`)
+   c. Write files to `~/.xgh/providers/<name>/`
+   d. Initialize cursor to 24h ago if missing
+   e. Test connection per the spec's test instructions (curl for bash, MCP tool call for mcp)
+
+3. **For bash-mode token-based providers:**
+   - Check if `~/.xgh/tokens.env` exists and contains the required env var
+   - If missing: prompt user for the token, write to `~/.xgh/tokens.env`
+   - Run the connection test from the spec
+
+4. **Report:**
+   ```
+   Providers configured:
+     ✅ github — 3 repos, bash mode (gh CLI)
+     ✅ slack — 2 channels, mcp mode (OAuth)
+     ✅ jira — 1 project, mcp mode (OAuth)
+     ❌ figma — FIGMA_TOKEN not set in ~/.xgh/tokens.env
+   ```
+
+5. **For unknown providers:** If a source key doesn't match any built-in spec:
+   - Read `providers/_template/spec.md` from plugin cache
+   - Follow its interactive scaffolding flow (6 questions — including mode selection)
+   - Generate provider artifacts in `~/.xgh/providers/<name>/`
+
 ## Step 4 — Confirm
 
 ```
@@ -166,6 +209,7 @@ projects:
   Role: ios-lead
   Channels: #ptech-31204-general, #ptech-31204-engineering
   Initial backfill: 15 items queued in ~/.xgh/inbox/
+  Providers: 3 configured (2 bash, 1 mcp)
   Next retriever run will include this project.
 
 Run /xgh-doctor to verify the full pipeline is healthy.
@@ -192,9 +236,13 @@ Jobs auto-expire after 3 days and are re-created each session automatically.
 Enable? [Y/n]
 ```
 
+**Dependency guard:** If `~/.xgh/scripts/retrieve-all.sh` doesn't exist yet:
+1. Find it in the plugin cache: `find ~/.claude/plugins/cache -path "*/xgh/*/scripts/retrieve-all.sh" -print -quit`
+2. Copy to `~/.xgh/scripts/retrieve-all.sh` and `chmod +x`
+
 If **yes**:
 1. Register CronCreate jobs immediately:
-   - retrieve: `cron: "*/5 * * * *"`, `prompt: "/xgh-retrieve"`, `recurring: true`
+   - retrieve: `cron: "*/5 * * * *"`, `prompt: "bash ~/.xgh/scripts/retrieve-all.sh || true"`, `recurring: true`
    - analyze: `cron: "*/30 * * * *"`, `prompt: "/xgh-analyze"`, `recurring: true`
 2. Remove pause file if present: `rm -f ~/.xgh/scheduler-paused`
 3. Report: `✅ Scheduler enabled — retrieve (*/5) and analyze (*/30) registered.`

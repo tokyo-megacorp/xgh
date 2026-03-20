@@ -28,5 +28,17 @@ assert_contains "providers/slack/spec.md" "conversations.history"
 assert_contains "providers/slack/spec.md" "cursor"
 assert_contains "providers/slack/spec.md" "fetch.sh"
 
+# Jira provider
+assert_file_exists "providers/jira/spec.md"
+assert_contains "providers/jira/spec.md" "JIRA_BASE_URL"
+assert_contains "providers/jira/spec.md" "JIRA_EMAIL"
+assert_contains "providers/jira/spec.md" "JIRA_API_TOKEN"
+assert_contains "providers/jira/spec.md" "rest/api/3/search"
+
+# Confluence provider
+assert_file_exists "providers/confluence/spec.md"
+assert_contains "providers/confluence/spec.md" "JIRA_BASE_URL"
+assert_contains "providers/confluence/spec.md" "rest/api/content/search"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

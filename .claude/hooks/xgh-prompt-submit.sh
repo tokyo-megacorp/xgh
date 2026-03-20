@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # xgh UserPromptSubmit hook
-# Detects prompt intent and injects cipher memory decision table as additionalContext.
+# Detects prompt intent and injects memory decision table as additionalContext.
 # Output: {"additionalContext": "..."} — the only key Claude Code recognizes for UserPromptSubmit hooks.
 set -euo pipefail
 

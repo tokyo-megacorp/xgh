@@ -28,7 +28,7 @@ steps:
       type: plan
       status: pending
       for_agent: reviewer
-    output: "Store plan in Cipher workspace with type=plan"
+    output: "Store plan in lossless-claude workspace with type=plan"
 
   - id: review-plan
     role: reviewer
@@ -38,7 +38,7 @@ steps:
       type: review
       status: pending
       for_agent: planner
-    output: "Store review in Cipher workspace with type=review"
+    output: "Store review in lossless-claude workspace with type=review"
 
   - id: incorporate-feedback
     role: planner
@@ -62,4 +62,4 @@ steps:
 
 completion:
   condition: "All steps have status=completed"
-  summary: "Store workflow summary in Cipher with thread_id for future reference"
+  summary: "Store workflow summary in lossless-claude with thread_id for future reference"

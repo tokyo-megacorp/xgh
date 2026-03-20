@@ -27,7 +27,7 @@ steps:
       type: result
       status: pending
       for_agent: security-reviewer
-    output: "Store implementation in Cipher with type=result"
+    output: "Store implementation in lossless-claude with type=result"
 
   - id: security-review
     role: security-reviewer
@@ -52,7 +52,7 @@ steps:
       type: result
       status: pending
       for_agent: security-reviewer
-    output: "Store fixes in Cipher with type=result, reference original findings"
+    output: "Store fixes in lossless-claude with type=result, reference original findings"
 
   - id: re-review
     role: security-reviewer

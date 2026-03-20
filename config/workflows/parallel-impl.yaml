@@ -30,7 +30,7 @@ steps:
       type: plan
       status: pending
       for_agent: "*"
-    output: "Store task breakdown in Cipher with type=plan, one message per subtask"
+    output: "Store task breakdown in lossless-claude with type=plan, one message per subtask"
 
   - id: implement-subtasks
     role: implementer

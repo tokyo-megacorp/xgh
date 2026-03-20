@@ -27,7 +27,7 @@ steps:
       type: result
       status: pending
       for_agent: validator
-    output: "Store implementation in Cipher with type=result"
+    output: "Store implementation in lossless-claude with type=result"
 
   - id: validate
     role: validator
@@ -48,7 +48,7 @@ steps:
       type: result
       status: pending
       for_agent: validator
-    output: "Store fix in Cipher with type=result"
+    output: "Store fix in lossless-claude with type=result"
     loop_to: validate
     max_iterations: 3
 

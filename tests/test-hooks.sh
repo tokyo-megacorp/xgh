@@ -179,13 +179,18 @@ print(d.get('schedulerTrigger', ''))
 " "$SS_SCHED_DEFAULT")
 assert_eq "schedulerTrigger default=on" "$SS_ST_DEFAULT" "on"
 
-# Validate schedulerInstructions present by default
+# Validate schedulerInstructions present by default (with a fake bash provider)
+FAKE_PROVIDER="$HOME/.xgh/providers/_test_hook/fetch.sh"
+mkdir -p "$(dirname "$FAKE_PROVIDER")"
+echo "#!/usr/bin/env bash" > "$FAKE_PROVIDER"
+SS_SI_OUT=$(XGH_CONTEXT_TREE="$TMPDIR_CT" bash hooks/session-start.sh)
+rm -rf "$HOME/.xgh/providers/_test_hook"
 SS_SI=$(python3 -c "
 import json, sys
 d = json.loads(sys.argv[1])
 v = d.get('schedulerInstructions', '')
-print('yes' if v and '/xgh-retrieve' in v and '/xgh-analyze' in v else 'no:' + repr(v))
-" "$SS_SCHED_DEFAULT")
+print('yes' if v and 'retrieve-all.sh' in v and '/xgh-analyze' in v else 'no:' + repr(v))
+" "$SS_SI_OUT")
 assert_eq "schedulerInstructions contains cron prompts" "$SS_SI" "yes"
 
 # Validate schedulerTrigger=paused when pause file exists
@@ -244,15 +249,19 @@ bash hooks/prompt-submit.sh > /dev/null 2>&1 && PASS=$((PASS + 1)) || { echo "FA
 # Context-mode plugin owns its own enforcement via PreToolUse hooks.
 # xgh no longer duplicates this — no pre-read, post-edit, or post-ctx-call hooks.
 
-# Test: schedulerInstructions mentions deep-retrieve
-SS_DEEP=$(XGH_CONTEXT_TREE="$TMPDIR_CT" bash hooks/session-start.sh)
-SS_DEEP_OK=$(python3 -c "
+# Test: schedulerInstructions mentions retrieve-all.sh (with a fake bash provider)
+FAKE_PROVIDER2="$HOME/.xgh/providers/_test_hook2/fetch.sh"
+mkdir -p "$(dirname "$FAKE_PROVIDER2")"
+echo "#!/usr/bin/env bash" > "$FAKE_PROVIDER2"
+SS_RETRIEVE=$(XGH_CONTEXT_TREE="$TMPDIR_CT" bash hooks/session-start.sh)
+rm -rf "$HOME/.xgh/providers/_test_hook2"
+SS_RETRIEVE_OK=$(python3 -c "
 import json, sys
 d = json.loads(sys.argv[1])
 si = d.get('schedulerInstructions', '')
-print('yes' if '/xgh-deep-retrieve' in (si or '') else 'no')
-" "$SS_DEEP")
-assert_eq "schedulerInstructions mentions deep-retrieve" "$SS_DEEP_OK" "yes"
+print('yes' if 'retrieve-all.sh' in (si or '') else 'no')
+" "$SS_RETRIEVE")
+assert_eq "schedulerInstructions mentions retrieve-all.sh" "$SS_RETRIEVE_OK" "yes"
 
 echo ""
 echo "Hooks test: $PASS passed, $FAIL failed"

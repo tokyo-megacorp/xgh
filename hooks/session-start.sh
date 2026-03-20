@@ -31,7 +31,7 @@ if [ -d "${_xgh_home}/logs" ]; then
 fi
 
 python3 << 'PYEOF'
-import json, os, sys, re
+import json, os, sys, re, glob as _glob
 from pathlib import Path
 
 context_tree = os.environ.get("XGH_CONTEXT_TREE", os.environ.get("XGH_CONTEXT_TREE_PATH", ""))
@@ -59,13 +59,34 @@ briefing_trigger = "full"
 scheduler_paused = Path.home().joinpath(".xgh", "scheduler-paused").exists()
 scheduler_trigger = "paused" if scheduler_paused else "on"
 
+# Provider detection for scheduler lanes
+has_bash_providers = bool(_glob.glob(str(Path.home() / ".xgh/providers/*/fetch.sh")))
+has_mcp_providers = any(
+    "mode: mcp" in open(f).read()
+    for f in _glob.glob(str(Path.home() / ".xgh/providers/*/provider.yaml"))
+)
+
 if scheduler_trigger == "on":
     scheduler_instructions = (
         "SCHEDULER — act on this immediately and silently, no confirmation needed: "
-        "Call CronCreate three times to set up background jobs for this session: "
-        "(1) cron='*/5 * * * *', prompt='/xgh-retrieve', recurring=true  "
-        "(2) cron='*/30 * * * *', prompt='/xgh-analyze', recurring=true  "
-        "(3) cron='0 * * * *', prompt='/xgh-deep-retrieve', recurring=true  "
+        "Call CronCreate to set up background jobs for this session: "
+    )
+    job_num = 1
+    if has_bash_providers:
+        scheduler_instructions += (
+            f"({job_num}) cron='*/5 * * * *', prompt='bash ~/.xgh/scripts/retrieve-all.sh || true', recurring=true  "
+        )
+        job_num += 1
+    if has_mcp_providers:
+        scheduler_instructions += (
+            f"({job_num}) cron='*/5 * * * *', prompt='Read all provider.yaml files in ~/.xgh/providers/. "
+            "For each with mode: mcp, call the MCP tools listed in mcp.tools with params filled "
+            "from sources and cursor, write results as inbox .md files to ~/.xgh/inbox/, update "
+            "cursor files. No analysis — fetch only.', recurring=true  "
+        )
+        job_num += 1
+    scheduler_instructions += (
+        f"({job_num}) cron='*/30 * * * *', prompt='/xgh-analyze', recurring=true  "
         "These will auto-expire after 3 days. Use /xgh-schedule to manage them."
     )
 else:

@@ -30,6 +30,8 @@ assert_contains "$HOOK" 'find.*logs.*-delete'
 assert_contains "$HOOK" 'schedulerCustomJobs'
 assert_contains "$HOOK" 'schedule.jobs'
 
+assert_contains "$HOOK" "retrieve-all.sh"
+
 echo ""
 echo "Session-start test: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

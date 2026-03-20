@@ -173,10 +173,11 @@ For each project with `github:` entries, check `index.last_full` against `index.
 
 ## Check 6 — Providers
 
-List all directories in `~/.xgh/providers/`. For each:
+List all directories in `~/.xgh/user_providers/`. For each:
 
 1. Check `provider.yaml` exists and read `mode`
-2. If `mode: bash`: check `fetch.sh` exists and is executable
+2. If `mode: cli`: check `fetch.sh` exists and is executable
+   If `mode: api`: check `fetch.sh` exists and is executable
    If `mode: mcp`: check `mcp.tools` section is non-empty in provider.yaml
 3. Check `cursor` file — if it exists, report age (how long since last update)
 4. Check last line of `~/.xgh/logs/provider-<name>.log` for errors
@@ -184,10 +185,20 @@ List all directories in `~/.xgh/providers/`. For each:
 Report:
 ```
 Providers
-  ✓ github: 3 repos, bash mode, cursor 4 min ago
-  ✓ slack: 2 channels, mcp mode (OAuth), cursor 4 min ago
-  ✗ figma: fetch.sh missing — run /xgh-track to regenerate
-  ⚠ jira: mcp mode, cursor 3 hours ago (stale — check MCP server)
+  ✓ github-cli: 3 repos, cli mode, cursor 4 min ago
+  ✓ slack-mcp: 2 channels, mcp mode (OAuth), cursor 4 min ago
+  ✗ figma-api: fetch.sh missing — run /xgh-track --regenerate figma-api
+  ⚠ jira-mcp: mcp mode, cursor 3 hours ago (stale — check MCP server)
+```
+
+Also check for legacy providers:
+```bash
+ls ~/.xgh/providers/ 2>/dev/null
+```
+If `~/.xgh/providers/` exists with non-empty subdirectories:
+```
+⚠ Legacy providers found in ~/.xgh/providers/
+  Run /xgh-track to migrate to ~/.xgh/user_providers/
 ```
 
 Also check `~/.xgh/tokens.env`:

@@ -12,5 +12,14 @@ assert_contains "providers/_template/spec.md" "tokens.env"
 assert_contains "providers/_template/spec.md" "inbox"
 assert_contains "providers/_template/spec.md" "urgency_keywords"
 
+# GitHub provider
+assert_file_exists "providers/github/spec.md"
+assert_contains "providers/github/spec.md" "gh api"
+assert_contains "providers/github/spec.md" "notifications"
+assert_contains "providers/github/spec.md" "pull_requests"
+assert_contains "providers/github/spec.md" "cursor"
+assert_contains "providers/github/spec.md" "provider.yaml"
+assert_contains "providers/github/spec.md" "fetch.sh"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

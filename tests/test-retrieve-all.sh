@@ -16,5 +16,11 @@ assert_contains "scripts/retrieve-all.sh" "retriever.log"
 
 assert_contains "scripts/retrieve-all.sh" "XGH_PROJECT_SCOPE"
 
+assert_contains "scripts/retrieve-all.sh" "user_providers"
+assert_contains "scripts/retrieve-all.sh" "PROVIDER_DIR"
+assert_contains "scripts/retrieve-all.sh" "CURSOR_FILE"
+assert_contains "scripts/retrieve-all.sh" "TOKENS_FILE"
+assert_contains "scripts/retrieve-all.sh" "mode: cli"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

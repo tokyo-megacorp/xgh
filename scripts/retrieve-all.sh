@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # retrieve-all.sh — Discovery-based provider orchestrator
-# Finds and runs all mode:bash fetch.sh scripts in ~/.xgh/providers/
+# Finds and runs all mode:cli and mode:api fetch.sh scripts in ~/.xgh/user_providers/
 # Skips mode:mcp providers (handled by separate CronCreate prompt)
 # Called by CronCreate every 5 minutes (1 Bash turn, no Claude)
 
-PROVIDERS_DIR="${XGH_PROVIDERS_DIR:-$HOME/.xgh/providers}"
+PROVIDERS_DIR="${XGH_PROVIDERS_DIR:-$HOME/.xgh/user_providers}"
 INBOX_DIR="$HOME/.xgh/inbox"
 LOG_FILE="$HOME/.xgh/logs/retriever.log"
 PAUSE_FILE="$HOME/.xgh/scheduler-paused"
@@ -63,8 +63,10 @@ for provider_dir in "$PROVIDERS_DIR"/*/; do
     name=$(basename "$provider_dir")
     script="$provider_dir/fetch.sh"
 
-    # Skip MCP-mode providers (no fetch.sh — handled by MCP CronCreate prompt)
-    if grep -q "^mode: mcp" "$provider_dir/provider.yaml" 2>/dev/null; then
+    # Only run mode: cli and mode: api providers (mcp handled by CronCreate prompt)
+    local mode
+    mode=$(grep "^mode:" "$provider_dir/provider.yaml" 2>/dev/null | awk '{print $2}')
+    if [ "$mode" != "cli" ] && [ "$mode" != "api" ]; then
         continue
     fi
 
@@ -80,11 +82,20 @@ for provider_dir in "$PROVIDERS_DIR"/*/; do
 
     total=$((total + 1))
 
+    # Export contract env vars for fetch.sh
+    export PROVIDER_DIR="$provider_dir"
+    export CURSOR_FILE="$provider_dir/cursor"
+    export INBOX_DIR  # promote script-level var to env for fetch.sh subprocess
+    export TOKENS_FILE="$HOME/.xgh/tokens.env"
+
     rc=0
     # fetch.sh may write a cursor file for incremental pagination on next run
     run_with_timeout 30 bash "$script" 2>>"$HOME/.xgh/logs/provider-$name.log" || rc=$?
     if [ "$rc" -eq 0 ]; then
         success=$((success + 1))
+    elif [ "$rc" -eq 2 ]; then
+        success=$((success + 1))
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever: WARN $name — partial failure (exit 2)" >> "$LOG_FILE"
     else
         failed=$((failed + 1))
         echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever: ERROR $name — exit code $rc" >> "$LOG_FILE"

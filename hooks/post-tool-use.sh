@@ -43,7 +43,7 @@ EXIT_CODE=$(echo "$HOOK_JSON" | python3 -c \
 MATCHED=false
 while IFS= read -r -d '' TRIGGER_FILE; do
   # Read command pattern from trigger YAML
-  CMD_PATTERN=$(grep -A1 "^  command:" "$TRIGGER_FILE" 2>/dev/null | tail -1 | sed 's/.*: *"//' | sed 's/".*//' || echo "")
+  CMD_PATTERN=$(grep "^  command:" "$TRIGGER_FILE" 2>/dev/null | head -1 | sed 's/^[[:space:]]*command:[[:space:]]*//' | sed 's/^"//' | sed 's/"$//' || echo "")
   [ -n "$CMD_PATTERN" ] || continue
 
   # Check exit_code expectation (default: 0)
@@ -65,15 +65,17 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
 SAFE_CMD=$(echo "$COMMAND" | tr ' /()[]{}' '_' | head -c 40)
 INBOX_FILE="$INBOX_DIR/${TIMESTAMP}_local_command_${SAFE_CMD}.md"
 
-TITLE=$(echo "$COMMAND" | head -c 80)
+# Escape for YAML (handle quotes and special chars)
+YAML_COMMAND=$(python3 -c "import sys,json; print(json.dumps(sys.argv[1]))" "$COMMAND" 2>/dev/null || echo "\"$COMMAND\"")
+YAML_TITLE=$(python3 -c "import sys,json; print(json.dumps(sys.argv[1][:80]))" "$COMMAND" 2>/dev/null || echo "\"$COMMAND\"" | head -c 80)
 
 cat > "$INBOX_FILE" << YAML
 ---
 source_type: local_command
 source: local
-command: "$COMMAND"
+command: $YAML_COMMAND
 exit_code: $EXIT_CODE
-title: "$TITLE"
+title: $YAML_TITLE
 timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 urgency_score: 50
 ---

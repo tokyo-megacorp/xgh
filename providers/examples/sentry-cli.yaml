@@ -1,0 +1,24 @@
+# ─────────────────────────────────────────────────────────────
+# Sentry CLI Provider
+# ─────────────────────────────────────────────────────────────
+# Mode: cli (uses `sentry-cli` binary)
+# Role: alerts — fetch new errors and issues from Sentry
+#
+# Great for: indie devs, SREs, anyone shipping to production
+# ─────────────────────────────────────────────────────────────
+
+service: sentry
+mode: cli
+binary: sentry-cli
+cursor_strategy: iso8601
+
+# Auth: SENTRY_AUTH_TOKEN in tokens.env (or ~/.sentryclirc)
+auth:
+  token_env: SENTRY_AUTH_TOKEN
+
+projects:
+  - org: my-org
+    project: my-app
+    sources:
+      - alerts            # New unresolved issues since cursor
+      - releases          # New releases/deploys

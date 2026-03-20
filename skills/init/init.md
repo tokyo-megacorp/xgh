@@ -115,6 +115,18 @@ command -v rtk
   ```
   If user says yes, run both commands. If no, skip — everything works without RTK.
 
+### 0f. Install retrieve orchestrator
+
+```bash
+RETRIEVE_SCRIPT=$(find ~/.claude/plugins/cache -path "*/xgh/*/scripts/retrieve-all.sh" -print -quit 2>/dev/null)
+if [ -n "$RETRIEVE_SCRIPT" ]; then
+    mkdir -p ~/.xgh/scripts
+    cp "$RETRIEVE_SCRIPT" ~/.xgh/scripts/retrieve-all.sh
+    chmod +x ~/.xgh/scripts/retrieve-all.sh
+    echo "Installed retrieve-all.sh"
+fi
+```
+
 ### 0e. Verify lossless-claude MCP registration
 
 ```bash
@@ -346,10 +358,17 @@ If **no** (or user skips): Continue to Step 7b.
 
 ## Step 7b — Scheduler
 
-> Scheduler is active by default on every session start. No configuration needed.
-> Use `/xgh-schedule pause` to disable, `/xgh-schedule resume` to re-enable.
+The SessionStart hook (`hooks/session-start.sh`) automatically registers CronCreate jobs when
+providers are configured. No manual setup needed.
 
-Skip this step — no action required.
+Use `/xgh-schedule pause` to disable, `/xgh-schedule resume` to re-enable.
+
+Verify by checking CronList after the first prompt of any new session.
+
+If no jobs appear, check:
+1. `~/.xgh/scripts/retrieve-all.sh` exists and is executable
+2. At least one provider exists in `~/.xgh/providers/`
+3. `~/.xgh/scheduler-paused` does not exist
 
 ---
 
@@ -415,4 +434,4 @@ This skill chains together existing skills rather than duplicating their logic:
 | Step 5 — Team profiles | `xgh:profile` per engineer |
 | Step 6 — Index codebase | `xgh:index` quick mode |
 | Step 7 — Initial curation | `xgh:curate` interactive |
-| Step 7b — Scheduler | No action (active by default) |
+| Step 7b — Scheduler | Auto-registered via `hooks/session-start.sh` |

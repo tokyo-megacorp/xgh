@@ -42,6 +42,26 @@ Available MCP tools by integration:
 - **Gmail**: `gmail_search_messages`, `gmail_read_message`
 - **Figma**: `figma_get_file`, `figma_get_comments`
 
+## Project Scope
+
+Determine which projects this briefing covers:
+
+1. Run `bash ~/.xgh/scripts/detect-project.sh` and read `XGH_PROJECT` and `XGH_PROJECT_SCOPE`
+2. If `XGH_PROJECT` is non-empty:
+   - Show in header: `🐴🤖 **xgh briefing** — [date] [time] — project: **[name]** (+[N] deps)`
+   - Scope ALL data gathering queries to projects in `XGH_PROJECT_SCOPE`:
+     - Memory queries: add project name to search terms
+     - Slack: only scan channels belonging to in-scope projects
+     - Jira: filter JQL to in-scope project keys
+     - GitHub: only check repos belonging to in-scope projects
+     - Figma: only check files belonging to in-scope projects
+   - Gmail and Calendar are NOT scoped (they're personal, not project-specific)
+3. If `XGH_PROJECT` is empty:
+   - Show in header: `🐴🤖 **xgh briefing** — [date] [time] — all projects`
+   - Proceed with all active projects (current behavior — command center mode)
+
+**Override:** `/xgh-briefing --all` forces all-projects mode regardless of cwd.
+
 ## Data Gathering
 
 ### 1. xgh Memory (always — lossless-claude)
@@ -53,6 +73,8 @@ lcm_search("last session", { limit: 3 })
 lcm_search("in progress", { limit: 3 })
 lcm_search("blocked", { limit: 2 })
 ```
+
+If project-scoped, prepend project name to search queries (e.g., "xgh last session").
 
 ### 2. Slack (if available)
 
@@ -68,6 +90,8 @@ searchJiraIssuesUsingJQL("assignee = currentUser() AND status != Done ORDER BY p
 searchJiraIssuesUsingJQL("assignee = currentUser() AND status = 'In Progress'", limit=5)
 ```
 
+If project-scoped, append `AND project IN (KEY1, KEY2)` to JQL queries using Jira keys from in-scope projects.
+
 ### 4. GitHub (if available)
 
 ```
@@ -75,6 +99,8 @@ gh pr list --author @me --state open
 gh issue list --assignee @me --state open
 gh pr list --review-requested @me --state open
 ```
+
+If project-scoped, only run these commands for repos belonging to in-scope projects.
 
 ### 5. Gmail (if available)
 
@@ -88,6 +114,8 @@ gmail_search_messages("subject:deadline OR subject:urgent is:unread", limit=5)
 ```
 figma_get_comments(file_key, limit=10)
 ```
+
+If project-scoped, only check file keys belonging to in-scope projects.
 
 ### 7. Team Pulse (always — from lossless-claude workspace)
 

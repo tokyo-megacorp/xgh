@@ -45,5 +45,12 @@ assert_contains "config/team.yaml" "pitfalls:"
 assert_contains "config/team.yaml" "Never skip the test"
 assert_contains "config/team.yaml" "lower_snake_case"
 
+assert_file_exists "config/workflow.yaml"
+assert_contains "config/workflow.yaml" "phases:"
+assert_contains "config/workflow.yaml" "defaults:"
+assert_contains "config/workflow.yaml" "test_commands:"
+assert_contains "config/workflow.yaml" "superpowers_table:"
+assert_contains "config/workflow.yaml" "feat/, fix/, docs/"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

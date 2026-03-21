@@ -140,29 +140,46 @@ If effort is specified, translate:
 
 ## Step 6: Build and Run Command
 
-### Construct the enriched prompt (exec only)
+### Build the prompt file (exec only)
 
-Wrap the task description with a standard footer so Codex always has verification and scope instructions — even if AGENTS.md doesn't cover the specific task:
+Construct a three-layer prompt and write it to a temp file. Piping via stdin avoids shell-escaping issues and enables dynamic context injection.
 
+```bash
+PROMPT_FILE="/tmp/codex-prompt-${TIMESTAMP}.md"
+CONTEXT_FILE="$(git rev-parse --show-toplevel 2>/dev/null)/.agents/skills/xgh/context.md"
+
+{
+  # Layer 1: live project context (if available and < 1 day old)
+  if [ -f "$CONTEXT_FILE" ] && [ $(( $(date +%s) - $(stat -f %m "$CONTEXT_FILE" 2>/dev/null || echo 0) )) -lt 86400 ]; then
+    cat "$CONTEXT_FILE"
+    echo ""
+    echo "---"
+    echo ""
+  fi
+
+  # Layer 2: task description
+  echo "<task description from Step 0>"
+  echo ""
+
+  # Layer 3: verification footer
+  echo "---"
+  echo "**After completing:**"
+  echo "1. Run: <test-command from Step 0, or 'bash tests/test-config.sh' if none stated>"
+  echo "2. Run \`git diff --name-only\` — confirm only these files were modified: <scope from Step 0>"
+  echo "3. Commit as: \`<commit-message from Step 0>\`"
+  echo ""
+  echo "**Do not** modify files outside the stated scope. If you find a related issue elsewhere, note it in your output — do not fix it."
+} > "$PROMPT_FILE"
 ```
-<original task description>
 
----
-**After completing:**
-1. Run: <test-command from Step 0, or "bash tests/test-config.sh" if none stated>
-2. Run `git diff --name-only` — confirm only these files were modified: <scope from Step 0>
-3. Commit as: `<commit-message from Step 0, or derive from task type>`
+For review dispatch, skip layers 1 and 3 — use the original prompt only.
 
-**Do not** modify any files outside the stated scope. If you find a related issue elsewhere, note it in your output — do not fix it.
-```
-
-Use `<enriched-prompt>` in the command below. For review dispatch, use the original prompt only (no footer).
-
-### Exec:
+### Exec (stateless — default):
 ```bash
 OUTPUT_FILE="/tmp/codex-exec-${TIMESTAMP}.md"
-codex exec "<enriched-prompt>" \
+cat "$PROMPT_FILE" | codex exec - \
   --full-auto \
+  --ephemeral \
   -C "$WORK_DIR" \
   [--add-dir "$WORK_DIR" if same-dir mode] \
   [-m <model> if specified] \
@@ -171,12 +188,37 @@ codex exec "<enriched-prompt>" \
   2>&1 | tee "$OUTPUT_FILE"
 ```
 
+### Exec (session mode — opt-in via `--session`):
+```bash
+OUTPUT_FILE="/tmp/codex-exec-${TIMESTAMP}.md"
+
+if [ -n "$SESSION_ID" ]; then
+  # Resume existing session
+  codex resume "$SESSION_ID" "$(cat $PROMPT_FILE)" \
+    --full-auto \
+    -C "$WORK_DIR" \
+    [-m <model>] [-c 'model_reasoning_effort="..."'] \
+    2>&1 | tee "$OUTPUT_FILE"
+else
+  # Start new session — capture UUID for resumption
+  cat "$PROMPT_FILE" | codex exec - \
+    --full-auto \
+    -C "$WORK_DIR" \
+    [-m <model>] [-c 'model_reasoning_effort="..."'] \
+    2>&1 | tee "$OUTPUT_FILE"
+  SESSION_ID=$(grep "^session id:" "$OUTPUT_FILE" | awk '{print $3}')
+fi
+```
+
+Return `SESSION_ID` in the result so the orchestrator can pass it back for follow-up dispatches.
+
 ### Review:
 ```bash
 OUTPUT_FILE="/tmp/codex-review-${TIMESTAMP}.md"
 codex review \
   [--base main | --uncommitted | --commit <sha>] \
   -s read-only \
+  --ephemeral \
   -C "$WORK_DIR" \
   [-c 'model_reasoning_effort="..."' if effort specified] \
   2>&1 | tee "$OUTPUT_FILE"
@@ -222,6 +264,39 @@ Return a concise summary:
 ```
 
 If the task involved a worktree, include the branch name and worktree path so the orchestrator can merge or discard.
+
+## Session Mode — When to Use and Risks
+
+### Default: stateless (`--ephemeral`)
+
+Every dispatch gets a clean slate. Codex reads only what you give it: AGENTS.md from the working directory + the three-layer prompt. Nothing carries over between dispatches.
+
+**Use stateless when:**
+- Dispatching independent tasks (the normal case)
+- Running multiple Codex instances in parallel worktrees
+- The task is fully self-contained with a written spec
+- A prior failed attempt should not influence the next run
+
+### Opt-in: session mode (`--session`)
+
+Codex persists the session to `~/.codex/sessions/`. The UUID is captured from the output header (`session id: <UUID>`) and returned to the orchestrator. Subsequent dispatches use `codex resume <UUID>` to continue where it left off.
+
+**Use session mode when:**
+- Running an exploratory, multi-turn investigation where context accumulates (e.g., debugging an unknown root cause across several steps)
+- The task genuinely requires Codex to remember decisions it made in the previous turn
+- You're doing an interactive "pairing session" where follow-up prompts build on earlier findings
+
+### Risks of session mode — advise the user before enabling
+
+| Risk | Description |
+|------|-------------|
+| **Context contamination** | Failed attempts, wrong assumptions, and stale tool output from prior turns accumulate. Codex may double down on a bad path rather than reconsidering. |
+| **No parallelism** | A session is tied to one Codex process. You lose the ability to run multiple independent tasks simultaneously. |
+| **Non-determinism** | Same task prompt → different result depending on accumulated history. Hard to reproduce or debug. |
+| **Session staleness** | If the session is hours or days old, Codex's accumulated context describes a state that no longer exists in the repo. |
+| **Hidden state** | The orchestrator (Claude) cannot see what Codex "remembers" from the session. Unexpected behavior becomes harder to diagnose. |
+
+**Rule of thumb:** If you can write a fully self-contained prompt that Codex can execute from scratch, use stateless. Only reach for session mode when the task is inherently iterative and you *want* Codex to carry state forward.
 
 ## Quality Standards
 

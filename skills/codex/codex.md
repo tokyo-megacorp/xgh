@@ -111,6 +111,8 @@ Parse the user's request to determine dispatch parameters. Only extract what the
 | `prompt` | — | remaining text after type |
 | `review_target` | `--base main` | `--uncommitted`, `--commit <sha>`, `--base <branch>` |
 | `effort` | CLI default | `--effort <level>` or `--thinking <level>` (translated to `-c 'model_reasoning_effort="..."'`) |
+| `session` | stateless (`--ephemeral`) | `--session` — opt-in stateful mode; captures UUID for resumption |
+| `session_id` | — | `--session-id <UUID>` — resume a specific prior session |
 
 **Effort level translation** (accepts `--effort`, `--thinking`, or raw `-c` — all resolve the same way):
 
@@ -291,6 +293,39 @@ lcm_store("Codex dispatch: <type> | model: <model> | isolation: <mode> | <outcom
 | Worktree exec | `--full-auto` | Isolated directory, safe for auto-approve |
 | Same-dir exec | `--full-auto --add-dir <dir>` | User explicitly chose same-dir |
 | Review | `-s read-only` | Enforced read-only sandbox — no file modifications |
+
+## Session Mode
+
+By default every dispatch is **stateless** (`--ephemeral`): fresh context, no history, parallel-safe.
+
+`--session` opts into **stateful mode**: Codex persists the session and returns a UUID. Use `--session-id <UUID>` on follow-up dispatches to resume exactly where it left off (`codex resume`).
+
+### When to use `--session`
+
+Only when the task is **inherently iterative** and Codex genuinely needs to carry state forward:
+
+- Exploratory debugging where each step narrows the root cause and the next step depends on prior findings
+- Multi-turn investigation where Codex needs to remember what it already ruled out
+- A deliberate "pairing session" where you'll prompt Codex several times in sequence
+
+### When NOT to use `--session` (the common case)
+
+- Any task with a complete written spec — stateless is always preferable
+- Running multiple tasks in parallel — sessions serialize, worktrees do not
+- After a failed attempt — session history will carry the wrong assumptions forward
+- If you're not sure — default stateless, no regrets
+
+### Risks — read before enabling
+
+| Risk | What happens |
+|------|-------------|
+| **Context contamination** | Prior failed attempts accumulate. Codex doubles down on wrong paths instead of reconsidering. |
+| **No parallelism** | One session = one process. Parallel worktree dispatch is blocked. |
+| **Non-determinism** | Same prompt → different result depending on what Codex remembers. Hard to reproduce. |
+| **Stale state** | Hours-old session describes a repo state that no longer exists. Codex acts on outdated context. |
+| **Opaque history** | Claude cannot see what Codex "remembers". Unexpected behavior is hard to diagnose. |
+
+**The rule:** if you can write a self-contained prompt Codex can execute from scratch, use stateless. Session mode is for the rare case where accumulated context is the feature, not a liability.
 
 ## Prompt Crafting
 

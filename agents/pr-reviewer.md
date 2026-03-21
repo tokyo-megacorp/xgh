@@ -32,7 +32,7 @@ description: |
 
 model: sonnet
 capabilities: [pr-review, code-review, github]
-color: yellow
+color: green
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 

@@ -128,7 +128,7 @@ local_agents:
   code-reviewer:
     type: agent
     model: sonnet
-    color: yellow
+    color: default
     tools: ["Read", "Grep", "Glob", "Bash"]
     capabilities: [code-review, architecture, conventions]
 
@@ -170,7 +170,7 @@ local_agents:
   pr-reviewer:
     type: agent
     model: sonnet
-    color: yellow
+    color: green
     tools: ["Read", "Grep", "Glob", "Bash"]
     capabilities: [pr-review, code-review, github]
 

@@ -23,7 +23,7 @@ description: |
 
 model: sonnet
 capabilities: [code-review, architecture, conventions]
-color: yellow
+color: default
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 

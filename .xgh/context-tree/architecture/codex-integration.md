@@ -16,14 +16,17 @@ Findings from live pairing session on 2026-03-21. Validated empirically via prob
 On every `codex exec -C <repo>` dispatch, Codex automatically loads context in this order:
 
 ```
+~/.codex/AGENTS.md           ← global system prompt (always loaded, every repo) ✅ CONFIRMED
 ~/.codex/superpowers/        ← global skill framework (using-superpowers)
 ~/.codex/skills/xgh/         ← global xgh skill (if installed)
-<repo>/AGENTS.md             ← primary project instructions (auto-read from -C dir)
-<repo>/.agents/skills/xgh/SKILL.md  ← repo-local skill (requires valid YAML frontmatter)
-<repo>/.agents/skills/xgh/context.md ← live project state (via pointer in SKILL.md)
+<repo>/AGENTS.md             ← project instructions (auto-read via -C dir) ✅ CONFIRMED
+<repo>/.agents/skills/xgh/SKILL.md  ← repo-local skill (requires valid YAML frontmatter) ✅ CONFIRMED
+<repo>/.agents/skills/xgh/context.md ← live project state (via pointer in SKILL.md) ✅ CONFIRMED
 ```
 
-**AGENTS.md is the most important layer.** Codex reads it on every dispatch, quotes it verbatim, and follows its instructions. It is the Codex equivalent of a system prompt.
+**`~/.codex/AGENTS.md` is the global system prompt** — loaded on every Codex dispatch regardless of repo. Currently empty. Prime real estate for cross-project conventions: commit format, test-before-done rule, scope discipline. Anything that should apply universally goes here; anything project-specific goes in `<repo>/AGENTS.md`.
+
+**`<repo>/AGENTS.md` is the project system prompt** — auto-read via `-C <dir>`. Codex reads it on every dispatch, quotes it verbatim, follows its instructions.
 
 **Skills require YAML frontmatter.** Without `---` delimiters, Codex silently fails to load the skill. Error: `"failed to load skill: missing YAML frontmatter delimited by ---"`. Fix: always add frontmatter to `.agents/skills/*/SKILL.md`.
 
@@ -37,7 +40,7 @@ On every `codex exec -C <repo>` dispatch, Codex automatically loads context in t
 | `.agents/skills/xgh/SKILL.md` | ✅ Yes (after frontmatter fix) | Must have valid YAML frontmatter |
 | `.agents/skills/xgh/context.md` | ✅ Yes | Read via pointer in SKILL.md |
 | `~/.codex/instructions.md` | ❌ No | File exists but is NOT injected as system context |
-| `~/.codex/AGENTS.md` | ❌ Not tested | Exists empty — unknown if auto-read globally |
+| `~/.codex/AGENTS.md` | ✅ Yes | Global system prompt — loaded every dispatch, every repo. Currently empty — prime real estate. |
 | `codex exec -` (stdin) | ✅ Confirmed | Reads full prompt from stdin; enables dynamic context injection |
 | `codex exec "<arg>"` (positional) | ✅ Yes | Standard path; escaping risk for large/complex prompts |
 

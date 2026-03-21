@@ -12,18 +12,5 @@ Run the `xgh:schedule` skill to manage the session scheduler and skill execution
 ## Usage
 
 ```
-/xgh-schedule                        # show active jobs
-/xgh-schedule pause retrieve         # pause retrieve job
-/xgh-schedule pause analyze          # pause analyze job
-/xgh-schedule resume retrieve        # resume retrieve job
-/xgh-schedule resume analyze         # resume analyze job
-/xgh-schedule run retrieve           # fire retrieve immediately
-/xgh-schedule run analyze            # fire analyze immediately
-/xgh-schedule off                    # cancel all xgh jobs this session
-/xgh-schedule prefs                  # show skill mode preferences
-/xgh-schedule prefs reset <skill>    # clear saved preference for a skill
+/xgh-schedule [status | pause <job> | resume <job> | run <job> | off | prefs | add "<skill>" "<cron>"]
 ```
-
-## Scheduler behavior
-
-The scheduler is always-on — jobs are auto-created at each session start. To pause, create `~/.xgh/scheduler-paused`. To resume, run `/xgh-schedule resume` (which removes the pause file).

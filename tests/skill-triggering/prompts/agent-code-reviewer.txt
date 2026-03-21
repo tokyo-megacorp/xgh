@@ -1,1 +1,1 @@
-The implementation for the new provider is done. Can you review the code against our conventions?
+Dispatch the xgh:code-reviewer agent to review the agents/ directory implementation against our team conventions.

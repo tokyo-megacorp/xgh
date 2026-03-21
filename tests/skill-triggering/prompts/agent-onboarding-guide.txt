@@ -1,1 +1,1 @@
-I just joined the team. How does this project work? Give me an orientation of the codebase and xgh system.
+Dispatch the xgh:onboarding-guide agent to orient me in the codebase. I just joined the team and need an overview.

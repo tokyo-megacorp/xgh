@@ -1,1 +1,1 @@
-How are my providers doing? I've been seeing some duplicate items in my briefings lately. Check retrieval quality.
+Dispatch the xgh:retrieval-auditor agent to audit provider health. We've been seeing duplicate items in briefings lately.

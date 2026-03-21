@@ -1,1 +1,1 @@
-There's a bug in the briefing skill — it keeps giving empty results even though I have inbox items. Can you investigate?
+Dispatch the xgh:investigation-lead agent to debug why the briefing skill returns empty results even when inbox has items.

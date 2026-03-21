@@ -1,1 +1,1 @@
-Review PR #42 before we merge it. Check against our conventions and cross-reference with the Jira ticket.
+Dispatch the xgh:pr-reviewer agent to review PR #42 before we merge it. Cross-reference with Jira and our conventions.

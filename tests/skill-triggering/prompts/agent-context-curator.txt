@@ -1,1 +1,1 @@
-Audit the context tree for stale entries. Some of the architecture docs seem outdated after our recent refactoring.
+Dispatch the xgh:context-curator agent to audit the context tree for stale entries after our recent refactoring.

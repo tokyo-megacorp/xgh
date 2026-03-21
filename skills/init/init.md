@@ -97,6 +97,32 @@ Also note: To capture local bash command events (for `source: local` triggers),
 the PostToolUse hook in `hooks/post-tool-use.sh` must be registered. Run `/xgh-setup`
 or add it to your Claude Code settings manually.
 
+### 0c2. Install default trigger catalog
+
+Copy the default triggers from `config/triggers.yaml` into `~/.xgh/triggers/` as individual runtime files. Skip files that already exist (never overwrite user edits).
+
+```bash
+TRIGGERS_CATALOG=$(find ~/.claude/plugins/cache -path "*/xgh/*/config/triggers.yaml" -print -quit 2>/dev/null)
+if [ -n "$TRIGGERS_CATALOG" ]; then
+  python3 - "$TRIGGERS_CATALOG" ~/.xgh/triggers << 'PY'
+import sys, yaml, os, re
+catalog_path, triggers_dir = sys.argv[1], sys.argv[2]
+os.makedirs(triggers_dir, exist_ok=True)
+catalog = yaml.safe_load(open(catalog_path))
+for entry in catalog.get('triggers', []):
+    slug = re.sub(r'[^a-z0-9]+', '-', entry['name'].lower()).strip('-')
+    dest = os.path.join(triggers_dir, f"{slug}.yaml")
+    if not os.path.exists(dest):
+        yaml.dump(entry, open(dest, 'w'), default_flow_style=False, sort_keys=False)
+        print(f"  Installed: ~/.xgh/triggers/{slug}.yaml")
+    else:
+        print(f"  Skipped (exists): ~/.xgh/triggers/{slug}.yaml")
+PY
+fi
+```
+
+> These are starter triggers only — safe to edit or delete. `/xgh-init` will never overwrite existing trigger files.
+
 ### 0d. Install static instructions (@reference)
 
 ```bash

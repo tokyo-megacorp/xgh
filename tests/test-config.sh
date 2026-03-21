@@ -97,9 +97,11 @@ cp agents/*.md "$TMP_REPO/agents/"
 python3 - "$TMP_REPO/config/agents.yaml" <<'PY'
 from pathlib import Path
 import sys
-
-import yaml
-
+try:
+    import yaml
+except ImportError:
+    print("SKIP: pyyaml not installed — skipping generator fixture test")
+    sys.exit(0)
 path = Path(sys.argv[1])
 data = yaml.safe_load(path.read_text())
 data["local_agents"] = {}

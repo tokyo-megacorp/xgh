@@ -112,11 +112,14 @@ assert_contains "$SESSION_START" 'triggers'                  "session-start crea
 # ── prompt-based skill triggering tests ──────────────────────────────────────
 assert_dir_exists  "$PLUGIN_DIR/tests/skill-triggering"                    "skill-triggering dir exists"
 assert_file_exists "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"        "run-test.sh exists"
+assert_file_exists "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  "run-agent-test.sh exists"
 assert_file_exists "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"         "run-all.sh exists"
 assert_file_exists "$PLUGIN_DIR/tests/skill-triggering/run-multiturn-test.sh" "run-multiturn-test.sh exists"
 
 PROMPTS_DIR="$PLUGIN_DIR/tests/skill-triggering/prompts"
 assert_dir_exists  "$PROMPTS_DIR"                  "prompts/ dir exists"
+
+# Skill prompt files (10)
 assert_file_exists "$PROMPTS_DIR/retrieve.txt"     "retrieve prompt exists"
 assert_file_exists "$PROMPTS_DIR/analyze.txt"      "analyze prompt exists"
 assert_file_exists "$PROMPTS_DIR/briefing.txt"     "briefing prompt exists"
@@ -125,12 +128,34 @@ assert_file_exists "$PROMPTS_DIR/investigate.txt"  "investigate prompt exists"
 assert_file_exists "$PROMPTS_DIR/track.txt"        "track prompt exists"
 assert_file_exists "$PROMPTS_DIR/doctor.txt"       "doctor prompt exists"
 assert_file_exists "$PROMPTS_DIR/index.txt"        "index prompt exists"
+assert_file_exists "$PROMPTS_DIR/trigger.txt"      "trigger prompt exists"
+assert_file_exists "$PROMPTS_DIR/schedule.txt"     "schedule prompt exists"
 
-# Runner scripts must have key content
+# Agent prompt files (8)
+assert_file_exists "$PROMPTS_DIR/agent-code-reviewer.txt"              "agent-code-reviewer prompt exists"
+assert_file_exists "$PROMPTS_DIR/agent-collaboration-dispatcher.txt"   "agent-collaboration-dispatcher prompt exists"
+assert_file_exists "$PROMPTS_DIR/agent-pipeline-doctor.txt"            "agent-pipeline-doctor prompt exists"
+assert_file_exists "$PROMPTS_DIR/agent-context-curator.txt"            "agent-context-curator prompt exists"
+assert_file_exists "$PROMPTS_DIR/agent-investigation-lead.txt"         "agent-investigation-lead prompt exists"
+assert_file_exists "$PROMPTS_DIR/agent-pr-reviewer.txt"                "agent-pr-reviewer prompt exists"
+assert_file_exists "$PROMPTS_DIR/agent-retrieval-auditor.txt"          "agent-retrieval-auditor prompt exists"
+assert_file_exists "$PROMPTS_DIR/agent-onboarding-guide.txt"           "agent-onboarding-guide prompt exists"
+
+# Skill runner scripts must have key content
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     "dangerously-skip-permissions"  "run-test.sh uses dangerously-skip-permissions"
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     "output-format stream-json"      "run-test.sh uses stream-json"
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     '"name":"Skill"'                 'run-test.sh greps for Skill tool'
+
+# Agent runner script must have key content
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  "dangerously-skip-permissions"  "run-agent-test.sh uses dangerously-skip-permissions"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  "output-format stream-json"      "run-agent-test.sh uses stream-json"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  '"name":"Agent"'                 'run-agent-test.sh greps for Agent tool'
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  'subagent_type'                  'run-agent-test.sh checks subagent_type'
+
+# run-all.sh orchestrates both skill and agent tests
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "run-test.sh"                    "run-all.sh calls run-test.sh"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "run-agent-test.sh"              "run-all.sh calls run-agent-test.sh"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "AGENT_TESTS"                    "run-all.sh has agent test array"
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-multiturn-test.sh" "xgh:briefing"            "multiturn test targets xgh:briefing"
 
 # ── Result ───────────────────────────────────────────────────────────────────

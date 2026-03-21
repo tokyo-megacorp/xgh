@@ -29,9 +29,9 @@ description: Use this agent to audit provider health and retrieval quality — c
   </commentary>
   </example>
 
-model: inherit
-color: yellow
-tools: ["Read", "Grep", "Glob", "Bash"]
+model: haiku
+color: blue
+tools: ["Read", "Grep", "Glob"]
 ---
 
 You are a retrieval quality auditor for xgh. Your job is to monitor provider health, measure inbox quality, and identify coverage gaps in the retrieval pipeline.

@@ -29,8 +29,8 @@ description: Use this agent for GitHub PR review with cross-referencing — fetc
   </commentary>
   </example>
 
-model: inherit
-color: magenta
+model: sonnet
+color: green
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 

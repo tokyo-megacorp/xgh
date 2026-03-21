@@ -29,8 +29,8 @@ description: Use this agent for deep investigation of xgh pipeline health — go
   </commentary>
   </example>
 
-model: inherit
-color: green
+model: sonnet
+color: orange
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 

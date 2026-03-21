@@ -59,5 +59,12 @@ assert_contains "config/triggers.yaml" "pr-opened"
 assert_contains "config/triggers.yaml" "digest-ready"
 assert_contains "config/triggers.yaml" "security-alert"
 
+assert_contains "agents/code-reviewer.md" "model: sonnet"
+assert_contains "agents/code-reviewer.md" "color: yellow"
+assert_contains "agents/code-reviewer.md" "tools:"
+assert_contains "agents/pr-reviewer.md" "model: sonnet"
+assert_contains "config/agents.yaml" "local_agents:"
+assert_contains "config/agents.yaml" "type: agent"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

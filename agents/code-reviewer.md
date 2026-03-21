@@ -20,9 +20,9 @@ description: Use this agent to review code quality within a collaboration workfl
   </commentary>
   </example>
 
-model: inherit
-color: blue
-tools: ["Read", "Grep", "Glob"]
+model: sonnet
+color: yellow
+tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 
 A subagent that performs structured code review using lossless-claude memory. It evaluates implementation quality, flags convention violations, and stores review findings so future sessions can learn from recurring patterns.

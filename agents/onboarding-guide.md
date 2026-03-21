@@ -29,7 +29,7 @@ description: Use this agent to help new developers or agents get oriented in the
   </commentary>
   </example>
 
-model: inherit
+model: sonnet
 color: purple
 tools: ["Read", "Grep", "Glob"]
 ---

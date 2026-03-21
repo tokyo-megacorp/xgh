@@ -29,9 +29,9 @@ description: Use this agent for systematic debugging of code-level bugs, test fa
   </commentary>
   </example>
 
-model: inherit
+model: opus
 color: red
-tools: ["Read", "Grep", "Glob", "Bash"]
+tools: ["Read", "Grep", "Glob", "Bash", "Agent"]
 ---
 
 You are a debugging investigation agent for xgh. Your job is to systematically find the root cause of code-level bugs, test failures, and unexpected behavior in skills, hooks, and agents.

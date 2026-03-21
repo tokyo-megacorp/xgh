@@ -29,9 +29,9 @@ description: Use this agent to review and maintain the context tree — checks f
   </commentary>
   </example>
 
-model: inherit
-color: cyan
-tools: ["Read", "Grep", "Glob"]
+model: haiku
+color: blue
+tools: ["Read", "Grep", "Glob", "Write", "Edit"]
 ---
 
 You are a context tree curation agent for xgh. Your job is to review the team's knowledge base for freshness, completeness, and consistency.

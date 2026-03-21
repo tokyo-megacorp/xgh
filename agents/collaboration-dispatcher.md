@@ -20,8 +20,8 @@ description: Use this agent to orchestrate multi-agent workflows — manages col
   </commentary>
   </example>
 
-model: inherit
-color: white
+model: sonnet
+color: green
 tools: ["Read", "Grep", "Glob"]
 ---
 

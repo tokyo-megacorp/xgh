@@ -103,6 +103,63 @@ agents:
       method: mcp
       notes: "Configure via environment variables or .xgh/config.yaml"
 
+local_agents:
+  code-reviewer:
+    type: agent
+    model: sonnet
+    color: yellow
+    tools: ["Read", "Grep", "Glob", "Bash"]
+    capabilities: [code-review, architecture, conventions]
+
+  collaboration-dispatcher:
+    type: agent
+    model: sonnet
+    color: green
+    tools: ["Read", "Grep", "Glob"]
+    capabilities: [dispatch, routing, coordination]
+
+  context-curator:
+    type: agent
+    model: haiku
+    color: blue
+    tools: ["Read", "Grep", "Glob", "Write", "Edit"]
+    capabilities: [context-tree, curation, indexing]
+
+  investigation-lead:
+    type: agent
+    model: opus
+    color: red
+    tools: ["Read", "Grep", "Glob", "Bash", "Agent"]
+    capabilities: [debugging, investigation, root-cause]
+
+  onboarding-guide:
+    type: agent
+    model: sonnet
+    color: purple
+    tools: ["Read", "Grep", "Glob"]
+    capabilities: [onboarding, documentation, guidance]
+
+  pipeline-doctor:
+    type: agent
+    model: sonnet
+    color: orange
+    tools: ["Read", "Grep", "Glob", "Bash"]
+    capabilities: [health-check, diagnostics, pipeline]
+
+  pr-reviewer:
+    type: agent
+    model: sonnet
+    color: green
+    tools: ["Read", "Grep", "Glob", "Bash"]
+    capabilities: [pr-review, code-review, github]
+
+  retrieval-auditor:
+    type: agent
+    model: haiku
+    color: blue
+    tools: ["Read", "Grep", "Glob"]
+    capabilities: [retrieval, audit, memory]
+
 # Message protocol metadata fields (used by all agents):
 #   type: plan | review | feedback | result | decision | question
 #   status: pending | in_progress | completed

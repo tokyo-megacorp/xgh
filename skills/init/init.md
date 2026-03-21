@@ -305,6 +305,8 @@ Profile saved:
 
 ## Step 3 — Add First Project
 
+**Auto-detect current repo:** Run `git remote get-url origin 2>/dev/null` and parse `org/repo` from the URL. If found and not already in `~/.xgh/ingest.yaml`, pre-populate it as the first project to track — no need to ask.
+
 Check if `projects:` in `~/.xgh/ingest.yaml` already has entries. If so:
 
 ```
@@ -314,7 +316,8 @@ You already have projects configured:
 Add another project? [y/N]
 ```
 
-If no existing projects (or user wants to add one), invoke the `/xgh-track` workflow. Follow that skill's full interactive flow:
+If no existing projects, or auto-detected repo is not yet tracked, invoke the `/xgh-track` workflow. Follow that skill's full interactive flow:
+- Pre-fill GitHub repo from auto-detected remote if available
 - Collect project name, Slack channels, Jira, Confluence, GitHub, Figma sources
 - Ask for `my_role` and `my_intent`
 - Ask for default provider access level

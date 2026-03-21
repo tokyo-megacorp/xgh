@@ -17,6 +17,24 @@ agents:
     invocation:
       method: native
       notes: "Claude Code is the host agent — no external invocation needed"
+    profile:
+      role: orchestrator
+      strengths:
+        - Multi-turn reasoning and ambiguous task clarification
+        - Holding full project context across a session
+        - Quick edits faster than secondary agent startup (~30s)
+        - Integrating subagent results back into the session
+        - Architectural decisions, spec writing, planning
+      delegate_when:
+        - Isolated implementation with a complete written spec
+        - Parallel execution while Claude handles other work
+        - Large diffs that would flood the context window
+        - Code review of a known diff (--base main, --uncommitted)
+        - Numbered task list execution from a plan
+      watch_outs:
+        - Protect context window — delegate large tasks early
+        - Don't over-engineer beyond the spec
+        - Dispatch rule — if you'd need to interrupt mid-run to ask a question, clarify first
 
   codex:
     type: secondary
@@ -159,6 +177,13 @@ local_agents:
     color: blue
     tools: ["Read", "Grep", "Glob"]
     capabilities: [retrieval, audit, memory]
+
+  codex-driver:
+    type: agent
+    model: sonnet
+    color: cyan
+    tools: ["Bash", "Read", "Glob", "Write"]
+    capabilities: [codex-dispatch, flag-detection, retry-logic, result-parsing]
 
 # Message protocol metadata fields (used by all agents):
 #   type: plan | review | feedback | result | decision | question

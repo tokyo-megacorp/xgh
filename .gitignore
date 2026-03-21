@@ -11,3 +11,4 @@ data/cipher-sessions.db*
 .xgh/local/
 .worktrees/
 .lossless-claude/
+.serena/

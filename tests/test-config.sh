@@ -52,5 +52,12 @@ assert_contains "config/workflow.yaml" "test_commands:"
 assert_contains "config/workflow.yaml" "superpowers_table:"
 assert_contains "config/workflow.yaml" "feat/, fix/, docs/"
 
+assert_file_exists "config/triggers.yaml"
+assert_contains "config/triggers.yaml" "triggers:"
+assert_contains "config/triggers.yaml" "installed_by: xgh"
+assert_contains "config/triggers.yaml" "pr-opened"
+assert_contains "config/triggers.yaml" "digest-ready"
+assert_contains "config/triggers.yaml" "security-alert"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

@@ -124,6 +124,35 @@ bash tests/test-commands.sh  # Command file existence and content
 
 ---
 
+## Working with Codex
+
+Instructions for Codex CLI when working on this repository.
+
+**Self-check before marking complete:**
+
+- Run the test command(s) in your task. All must pass before marking complete.
+- Run `git diff --name-only` — verify you only modified files within the stated scope.
+- If no test command was given, default to: bash tests/test-config.sh
+
+**Scope discipline:**
+
+- Modify **only** the files explicitly mentioned in your task.
+- If you find a related issue elsewhere, note it in your output — do not fix it silently.
+- Never modify AGENTS.md directly — it is auto-generated (run: bash scripts/gen-agents-md.sh).
+
+**Commit convention:**
+
+- Format: `<type>: <description>` — e.g., `fix:`, `feat:`, `docs:`
+- One commit per logical change. Do not bundle unrelated fixes.
+
+**What to report:**
+
+- List every file modified with a one-line summary of what changed.
+- Report exit code and last 5 lines of any test run.
+- Flag any ambiguity encountered — never silently guess.
+
+---
+
 ## Superpowers Methodology
 
 | Situation | Action |

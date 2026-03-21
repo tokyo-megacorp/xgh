@@ -193,6 +193,30 @@ out.append("")
 out.append("---")
 out.append("")
 
+# Working with Codex
+codex_inst = wf.get('codex_agent_instructions', {})
+if codex_inst:
+    out.append("## Working with Codex")
+    out.append("")
+    out.append("Instructions for Codex CLI when working on this repository.")
+    out.append("")
+    section_labels = {
+        'self_check': 'Self-check before marking complete',
+        'scope_discipline': 'Scope discipline',
+        'commit_convention': 'Commit convention',
+        'reporting': 'What to report',
+    }
+    for key, label in section_labels.items():
+        items = codex_inst.get(key, [])
+        if items:
+            out.append(f"**{label}:**")
+            out.append("")
+            for item in items:
+                out.append(f"- {item}")
+            out.append("")
+    out.append("---")
+    out.append("")
+
 # Superpowers Methodology
 out.append("## Superpowers Methodology")
 out.append("")

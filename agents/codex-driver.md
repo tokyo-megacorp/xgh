@@ -140,10 +140,28 @@ If effort is specified, translate:
 
 ## Step 6: Build and Run Command
 
+### Construct the enriched prompt (exec only)
+
+Wrap the task description with a standard footer so Codex always has verification and scope instructions — even if AGENTS.md doesn't cover the specific task:
+
+```
+<original task description>
+
+---
+**After completing:**
+1. Run: <test-command from Step 0, or "bash tests/test-config.sh" if none stated>
+2. Run `git diff --name-only` — confirm only these files were modified: <scope from Step 0>
+3. Commit as: `<commit-message from Step 0, or derive from task type>`
+
+**Do not** modify any files outside the stated scope. If you find a related issue elsewhere, note it in your output — do not fix it.
+```
+
+Use `<enriched-prompt>` in the command below. For review dispatch, use the original prompt only (no footer).
+
 ### Exec:
 ```bash
 OUTPUT_FILE="/tmp/codex-exec-${TIMESTAMP}.md"
-codex exec "<prompt>" \
+codex exec "<enriched-prompt>" \
   --full-auto \
   -C "$WORK_DIR" \
   [--add-dir "$WORK_DIR" if same-dir mode] \

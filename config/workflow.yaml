@@ -61,6 +61,23 @@ phases:
       - "Open PR targeting develop → Copilot review → merge"
       - "Merge develop → main for release"
 
+codex_agent_instructions:
+  self_check:
+    - "Run the test command(s) in your task. All must pass before marking complete."
+    - "Run `git diff --name-only` — verify you only modified files within the stated scope."
+    - "If no test command was given, default to: bash tests/test-config.sh"
+  scope_discipline:
+    - "Modify **only** the files explicitly mentioned in your task."
+    - "If you find a related issue elsewhere, note it in your output — do not fix it silently."
+    - "Never modify AGENTS.md directly — it is auto-generated (run: bash scripts/gen-agents-md.sh)."
+  commit_convention:
+    - "Format: `<type>: <description>` — e.g., `fix:`, `feat:`, `docs:`"
+    - "One commit per logical change. Do not bundle unrelated fixes."
+  reporting:
+    - "List every file modified with a one-line summary of what changed."
+    - "Report exit code and last 5 lines of any test run."
+    - "Flag any ambiguity encountered — never silently guess."
+
 superpowers_table:
   - situation: "Starting a task"
     action: "Search context tree + lossless-claude memories"

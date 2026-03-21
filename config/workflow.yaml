@@ -35,14 +35,17 @@ phases:
       - "Propose 2-3 approaches, recommend one"
       - "Write design spec to .xgh/specs/"
       - "Write implementation plan to .xgh/plans/"
-      - "Push plan + spec to remote before any implementation begins"
+      - "Push plan + spec → open PR targeting develop (plan-only PR, no code)"
+      - "Iterate on plan with Copilot PR review until approved"
+      - "Merge plan PR → implementation begins from the merged plan"
 
   - name: "Implementation"
     model: sonnet
     effort: normal
     steps:
+      - "Branch from develop (feat/* or fix/*)"
       - "Use superpowers:subagent-driven-development"
-      - "Fresh subagent per task"
+      - "Fresh subagent per task, driven by the merged plan"
       - "Two-stage review: spec compliance then code quality"
       - "Add AI unit test (tests/skill-triggering/prompts/) for any skill invoked but not yet tested"
 
@@ -53,6 +56,7 @@ phases:
       - "Review all implementation against spec"
       - "Run full test suite"
       - "Run /xgh-analyze to capture session learnings into memory"
+      - "Open PR targeting develop → Copilot review → merge"
       - "Merge develop → main for release"
 
 superpowers_table:

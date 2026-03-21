@@ -224,6 +224,33 @@ Validate the trigger engine configuration and runtime state.
    ⚠️ PostToolUse hook not registered — source:local triggers inactive
    ```
 
+## Check 8 — Agent version parity
+
+For each secondary agent in `config/agents.yaml` with a `tested_version` field (non-null):
+
+1. Check if the agent is installed: `command -v <agent> >/dev/null 2>&1`
+2. If installed, get its version: `<agent> --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1`
+3. Compare against `tested_version` in the registry
+
+Report:
+```
+Agent versions
+  ✓ codex: v0.116.0 (tested: 0.116.0 — exact match)
+  ⚠ codex: v0.120.0 (tested: 0.116.0 — newer, behaviors may differ)
+  ✗ codex: v0.100.0 (tested: 0.116.0 — older, some flags may be missing)
+  ⚠ gemini: tested_version not set — run /xgh-doctor after first use to record it
+  - opencode: not installed
+```
+
+Rules:
+- Exact match → ✓
+- Installed version > tested → ⚠ (minor: newer may have renamed flags or changed behavior)
+- Installed version < tested → ✗ (major: flags we rely on may not exist yet)
+- `tested_version: null` and agent installed → ⚠ (no baseline recorded)
+- Agent not installed → skip (only flag if installed)
+
+**Fix for mismatch:** Re-test the affected skill (`/xgh-codex`, `/xgh-gemini`) and update `tested_version` in `config/agents.yaml` if behaviors are confirmed working.
+
 ## Output format
 
 ```
@@ -276,6 +303,11 @@ Scheduler
 Codebase Index
   ✓ acme-ios: indexed 2 days ago (schedule: weekly — OK)
   ✗ passcode-service: never indexed — run /xgh-index
+
+Agent Versions
+  ✓ codex: v0.116.0 (tested: 0.116.0)
+  ⚠ gemini: tested_version not set — update config/agents.yaml after validating
+  - opencode: not installed
 
 Summary: 9 passed, 0 warnings, 2 failures
 Fix: Check #channel-missing name. Run: claude -p "/xgh-analyze" to clear overdue analyzer.

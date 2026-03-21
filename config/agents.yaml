@@ -49,6 +49,7 @@ agents:
       exec: "codex exec \"<prompt>\" --full-auto -C <dir> -o <output> [passthrough flags]"
       review: "codex review [target] -s read-only -C <dir> [passthrough flags]"
       notes: "Only spawning flags (--full-auto, -C, -o) are injected. All other flags forwarded from user. Requires: npm i -g @openai/codex"
+      tested_version: "0.116.0"  # version all xgh-codex behaviors were validated against
       skill_dir: ".agents/skills/xgh/"
       rules_file: "AGENTS.md"
       auto_detect: codex
@@ -70,6 +71,7 @@ agents:
       exec: "gemini -p \"<prompt>\" --yolo [passthrough flags]"
       review: "gemini -p \"<prompt>\" --approval-mode plan [passthrough flags]"
       notes: "Only spawning flags (-p, --yolo/--approval-mode) are injected. Working dir via cd, output via redirection. Requires: Gemini CLI"
+      tested_version: null  # not yet recorded — run /xgh-doctor to prompt
       skill_dir: ".gemini/skills/xgh/"
       rules_file: "GEMINI.md"
       auto_detect: gemini
@@ -91,6 +93,7 @@ agents:
       exec: "cd <dir> && opencode run \"<prompt>\" [passthrough flags] > <output>"
       review: "cd <dir> && opencode run \"Code review: <prompt>. Do NOT modify any files.\" [passthrough flags]"
       notes: "Non-interactive mode auto-approves all permissions (no --full-auto equivalent needed). OpenCode natively reads .claude/skills. Working dir via cd, output via redirect. Model: --model <provider>/<name>. Requires: npm i -g opencode-ai"
+      tested_version: null  # not yet recorded — run /xgh-doctor to prompt
       skill_dir: ".opencode/skills/xgh/"
       rules_file: "AGENTS.md"
       auto_detect: opencode

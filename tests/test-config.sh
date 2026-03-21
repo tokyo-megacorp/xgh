@@ -38,5 +38,12 @@ assert_contains "config/project.yaml" "lossless-claude"
 assert_contains "config/project.yaml" "BM25"
 assert_contains "config/project.yaml" "vllm-mlx"
 
+assert_file_exists "config/team.yaml"
+assert_contains "config/team.yaml" "conventions:"
+assert_contains "config/team.yaml" "iron_laws:"
+assert_contains "config/team.yaml" "pitfalls:"
+assert_contains "config/team.yaml" "Never skip the test"
+assert_contains "config/team.yaml" "lower_snake_case"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

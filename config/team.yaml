@@ -1,0 +1,42 @@
+# config/team.yaml
+# Team conventions and pitfalls — source of truth for AGENTS.md guidelines section.
+
+conventions:
+  general:
+    - "**Test-first**: Write a failing test before implementing any feature. Tests live in `tests/` and use the `assert_*` bash helper pattern."
+    - "**Shell conventions**: All bash scripts must start with `#!/usr/bin/env bash` and `set -euo pipefail`."
+    - "**Plan discipline**: Each change should map to a plan step. Check off `- [x]` items in the relevant plan doc as you complete them."
+    - "**Minimal diffs**: Make the smallest correct change. Do not refactor unrelated code."
+    - "**No secrets**: Never commit API keys, tokens, or credentials. Secrets belong in environment variables only."
+
+  naming:
+    - "Bash functions: `lower_snake_case`"
+    - "Constants / env vars: `UPPER_SNAKE_CASE`"
+    - "YAML keys: `camelCase` (following MCS tech pack schema)"
+    - "Markdown skills: one directory per skill, markdown file matches directory name"
+    - "Slash commands: markdown files in `commands/`, filename is the command name"
+
+  skills:
+    - "Commands are thin wrappers — all logic lives in `skills/`"
+    - "No context-mode references in xgh skill files (context-mode handles its own enforcement)"
+    - "Skill frontmatter must include `name`, `description`, and `trigger`"
+
+iron_laws:
+  - title: "Never skip the test"
+    body: "every implementation task starts with a failing test"
+  - title: "Never leave a placeholder"
+    body: "replace stubs before marking a task complete"
+  - title: "Never break existing tests"
+    body: "run the full test suite before marking a plan step done"
+  - title: "Never commit secrets"
+    body: "use env vars; add patterns to `.gitignore`"
+
+pitfalls:
+  - title: "plugin.json has no skills/commands arrays"
+    body: "Skills and commands are auto-discovered from filesystem — never add them to plugin.json"
+  - title: "context-mode in skill files"
+    body: "xgh skills must not reference ctx_execute or ctx_batch_execute — context-mode handles its own enforcement via CLAUDE.md injection"
+  - title: "assert_yaml_key helper does not exist"
+    body: "Use assert_contains for all YAML assertions in test-config.sh"
+  - title: "gen-agents-md requires pyyaml"
+    body: "Run `pip3 install pyyaml` before running scripts/gen-agents-md.sh; the script checks for it and exits with a clear error if missing"

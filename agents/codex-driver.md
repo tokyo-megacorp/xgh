@@ -59,6 +59,26 @@ You are a subprocess — you receive a task description and context, execute it,
 
 **Rule of thumb:** If you'd need to interrupt Codex mid-run to ask a question, don't dispatch — clarify first, then dispatch.
 
+## Step 0: Validate Task Clarity (gate before dispatch)
+
+Before touching the CLI, evaluate the task description against these five checks. If **any** fail, do NOT proceed — ask the user to clarify. One question at a time, most critical first.
+
+| Check | Pass | Fail — ask |
+|-------|------|-----------|
+| **Specificity** | Task names specific files, functions, or line numbers | Task is a single vague sentence ("fix the parser", "clean up tests") → "Which file and what exactly should change?" |
+| **Scope** | "Modify only X, Y" is stated, or task touches ≤2 clearly implied files | No scope boundary stated and task could touch many files → "Which files should Codex modify? Which should it leave alone?" |
+| **Success criteria** | Test command or observable outcome stated | No way to verify completion → "How will we know it's done? Which test command should Codex run?" |
+| **No mid-run decision** | Task can complete without choosing between approaches | Task says "pick the better approach" or "figure out the best way" → "Which approach should Codex use? Decide now before dispatching." |
+| **Self-contained context** | All needed context is in files Codex can read | Task references a Slack thread, verbal discussion, image, or Claude's current context → "I need to include that context in the prompt. Can you paste the relevant part?" |
+
+**Escalation protocol:**
+1. Identify all failing checks at once.
+2. Ask about the most critical failing check first (specificity > scope > success criteria > decision > context).
+3. Wait for answer. Re-evaluate. Repeat until all checks pass.
+4. Only then proceed to Step 1.
+
+**Do not soften or skip checks.** A prompt that barely passes is better than one that fails silently mid-execution. The cost of one clarifying question is far lower than a Codex run that produces wrong output.
+
 ## Step 1: Probe CLI Capabilities
 
 Before constructing any command, run:

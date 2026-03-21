@@ -141,16 +141,27 @@ assert_file_exists "$PROMPTS_DIR/agent-pr-reviewer.txt"                "agent-pr
 assert_file_exists "$PROMPTS_DIR/agent-retrieval-auditor.txt"          "agent-retrieval-auditor prompt exists"
 assert_file_exists "$PROMPTS_DIR/agent-onboarding-guide.txt"           "agent-onboarding-guide prompt exists"
 
-# Skill runner scripts must have key content
+# Skill runner — key flags and patterns
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     "dangerously-skip-permissions"  "run-test.sh uses dangerously-skip-permissions"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     "no-session-persistence"         "run-test.sh uses no-session-persistence"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     "\-\-bare"                       "run-test.sh uses bare mode"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     "max-budget-usd"                 "run-test.sh caps budget"
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     "output-format stream-json"      "run-test.sh uses stream-json"
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     '"name":"Skill"'                 'run-test.sh greps for Skill tool'
 
-# Agent runner script must have key content
+# Agent runner — key flags and patterns
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  "dangerously-skip-permissions"  "run-agent-test.sh uses dangerously-skip-permissions"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  "no-session-persistence"         "run-agent-test.sh uses no-session-persistence"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  "\-\-bare"                       "run-agent-test.sh uses bare mode"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  "max-budget-usd"                 "run-agent-test.sh caps budget"
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  "output-format stream-json"      "run-agent-test.sh uses stream-json"
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  '"name":"Agent"'                 'run-agent-test.sh greps for Agent tool'
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-agent-test.sh"  'subagent_type'                  'run-agent-test.sh checks subagent_type'
+
+# Multiturn runner — uses --session-id + --resume instead of --continue
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-multiturn-test.sh"  "session-id"                "multiturn uses session-id"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-multiturn-test.sh"  "\-\-resume"                "multiturn uses resume (not continue)"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-multiturn-test.sh"  "max-budget-usd"            "multiturn caps budget"
 
 # run-all.sh orchestrates both skill and agent tests
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "run-test.sh"                    "run-all.sh calls run-test.sh"

@@ -6,7 +6,17 @@
 # Do NOT call from tests/test-config.sh.
 # Run manually when editing skill/agent trigger descriptions.
 #
-# Cost estimate: ~18 prompts × 1 turn ≈ ~$0.90 per full suite run.
+# Environment variables:
+#   XGH_TEST_MODEL    — model to use (default: sonnet)
+#   XGH_TEST_BUDGET   — max USD per test invocation (default: 0.50)
+#
+# Cost estimate: ~18 prompts × 1 turn ≈ ~$0.90 per full suite run (sonnet).
+#
+# Examples:
+#   ./run-all.sh                                    # run all 18 tests
+#   ./run-all.sh --skills-only                      # run 10 skill tests
+#   ./run-all.sh --agents-only                      # run 8 agent tests
+#   XGH_TEST_MODEL=haiku ./run-all.sh               # cheaper run with haiku
 
 set -euo pipefail
 

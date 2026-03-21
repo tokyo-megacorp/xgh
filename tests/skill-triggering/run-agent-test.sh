@@ -5,9 +5,13 @@
 # Tests whether Claude dispatches an agent based on a natural-language prompt.
 # Checks for the Agent tool invocation with matching subagent_type in stream-json output.
 #
+# Environment variables:
+#   XGH_TEST_MODEL    — model to use (default: sonnet)
+#   XGH_TEST_BUDGET   — max USD per invocation (default: 0.50)
+#
 # Examples:
 #   ./run-agent-test.sh xgh:pipeline-doctor prompts/agent-pipeline-doctor.txt
-#   ./run-agent-test.sh xgh:pr-reviewer     prompts/agent-pr-reviewer.txt
+#   XGH_TEST_MODEL=haiku ./run-agent-test.sh xgh:pr-reviewer prompts/agent-pr-reviewer.txt
 
 set -euo pipefail
 
@@ -24,6 +28,10 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# Configurable via environment
+MODEL="${XGH_TEST_MODEL:-sonnet}"
+BUDGET="${XGH_TEST_BUDGET:-0.50}"
+
 TIMESTAMP=$(date +%s)
 OUTPUT_DIR="/tmp/xgh-agent-tests/${TIMESTAMP}/${AGENT_NAME//:/--}"
 mkdir -p "$OUTPUT_DIR"
@@ -35,21 +43,32 @@ echo "=== xgh Agent Dispatch Test ==="
 echo "Agent:       $AGENT_NAME"
 echo "Prompt file: $PROMPT_FILE"
 echo "Plugin dir:  $PLUGIN_DIR"
+echo "Model:       $MODEL"
 echo ""
 
 cp "$PROMPT_FILE" "$OUTPUT_DIR/prompt.txt"
 
 LOG_FILE="$OUTPUT_DIR/claude-output.json"
 
-echo "Running claude -p ..."
-# --verbose is required for --output-format stream-json with -p
-# Note: `timeout` is not available on macOS by default; claude has its own session timeout
-claude -p "$PROMPT" \
-    --plugin-dir "$PLUGIN_DIR" \
-    --dangerously-skip-permissions \
-    --verbose \
-    --output-format stream-json \
-    > "$LOG_FILE" 2>&1 || true
+# Print the exact CLI command for reproducibility
+CMD=(
+    claude -p "$PROMPT"
+    --plugin-dir "$PLUGIN_DIR"
+    --dangerously-skip-permissions
+    --no-session-persistence
+    --bare
+    --verbose
+    --model "$MODEL"
+    --max-budget-usd "$BUDGET"
+    --output-format stream-json
+)
+echo "\$ ${CMD[*]}"
+echo ""
+
+# --bare: skip hooks/LSP/auto-memory/CLAUDE.md — only the plugin is loaded (pure isolation)
+# --no-session-persistence: don't save session to disk (tests shouldn't pollute history)
+# --verbose: required for --output-format stream-json with -p
+"${CMD[@]}" > "$LOG_FILE" 2>&1 || true
 
 echo ""
 echo "=== Results ==="

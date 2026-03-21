@@ -5,9 +5,13 @@
 # Tests whether Claude triggers a skill based on a prompt.
 # Supports both natural-language prompts and explicit /command prompts.
 #
+# Environment variables:
+#   XGH_TEST_MODEL    — model to use (default: sonnet)
+#   XGH_TEST_BUDGET   — max USD per invocation (default: 0.50)
+#
 # Examples:
 #   ./run-test.sh xgh:briefing prompts/briefing.txt
-#   ./run-test.sh xgh:track   prompts/track.txt
+#   XGH_TEST_MODEL=haiku ./run-test.sh xgh:track prompts/track.txt
 
 set -euo pipefail
 
@@ -24,6 +28,10 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# Configurable via environment
+MODEL="${XGH_TEST_MODEL:-sonnet}"
+BUDGET="${XGH_TEST_BUDGET:-0.50}"
+
 TIMESTAMP=$(date +%s)
 OUTPUT_DIR="/tmp/xgh-skill-tests/${TIMESTAMP}/${SKILL_NAME//:/--}"
 mkdir -p "$OUTPUT_DIR"
@@ -35,21 +43,32 @@ echo "=== xgh Skill Triggering Test ==="
 echo "Skill:       $SKILL_NAME"
 echo "Prompt file: $PROMPT_FILE"
 echo "Plugin dir:  $PLUGIN_DIR"
+echo "Model:       $MODEL"
 echo ""
 
 cp "$PROMPT_FILE" "$OUTPUT_DIR/prompt.txt"
 
 LOG_FILE="$OUTPUT_DIR/claude-output.json"
 
-echo "Running claude -p ..."
-# --verbose is required for --output-format stream-json with -p
-# Note: `timeout` is not available on macOS by default; claude has its own session timeout
-claude -p "$PROMPT" \
-    --plugin-dir "$PLUGIN_DIR" \
-    --dangerously-skip-permissions \
-    --verbose \
-    --output-format stream-json \
-    > "$LOG_FILE" 2>&1 || true
+# Print the exact CLI command for reproducibility
+CMD=(
+    claude -p "$PROMPT"
+    --plugin-dir "$PLUGIN_DIR"
+    --dangerously-skip-permissions
+    --no-session-persistence
+    --bare
+    --verbose
+    --model "$MODEL"
+    --max-budget-usd "$BUDGET"
+    --output-format stream-json
+)
+echo "\$ ${CMD[*]}"
+echo ""
+
+# --bare: skip hooks/LSP/auto-memory/CLAUDE.md — only the plugin is loaded (pure isolation)
+# --no-session-persistence: don't save session to disk (tests shouldn't pollute history)
+# --verbose: required for --output-format stream-json with -p
+"${CMD[@]}" > "$LOG_FILE" 2>&1 || true
 
 echo ""
 echo "=== Results ==="

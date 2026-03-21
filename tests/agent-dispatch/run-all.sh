@@ -1,60 +1,57 @@
 #!/usr/bin/env bash
-# Run all xgh skill triggering tests (pure NL prompts)
+# Run all xgh agent dispatch tests (explicit dispatch prompts)
 # Usage: ./run-all.sh
 #
 # NOTE: This is an opt-in test suite — it invokes claude -p and costs API tokens.
 # Do NOT call from tests/test-config.sh.
-# Run manually when editing skill trigger descriptions.
+# Run manually when editing agent definitions or dispatch prompts.
 #
-# For agent dispatch tests, see tests/agent-dispatch/run-all.sh.
+# For skill triggering tests, see tests/skill-triggering/run-all.sh.
 #
 # Environment variables:
 #   XGH_TEST_MODEL    — model to use (default: sonnet)
 #   XGH_TEST_BUDGET   — max USD per test invocation (default: 0.50)
 #   XGH_TEST_LOG_DIR  — persistent log directory (default: /tmp/xgh-test-logs)
 #
-# Cost estimate: ~12 prompts × 1 turn ≈ ~$0.60 per run (sonnet).
+# Cost estimate: ~8 prompts × 1 turn ≈ ~$0.40 per run (sonnet).
 #
 # Logs are saved to $XGH_TEST_LOG_DIR (default /tmp/xgh-test-logs):
 #   summary.log          — one-line-per-test results
-#   skill-xgh--NAME/     — per-skill logs (claude-output.json, prompt.txt, result.txt)
+#   agent-xgh--NAME/     — per-agent logs (claude-output.json, prompt.txt, result.txt)
 #
 # Examples:
-#   ./run-all.sh                         # run all 12 skill tests
+#   ./run-all.sh                         # run all 8 agent tests
 #   XGH_TEST_MODEL=haiku ./run-all.sh    # cheaper run with haiku
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROMPTS_DIR="$SCRIPT_DIR/prompts"
+RUNNER="$SCRIPT_DIR/../skill-triggering/run-agent-test.sh"
 
 export XGH_TEST_LOG_DIR="${XGH_TEST_LOG_DIR:-/tmp/xgh-test-logs}"
 mkdir -p "$XGH_TEST_LOG_DIR"
 SUMMARY_LOG="$XGH_TEST_LOG_DIR/summary.log"
 
-# ── Skill tests (pure NL prompts) ───────────────────────────────────────────
-SKILL_TESTS=(
-    "xgh:retrieve:retrieve.txt"
-    "xgh:analyze:analyze.txt"
-    "xgh:briefing:briefing.txt"
-    "xgh:implement:implement.txt"
-    "xgh:investigate:investigate.txt"
-    "xgh:track:track.txt"
-    "xgh:doctor:doctor.txt"
-    "xgh:index:index.txt"
-    "xgh:trigger:trigger.txt"
-    "xgh:schedule:schedule.txt"
-    "xgh:codex:codex.txt"
-    "xgh:gemini:gemini.txt"
+# ── Agent dispatch tests (explicit prompts) ─────────────────────────────────
+AGENT_TESTS=(
+    "xgh:code-reviewer:code-reviewer.txt"
+    "xgh:collaboration-dispatcher:collaboration-dispatcher.txt"
+    "xgh:pipeline-doctor:pipeline-doctor.txt"
+    "xgh:context-curator:context-curator.txt"
+    "xgh:investigation-lead:investigation-lead.txt"
+    "xgh:pr-reviewer:pr-reviewer.txt"
+    "xgh:retrieval-auditor:retrieval-auditor.txt"
+    "xgh:onboarding-guide:onboarding-guide.txt"
 )
 
-echo "=== xgh Skill Triggering Tests ==="
+echo "=== xgh Agent Dispatch Tests ==="
 echo "Plugin dir: $(cd "$SCRIPT_DIR/../.." && pwd)"
 echo "Model:  ${XGH_TEST_MODEL:-sonnet}"
 echo "Logs:   $XGH_TEST_LOG_DIR"
 echo ""
 
-echo "# xgh skill triggering test results — $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$SUMMARY_LOG"
+echo "# xgh agent dispatch test results — $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$SUMMARY_LOG"
 echo "# model=${XGH_TEST_MODEL:-sonnet}" >> "$SUMMARY_LOG"
 echo "" >> "$SUMMARY_LOG"
 
@@ -62,27 +59,27 @@ PASSED=0
 FAILED=0
 RESULTS=()
 
-for entry in "${SKILL_TESTS[@]}"; do
-    SKILL="${entry%:*}"
+for entry in "${AGENT_TESTS[@]}"; do
+    AGENT="${entry%:*}"
     PROMPT_FILE="${entry##*:}"
     FULL_PROMPT="$PROMPTS_DIR/$PROMPT_FILE"
 
     if [ ! -f "$FULL_PROMPT" ]; then
-        echo "⚠️  SKIP: No prompt file for $SKILL ($FULL_PROMPT)"
-        echo "SKIP [skill] $SKILL — missing prompt" >> "$SUMMARY_LOG"
+        echo "⚠️  SKIP: No prompt file for $AGENT ($FULL_PROMPT)"
+        echo "SKIP [agent] $AGENT — missing prompt" >> "$SUMMARY_LOG"
         continue
     fi
 
-    echo "--- Testing skill: $SKILL ---"
+    echo "--- Testing agent: $AGENT ---"
 
-    if "$SCRIPT_DIR/run-test.sh" "$SKILL" "$FULL_PROMPT"; then
+    if "$RUNNER" "$AGENT" "$FULL_PROMPT"; then
         PASSED=$((PASSED + 1))
-        RESULTS+=("✅ [skill] $SKILL")
-        echo "PASS [skill] $SKILL" >> "$SUMMARY_LOG"
+        RESULTS+=("✅ [agent] $AGENT")
+        echo "PASS [agent] $AGENT" >> "$SUMMARY_LOG"
     else
         FAILED=$((FAILED + 1))
-        RESULTS+=("❌ [skill] $SKILL")
-        echo "FAIL [skill] $SKILL" >> "$SUMMARY_LOG"
+        RESULTS+=("❌ [agent] $AGENT")
+        echo "FAIL [agent] $AGENT" >> "$SUMMARY_LOG"
     fi
 
     echo ""

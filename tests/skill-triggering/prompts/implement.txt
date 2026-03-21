@@ -1,1 +1,1 @@
-/xgh-implement https://jira.example.com/browse/PROJ-42
+Work on PROJ-42 — the OAuth Jira ticket.

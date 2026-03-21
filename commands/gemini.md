@@ -16,6 +16,6 @@ Run the `xgh:gemini` skill to dispatch implementation tasks or code reviews to G
 ```
 /xgh-gemini exec "Add unit tests for the auth module"
 /xgh-gemini review "Check for security issues in the latest changes"
-/xgh-gemini exec --model gemini-2.5-flash "Fix lint warnings in src/utils/"
-/xgh-gemini exec --same-dir "Add missing docstrings"
+/xgh-gemini exec --model gemini-2.5-flash --effort high "Fix lint warnings in src/utils/"
+/xgh-gemini exec --same-dir --thinking xhigh "Add missing docstrings"
 ```

@@ -1,1 +1,1 @@
-Use the xgh:schedule skill to show my scheduler status.
+Is the xgh retrieve job still running? I haven't seen new inbox items in a while.

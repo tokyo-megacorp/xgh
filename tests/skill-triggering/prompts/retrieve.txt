@@ -1,1 +1,1 @@
-/xgh-retrieve
+Fetch the latest from Slack and GitHub.

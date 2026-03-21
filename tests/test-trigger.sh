@@ -133,15 +133,19 @@ assert_file_exists "$PROMPTS_DIR/schedule.txt"     "schedule prompt exists"
 assert_file_exists "$PROMPTS_DIR/codex.txt"        "codex prompt exists"
 assert_file_exists "$PROMPTS_DIR/gemini.txt"       "gemini prompt exists"
 
-# Agent prompt files (8)
-assert_file_exists "$PROMPTS_DIR/agent-code-reviewer.txt"              "agent-code-reviewer prompt exists"
-assert_file_exists "$PROMPTS_DIR/agent-collaboration-dispatcher.txt"   "agent-collaboration-dispatcher prompt exists"
-assert_file_exists "$PROMPTS_DIR/agent-pipeline-doctor.txt"            "agent-pipeline-doctor prompt exists"
-assert_file_exists "$PROMPTS_DIR/agent-context-curator.txt"            "agent-context-curator prompt exists"
-assert_file_exists "$PROMPTS_DIR/agent-investigation-lead.txt"         "agent-investigation-lead prompt exists"
-assert_file_exists "$PROMPTS_DIR/agent-pr-reviewer.txt"                "agent-pr-reviewer prompt exists"
-assert_file_exists "$PROMPTS_DIR/agent-retrieval-auditor.txt"          "agent-retrieval-auditor prompt exists"
-assert_file_exists "$PROMPTS_DIR/agent-onboarding-guide.txt"           "agent-onboarding-guide prompt exists"
+# Agent dispatch test suite (separate category)
+AGENT_PROMPTS_DIR="$PLUGIN_DIR/tests/agent-dispatch/prompts"
+assert_dir_exists  "$PLUGIN_DIR/tests/agent-dispatch"                         "agent-dispatch dir exists"
+assert_file_exists "$PLUGIN_DIR/tests/agent-dispatch/run-all.sh"              "agent-dispatch run-all.sh exists"
+assert_dir_exists  "$AGENT_PROMPTS_DIR"                                        "agent-dispatch prompts/ dir exists"
+assert_file_exists "$AGENT_PROMPTS_DIR/code-reviewer.txt"              "agent code-reviewer prompt exists"
+assert_file_exists "$AGENT_PROMPTS_DIR/collaboration-dispatcher.txt"   "agent collaboration-dispatcher prompt exists"
+assert_file_exists "$AGENT_PROMPTS_DIR/pipeline-doctor.txt"            "agent pipeline-doctor prompt exists"
+assert_file_exists "$AGENT_PROMPTS_DIR/context-curator.txt"            "agent context-curator prompt exists"
+assert_file_exists "$AGENT_PROMPTS_DIR/investigation-lead.txt"         "agent investigation-lead prompt exists"
+assert_file_exists "$AGENT_PROMPTS_DIR/pr-reviewer.txt"                "agent pr-reviewer prompt exists"
+assert_file_exists "$AGENT_PROMPTS_DIR/retrieval-auditor.txt"          "agent retrieval-auditor prompt exists"
+assert_file_exists "$AGENT_PROMPTS_DIR/onboarding-guide.txt"           "agent onboarding-guide prompt exists"
 
 # Skill runner — key flags and patterns
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-test.sh"     "dangerously-skip-permissions"  "run-test.sh uses dangerously-skip-permissions"
@@ -163,10 +167,15 @@ assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-multiturn-test.sh"  "ses
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-multiturn-test.sh"  "\-\-resume"                "multiturn uses resume (not continue)"
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-multiturn-test.sh"  "max-budget-usd"            "multiturn caps budget"
 
-# run-all.sh orchestrates both skill and agent tests
-assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "run-test.sh"                    "run-all.sh calls run-test.sh"
-assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "run-agent-test.sh"              "run-all.sh calls run-agent-test.sh"
-assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "AGENT_TESTS"                    "run-all.sh has agent test array"
+# skill-triggering/run-all.sh handles skills only
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "run-test.sh"                    "skill run-all.sh calls run-test.sh"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "SKILL_TESTS"                    "skill run-all.sh has SKILL_TESTS array"
+assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-all.sh"      "agent-dispatch"                 "skill run-all.sh points to agent-dispatch"
+
+# agent-dispatch/run-all.sh handles agents
+assert_contains "$PLUGIN_DIR/tests/agent-dispatch/run-all.sh"        "run-agent-test.sh"              "agent run-all.sh calls run-agent-test.sh"
+assert_contains "$PLUGIN_DIR/tests/agent-dispatch/run-all.sh"        "AGENT_TESTS"                    "agent run-all.sh has AGENT_TESTS array"
+
 assert_contains "$PLUGIN_DIR/tests/skill-triggering/run-multiturn-test.sh" "xgh:briefing"            "multiturn test targets xgh:briefing"
 
 # ── Result ───────────────────────────────────────────────────────────────────

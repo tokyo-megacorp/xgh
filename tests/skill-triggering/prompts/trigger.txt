@@ -1,1 +1,1 @@
-Use the xgh:trigger skill to show my trigger engine status.
+What alert rules have I set up? Did any fire recently?

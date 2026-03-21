@@ -21,6 +21,12 @@ conventions:
     - "No context-mode references in xgh skill files (context-mode handles its own enforcement)"
     - "Skill frontmatter must include `name`, `description`, and `trigger`"
 
+  dogfooding:
+    - "**Use xgh to build xgh**: run `/xgh-brief` at session start, `/xgh-retrieve` before researching, `/xgh-analyze` after significant findings — xgh improves by exercising its own tools"
+    - "**If you call it, test it**: whenever a skill is invoked during a session and no AI unit test exists for it, add a prompt to `tests/skill-triggering/prompts/` before the session ends"
+    - "**Capture every gap**: when a skill fails, misfires, or is not triggered by the right prompt, immediately add or update the prompt test that would have caught it"
+    - "**lcm_store session learnings**: after any significant work, extract 3-7 bullets and store via `lcm_store` — the next session starts smarter"
+
 iron_laws:
   - title: "Never skip the test"
     body: "every implementation task starts with a failing test"
@@ -30,6 +36,10 @@ iron_laws:
     body: "run the full test suite before marking a plan step done"
   - title: "Never commit secrets"
     body: "use env vars; add patterns to `.gitignore`"
+  - title: "If you call it, test it"
+    body: "every skill invoked during a session must have a prompt in tests/skill-triggering/prompts/ — add it before the session ends"
+  - title: "Dogfood first"
+    body: "use xgh skills to drive xgh development — /xgh-brief at session start, /xgh-retrieve before research, /xgh-analyze after findings"
 
 pitfalls:
   - title: "plugin.json has no skills/commands arrays"

@@ -117,6 +117,8 @@ bash tests/test-commands.sh  # Command file existence and content
 2. **Never leave a placeholder** — replace stubs before marking a task complete
 3. **Never break existing tests** — run the full test suite before marking a plan step done
 4. **Never commit secrets** — use env vars; add patterns to `.gitignore`
+5. **If you call it, test it** — every skill invoked during a session must have a prompt in tests/skill-triggering/prompts/ — add it before the session ends
+6. **Dogfood first** — use xgh skills to drive xgh development — /xgh-brief at session start, /xgh-retrieve before research, /xgh-analyze after findings
 
 ---
 

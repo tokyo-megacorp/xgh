@@ -59,7 +59,7 @@ echo "=== Results ==="
 SKILL_BASE="${SKILL_NAME##*:}"
 SKILL_PATTERN='"skill":"([^"]*:)?'"${SKILL_BASE}"'"'
 
-if grep -q '"Skill"' "$LOG_FILE" && grep -qE "$SKILL_PATTERN" "$LOG_FILE"; then
+if grep -q '"name":"Skill"' "$LOG_FILE" && grep -qE "$SKILL_PATTERN" "$LOG_FILE"; then
     echo "✅ PASS: Skill '$SKILL_NAME' was triggered"
     TRIGGERED=true
 else

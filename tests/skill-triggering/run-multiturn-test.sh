@@ -63,7 +63,7 @@ echo ""
 echo "=== Results ==="
 
 SKILL_PATTERN='"skill":"([^"]*:)?briefing"'
-if grep -q '"Skill"' "$TURN3_LOG" && grep -qE "$SKILL_PATTERN" "$TURN3_LOG"; then
+if grep -q '"name":"Skill"' "$TURN3_LOG" && grep -qE "$SKILL_PATTERN" "$TURN3_LOG"; then
     echo "✅ PASS: xgh:briefing triggered in Turn 3 (after context accumulation)"
     TRIGGERED=true
 else

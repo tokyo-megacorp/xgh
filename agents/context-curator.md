@@ -32,7 +32,7 @@ description: |
 
 model: haiku
 capabilities: [context-tree, curation, indexing]
-color: blue
+color: purple
 tools: ["Read", "Grep", "Glob", "Write", "Edit"]
 ---
 

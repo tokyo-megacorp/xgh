@@ -66,5 +66,10 @@ assert_contains "agents/pr-reviewer.md" "model: sonnet"
 assert_contains "config/agents.yaml" "local_agents:"
 assert_contains "config/agents.yaml" "type: agent"
 
+assert_file_exists "scripts/gen-agents-md.sh"
+assert_contains "scripts/gen-agents-md.sh" "pyyaml"
+assert_contains "scripts/gen-agents-md.sh" "local_agents"
+assert_contains "scripts/gen-agents-md.sh" "AUTO-GENERATED"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

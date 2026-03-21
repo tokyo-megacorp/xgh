@@ -33,7 +33,7 @@ phases:
       - "Search lossless-claude memory for related past work"
       - "Read spec and context tree"
       - "Propose 2-3 approaches, recommend one"
-      - "Pair with Codex on design (xgh:codex exec --effort high) — catch schema mismatches, stale assumptions, blocking issues before writing the plan"
+      - "If preferences.pair_programming.enabled + 'design' in phases: pair with preferences.pair_programming.tool at preferences.pair_programming.effort — catch schema mismatches and blocking issues before writing the plan"
       - "Write design spec to .xgh/specs/"
       - "Write implementation plan to .xgh/plans/"
       - "Push plan + spec → open PR targeting develop (plan-only PR, no code)"
@@ -46,8 +46,8 @@ phases:
     steps:
       - "Branch from develop (feat/* or fix/*)"
       - "Use superpowers:subagent-driven-development"
-      - "Per task: pair with Codex on approach before dispatching implementer (xgh:codex exec)"
-      - "Fresh Sonnet subagent per task, driven by the merged plan"
+      - "If preferences.pair_programming.enabled + 'per_task' in phases: pair with preferences.pair_programming.tool before dispatching implementer"
+      - "Fresh subagent per task using preferences.superpowers.implementation_model, driven by the merged plan"
       - "Two-stage review: spec compliance then code quality"
       - "Add AI unit test (tests/skill-triggering/prompts/) for any skill invoked but not yet tested"
 

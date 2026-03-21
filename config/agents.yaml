@@ -156,7 +156,7 @@ local_agents:
   onboarding-guide:
     type: agent
     model: sonnet
-    color: magenta
+    color: pink
     tools: ["Read", "Grep", "Glob"]
     capabilities: [onboarding, documentation, guidance]
 

@@ -15,15 +15,10 @@ TIMESTAMP=$(date +%s)
 OUTPUT_DIR="/tmp/xgh-skill-tests/${TIMESTAMP}/multiturn"
 mkdir -p "$OUTPUT_DIR"
 
-PROJECT_DIR="$OUTPUT_DIR/project"
-mkdir -p "$PROJECT_DIR"
-
 echo "=== xgh Multi-Turn Skill Continuity Test ==="
 echo "Skill under test: xgh:briefing"
 echo "Output dir: $OUTPUT_DIR"
 echo ""
-
-cd "$PROJECT_DIR"
 
 # Turn 1: Start a routine conversation
 echo ">>> Turn 1: Starting a routine work conversation..."
@@ -37,6 +32,8 @@ claude -p "I just got in. Let me check some things. What's the status of the cod
 echo "Turn 1 complete."
 
 # Turn 2: Continue with more context
+# NOTE: --continue resumes the most recent Claude Code session on this machine.
+# Runs must be sequential (not parallel) to avoid attaching to the wrong session.
 echo ""
 echo ">>> Turn 2: Accumulating more conversation context..."
 TURN2_LOG="$OUTPUT_DIR/turn2.json"

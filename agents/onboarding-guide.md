@@ -32,7 +32,7 @@ description: |
 
 model: sonnet
 capabilities: [onboarding, documentation, guidance]
-color: purple
+color: magenta
 tools: ["Read", "Grep", "Glob"]
 ---
 

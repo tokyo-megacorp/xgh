@@ -142,7 +142,7 @@ local_agents:
   context-curator:
     type: agent
     model: haiku
-    color: blue
+    color: purple
     tools: ["Read", "Grep", "Glob", "Write", "Edit"]
     capabilities: [context-tree, curation, indexing]
 
@@ -156,7 +156,7 @@ local_agents:
   onboarding-guide:
     type: agent
     model: sonnet
-    color: purple
+    color: magenta
     tools: ["Read", "Grep", "Glob"]
     capabilities: [onboarding, documentation, guidance]
 
@@ -170,7 +170,7 @@ local_agents:
   pr-reviewer:
     type: agent
     model: sonnet
-    color: green
+    color: yellow
     tools: ["Read", "Grep", "Glob", "Bash"]
     capabilities: [pr-review, code-review, github]
 

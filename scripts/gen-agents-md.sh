@@ -157,7 +157,7 @@ out.append("---")
 out.append("")
 
 # Iron Laws
-out.append("### Iron Laws")
+out.append("## Iron Laws")
 out.append("")
 for i, law in enumerate(team['iron_laws'], 1):
     out.append(f"{i}. **{law['title']}** — {law['body']}")
@@ -197,11 +197,13 @@ out.append("")
 # Implementation Status
 out.append("## Implementation Status")
 out.append("")
-out.append("| Plan | Title | Status |")
-out.append("|------|-------|--------|")
+out.append("| Feature | Status |")
+out.append("|---------|--------|")
 for s in proj.get('implementation_status', []):
-    status_emoji = "✅" if s['status'] == 'complete' else "🔄"
-    out.append(f"| {s['plan']} | {s['title']} | {status_emoji} Complete |")
+    status_label = "Complete" if s.get('status') == 'complete' else "In Progress"
+    status_icon = "✅" if s.get('status') == 'complete' else "🔄"
+    row = f"| {s['plan']} — {s['title']} | {status_icon} {status_label} |"
+    out.append(row)
 out.append("")
 out.append("---")
 out.append("")

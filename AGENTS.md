@@ -111,7 +111,7 @@ bash tests/test-commands.sh  # Command file existence and content
 
 ---
 
-### Iron Laws
+## Iron Laws
 
 1. **Never skip the test** — every implementation task starts with a failing test
 2. **Never leave a placeholder** — replace stubs before marking a task complete
@@ -154,19 +154,19 @@ bash tests/test-commands.sh  # Command file existence and content
 
 ## Implementation Status
 
-| Plan | Title | Status |
-|------|-------|--------|
-| Plan 1 | Foundation — scaffold, installer | ✅ Complete |
-| Plan 2 | Context Tree Engine — CRUD, BM25 search, sync | ✅ Complete |
-| Plan 3 | Hooks & Core Skills — real hook implementations | ✅ Complete |
-| Plan 4 | Team Collaboration Skills | ✅ Complete |
-| Plan 5 | Multi-Agent Collaboration Bus | ✅ Complete |
-| Plan 6 | Workflow Skills (investigate, design, implement) | ✅ Complete |
-| Plan 7 | Briefing | ✅ Complete |
-| Ingest | Context ingestion pipeline (25 files, 68 tests) | ✅ Complete |
-| Refresh | Command rename, output style, /xgh-help | ✅ Complete |
-| Plan 8 | Ollama / Linux Support | ✅ Complete |
-| Plan 9 | Remote Backend — XGH_BACKEND=remote | ✅ Complete |
+| Feature | Status |
+|---------|--------|
+| Plan 1 — Foundation — scaffold, installer | ✅ Complete |
+| Plan 2 — Context Tree Engine — CRUD, BM25 search, sync | ✅ Complete |
+| Plan 3 — Hooks & Core Skills — real hook implementations | ✅ Complete |
+| Plan 4 — Team Collaboration Skills | ✅ Complete |
+| Plan 5 — Multi-Agent Collaboration Bus | ✅ Complete |
+| Plan 6 — Workflow Skills (investigate, design, implement) | ✅ Complete |
+| Plan 7 — Briefing | ✅ Complete |
+| Ingest — Context ingestion pipeline (25 files, 68 tests) | ✅ Complete |
+| Refresh — Command rename, output style, /xgh-help | ✅ Complete |
+| Plan 8 — Ollama / Linux Support | ✅ Complete |
+| Plan 9 — Remote Backend — XGH_BACKEND=remote | ✅ Complete |
 
 ---
 

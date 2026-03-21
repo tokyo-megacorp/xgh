@@ -76,6 +76,8 @@ assert_contains "AGENTS.md" "## Agent Roster"
 assert_contains "AGENTS.md" "| Agent | Model | Capabilities |"
 assert_contains "AGENTS.md" "## Automation Map"
 assert_contains "AGENTS.md" "| Trigger | Condition | Skill | Workflow | Lead Agent |"
+assert_contains "AGENTS.md" "## Iron Laws"
+assert_contains "AGENTS.md" "## Implementation Status"
 
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

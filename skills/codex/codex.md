@@ -109,6 +109,19 @@ Parse the user's request to determine dispatch parameters. Only extract what the
 | `isolation` | `worktree` (exec), `same-dir` (review) | `--worktree`, `--same-dir` |
 | `prompt` | — | remaining text after type |
 | `review_target` | `--base main` | `--uncommitted`, `--commit <sha>`, `--base <branch>` |
+| `effort` | CLI default | `--effort <level>` or `--thinking <level>` (translated to `-c 'model_reasoning_effort="..."'`) |
+
+**Effort level translation** (accepts `--effort`, `--thinking`, or raw `-c` — all resolve the same way):
+
+| User says | Resolves to | OpenAI config |
+|-----------|-------------|---------------|
+| `--effort low` / `--thinking low` | low | `-c 'model_reasoning_effort="low"'` |
+| `--effort medium` / `--thinking medium` | medium | `-c 'model_reasoning_effort="medium"'` |
+| `--effort high` / `--thinking high` | high | `-c 'model_reasoning_effort="high"'` |
+| `--effort max` / `--thinking max` | xhigh | `-c 'model_reasoning_effort="xhigh"'` |
+| `--effort xhigh` / `--thinking xhigh` | xhigh | `-c 'model_reasoning_effort="xhigh"'` |
+
+`--effort` and `--thinking` are aliases — both translate to `model_reasoning_effort`. The value `max` (Anthropic jargon) maps to `xhigh` (OpenAI jargon). All other values pass through as-is. If the user passes `-c 'model_reasoning_effort="..."'` directly, forward without translation.
 
 **Passthrough flags** (forwarded verbatim to Codex CLI if the user includes them):
 

@@ -40,6 +40,7 @@ Dispatch implementation tasks or code reviews to OpenAI's Codex CLI. Supports wo
 | `type` | No | `exec` (default) or `review` |
 | `prompt` | Yes (exec) | Task description for Codex |
 | `--model`, `-m` | No | Override model (e.g., `gpt-5.4-mini`, `gpt-5.1-codex-mini`). Omit to use CLI default. |
+| `--effort`, `--thinking` | No | Reasoning effort: `low`, `medium`, `high`, `max`/`xhigh`. Both flags are aliases. |
 | `--search` | No | Enable live web search for Codex |
 | `[any codex flag]` | No | All unrecognized flags are forwarded to Codex CLI as-is |
 | `--worktree` | No | Force worktree isolation (default for exec) |
@@ -62,6 +63,9 @@ Dispatch implementation tasks or code reviews to OpenAI's Codex CLI. Supports wo
 
 # Review uncommitted changes
 /xgh-codex review --uncommitted
+
+# Max reasoning effort for a complex task
+/xgh-codex exec --effort max "Refactor the auth middleware for thread safety"
 
 # Same-dir mode for a quick fix
 /xgh-codex exec --same-dir "Fix all ESLint warnings in src/utils/"

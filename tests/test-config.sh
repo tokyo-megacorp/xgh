@@ -30,11 +30,13 @@ assert_contains "config/agents.yaml" "auto_detect: gemini"
 
 assert_file_exists "config/project.yaml"
 assert_contains "config/project.yaml" "name: xgh"
-assert_contains "config/project.yaml" "tagline:"
+assert_contains "config/project.yaml" "xgh: Claude on the fastlane"
 assert_contains "config/project.yaml" "tech_stack:"
 assert_contains "config/project.yaml" "install:"
 assert_contains "config/project.yaml" "key_design_decisions:"
 assert_contains "config/project.yaml" "lossless-claude"
+assert_contains "config/project.yaml" "BM25"
+assert_contains "config/project.yaml" "vllm-mlx"
 
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

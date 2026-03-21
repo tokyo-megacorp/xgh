@@ -28,6 +28,8 @@ phases:
     model: opus
     effort: max
     steps:
+      - "Run /xgh-brief to load session context"
+      - "Run /xgh-retrieve to pull latest project activity"
       - "Search lossless-claude memory for related past work"
       - "Read spec and context tree"
       - "Propose 2-3 approaches, recommend one"
@@ -41,6 +43,7 @@ phases:
       - "Use superpowers:subagent-driven-development"
       - "Fresh subagent per task"
       - "Two-stage review: spec compliance then code quality"
+      - "Add AI unit test (tests/skill-triggering/prompts/) for any skill invoked but not yet tested"
 
   - name: "Review"
     model: opus
@@ -48,6 +51,7 @@ phases:
     steps:
       - "Review all implementation against spec"
       - "Run full test suite"
+      - "Run /xgh-analyze to capture session learnings into memory"
       - "Merge develop → main for release"
 
 superpowers_table:

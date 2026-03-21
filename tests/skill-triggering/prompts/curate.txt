@@ -1,0 +1,1 @@
+Curate the context tree — validate frontmatter, archive stale entries, and verify the index is clean.

@@ -1,6 +1,7 @@
 ---
 name: retrieval-auditor
-description: Use this agent to audit provider health and retrieval quality — checks fetch logs, inbox quality metrics, and coverage gaps. Dispatch after retrieval failures or periodically for quality monitoring. Examples:
+description: |
+  Use this agent to audit provider health and retrieval quality — checks fetch logs, inbox quality metrics, and coverage gaps. Dispatch after retrieval failures or periodically for quality monitoring. Examples:
 
   <example>
   Context: Retrieval runs with errors
@@ -30,6 +31,7 @@ description: Use this agent to audit provider health and retrieval quality — c
   </example>
 
 model: haiku
+capabilities: [retrieval, audit, memory]
 color: blue
 tools: ["Read", "Grep", "Glob"]
 ---

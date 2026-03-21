@@ -12,14 +12,14 @@ conventions:
   naming:
     - "Bash functions: `lower_snake_case`"
     - "Constants / env vars: `UPPER_SNAKE_CASE`"
-    - "YAML keys: `camelCase` (following MCS tech pack schema)"
+    - "YAML keys: `snake_case`"
     - "Markdown skills: one directory per skill, markdown file matches directory name"
     - "Slash commands: markdown files in `commands/`, filename is the command name"
 
   skills:
     - "Commands are thin wrappers — all logic lives in `skills/`"
     - "No context-mode references in xgh skill files (context-mode handles its own enforcement)"
-    - "Skill frontmatter must include `name`, `description`, and `trigger`"
+    - "Skill frontmatter must include `name`, `description`, and `triggers`"
 
   dogfooding:
     - "**Use xgh to build xgh**: run `/xgh-brief` at session start, `/xgh-retrieve` before researching, `/xgh-analyze` after significant findings — xgh improves by exercising its own tools"

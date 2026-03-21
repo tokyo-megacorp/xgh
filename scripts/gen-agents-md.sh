@@ -20,7 +20,12 @@ except (ImportError, AttributeError):
 PYCHECK
 
 python3 - <<'PYEOF'
-import yaml, os, glob, re
+import glob
+import os
+import re
+import sys
+
+import yaml
 
 ROOT = os.getcwd()
 
@@ -29,15 +34,37 @@ def load(path):
         return yaml.safe_load(f)
 
 def frontmatter(path):
+    """Extract agent frontmatter fields using direct regex — avoids YAML parse errors
+    from description fields containing colons, <example> blocks, and angle brackets."""
     with open(path) as f:
         content = f.read()
     m = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
     if not m:
         return {}
-    try:
-        return yaml.safe_load(m.group(1)) or {}
-    except yaml.YAMLError:
-        return {}
+    block = m.group(1)
+    result = {}
+    # Extract simple scalar fields
+    for field in ('name', 'model', 'color'):
+        fm = re.search(rf'^{field}:\s*(.+)$', block, re.MULTILINE)
+        if fm:
+            result[field] = fm.group(1).strip().strip('"\'')
+    # Extract inline list fields: capabilities: [a, b, c] or tools: ["a", "b"]
+    for field in ('capabilities', 'tools'):
+        fm = re.search(rf'^{field}:\s*\[([^\]]*)\]', block, re.MULTILINE)
+        if fm:
+            items = [x.strip().strip('"\'') for x in fm.group(1).split(',') if x.strip()]
+            result[field] = items
+        elif re.search(rf'^{field}:\s*\[', block, re.MULTILINE):
+            # Unterminated list — emit warning
+            print(f"WARNING: {path}: unterminated list in '{field}' field", file=sys.stderr)
+    return result
+
+def render_capabilities(values):
+    if not values:
+        return "—"
+    if not isinstance(values, list):
+        values = [values]
+    return ", ".join(f"`{value}`" for value in values)
 
 def render_condition(when):
     parts = []
@@ -101,14 +128,15 @@ out.append("")
 out.append("---")
 out.append("")
 
-# Agent Roster — reads from local_agents: section
+# Agent Roster — rows from configured local agents, metadata from agent markdown frontmatter
 out.append("## Agent Roster")
 out.append("")
 out.append("| Agent | Model | Capabilities |")
 out.append("|-------|-------|-------------|")
 for name, entry in ag.get('local_agents', {}).items():
-    model = entry.get('model', '—')
-    caps = ", ".join(f"`{c}`" for c in entry.get('capabilities', []))
+    meta = agent_meta.get(name, {})
+    model = meta.get('model', entry.get('model', '—'))
+    caps = render_capabilities(meta.get('capabilities', entry.get('capabilities', [])))
     out.append(f"| {name} | {model} | {caps} |")
 out.append("")
 out.append("---")

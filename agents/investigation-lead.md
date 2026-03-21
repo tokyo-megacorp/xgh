@@ -1,6 +1,7 @@
 ---
 name: investigation-lead
-description: Use this agent for systematic debugging of code-level bugs, test failures, and unexpected behavior in xgh skills, hooks, or agents. For retrieval pipeline issues, use pipeline-doctor instead. Examples:
+description: |
+  Use this agent for systematic debugging of code-level bugs, test failures, and unexpected behavior in xgh skills, hooks, or agents. For retrieval pipeline issues, use pipeline-doctor instead. Examples:
 
   <example>
   Context: Test failures with non-obvious cause
@@ -30,6 +31,7 @@ description: Use this agent for systematic debugging of code-level bugs, test fa
   </example>
 
 model: opus
+capabilities: [debugging, investigation, root-cause]
 color: red
 tools: ["Read", "Grep", "Glob", "Bash", "Agent"]
 ---

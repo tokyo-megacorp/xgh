@@ -1,6 +1,7 @@
 ---
 name: context-curator
-description: Use this agent to review and maintain the context tree — checks for stale entries, missing coverage, and manifest consistency. Dispatch after significant project changes or when briefings surface outdated context. Examples:
+description: |
+  Use this agent to review and maintain the context tree — checks for stale entries, missing coverage, and manifest consistency. Dispatch after significant project changes or when briefings surface outdated context. Examples:
 
   <example>
   Context: User suspects context tree is outdated
@@ -30,6 +31,7 @@ description: Use this agent to review and maintain the context tree — checks f
   </example>
 
 model: haiku
+capabilities: [context-tree, curation, indexing]
 color: blue
 tools: ["Read", "Grep", "Glob", "Write", "Edit"]
 ---

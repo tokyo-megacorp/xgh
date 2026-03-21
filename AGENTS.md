@@ -9,8 +9,9 @@
 
 ## What is xgh?
 
-xgh is a Model Context Server (MCS) tech pack for Claude Code that gives AI agents
-persistent, team-shared memory across sessions. It combines:
+xgh is declarative AI ops — declare your agent behavior in YAML, converge every
+AI platform to match. It is a Model Context Server (MCS) tech pack for Claude Code
+that gives AI agents persistent, team-shared memory across sessions. It combines:
 
 - **lossless-claude** — persistent memory via SQLite + FTS5 for storing and querying
   past decisions, reasoning chains, and patterns
@@ -62,6 +63,7 @@ claude plugin install xgh@ipedro
 | pipeline-doctor | sonnet | `health-check`, `diagnostics`, `pipeline` |
 | pr-reviewer | sonnet | `pr-review`, `code-review`, `github` |
 | retrieval-auditor | haiku | `retrieval`, `audit`, `memory` |
+| codex-driver | sonnet | `codex-dispatch`, `flag-detection`, `retry-logic`, `result-parsing` |
 
 ---
 
@@ -94,12 +96,12 @@ Triggers, workflows, and agents — the full 'what fires when' picture.
 
 - Bash functions: `lower_snake_case`
 - Constants / env vars: `UPPER_SNAKE_CASE`
-- YAML keys: `camelCase` (following MCS tech pack schema)
+- YAML keys: `snake_case`
 - Markdown skills: one directory per skill, markdown file matches directory name
 - Slash commands: markdown files in `commands/`, filename is the command name
 - Commands are thin wrappers — all logic lives in `skills/`
 - No context-mode references in xgh skill files (context-mode handles its own enforcement)
-- Skill frontmatter must include `name`, `description`, and `trigger`
+- Skill frontmatter must include `name`, `description`, and `triggers`
 
 ### Running tests
 

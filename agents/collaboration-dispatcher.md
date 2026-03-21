@@ -1,6 +1,7 @@
 ---
 name: collaboration-dispatcher
-description: Use this agent to orchestrate multi-agent workflows — manages collaboration threads, dispatches work items, monitors progress, and routes messages between agents via lossless-claude memory. Examples:
+description: |
+  Use this agent to orchestrate multi-agent workflows — manages collaboration threads, dispatches work items, monitors progress, and routes messages between agents via lossless-claude memory. Examples:
 
   <example>
   Context: User wants to run a structured review workflow
@@ -21,6 +22,7 @@ description: Use this agent to orchestrate multi-agent workflows — manages col
   </example>
 
 model: sonnet
+capabilities: [dispatch, routing, coordination]
 color: green
 tools: ["Read", "Grep", "Glob"]
 ---

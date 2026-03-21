@@ -1,6 +1,7 @@
 ---
 name: onboarding-guide
-description: Use this agent to help new developers or agents get oriented in the codebase and xgh system — surfaces architecture, conventions, and gotchas from the context tree. Examples:
+description: |
+  Use this agent to help new developers or agents get oriented in the codebase and xgh system — surfaces architecture, conventions, and gotchas from the context tree. Examples:
 
   <example>
   Context: New team member's first session
@@ -30,6 +31,7 @@ description: Use this agent to help new developers or agents get oriented in the
   </example>
 
 model: sonnet
+capabilities: [onboarding, documentation, guidance]
 color: purple
 tools: ["Read", "Grep", "Glob"]
 ---

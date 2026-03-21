@@ -168,18 +168,18 @@
 
 | # | Agent | Model | Color | Tools | Status |
 |---|-------|-------|-------|-------|--------|
-| 1 | `code-reviewer` | inherit | blue | R,Grep,Glob | Upgrade frontmatter + cleanup |
-| 2 | `collaboration-dispatcher` | inherit | white | R,Grep,Glob | Upgrade frontmatter + cleanup |
-| 3 | `pipeline-doctor` | inherit | green | R,Grep,Glob,Bash | **New** |
-| 4 | `context-curator` | inherit | cyan | R,Grep,Glob | **New** |
-| 5 | `investigation-lead` | inherit | red | R,Grep,Glob,Bash | **New** |
-| 6 | `pr-reviewer` | inherit | magenta | R,Grep,Glob,Bash | **New** |
-| 7 | `retrieval-auditor` | inherit | yellow | R,Grep,Glob,Bash | **New** |
-| 8 | `onboarding-guide` | inherit | purple | R,Grep,Glob | **New** |
+| 1 | `code-reviewer` | sonnet | yellow | R,Grep,Glob,Bash | Upgrade frontmatter + cleanup |
+| 2 | `collaboration-dispatcher` | sonnet | green | R,Grep,Glob | Upgrade frontmatter + cleanup |
+| 3 | `pipeline-doctor` | sonnet | orange | R,Grep,Glob,Bash | **New** |
+| 4 | `context-curator` | haiku | blue | R,Grep,Glob,Write,Edit | **New** |
+| 5 | `investigation-lead` | opus | red | R,Grep,Glob,Bash,Agent | **New** |
+| 6 | `pr-reviewer` | sonnet | green | R,Grep,Glob,Bash | **New** |
+| 7 | `retrieval-auditor` | haiku | blue | R,Grep,Glob | **New** |
+| 8 | `onboarding-guide` | sonnet | purple | R,Grep,Glob | **New** |
 
 **Naming:** Follows lossless-claude pattern — kebab-case, descriptive nouns (not verbs).
 
-**All agents use `inherit` model** — after review, all tasks require sufficient reasoning for the parent model. Haiku was dropped for context-curator (requires architectural judgment) and retrieval-auditor (requires Bash + diagnostic reasoning).
+**Models are assigned concretely by capability tier** — `sonnet/haiku/opus`. Sonnet handles coordination, review, and onboarding work; Haiku covers lightweight curation and auditing; Opus is reserved for deep investigations that need the most reasoning headroom.
 
 **Each agent MUST include `<example>` dispatch blocks** in the YAML `description` field — this is how Claude Code learns when to invoke each agent automatically.
 

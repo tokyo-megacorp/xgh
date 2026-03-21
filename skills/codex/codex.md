@@ -170,55 +170,38 @@ If the user passes `--add-dir <path>`, set `WORK_DIR` to that path. Otherwise se
 
 ## Step 2: Dispatch
 
-### Exec dispatch
+Use the **Agent tool** with `subagent_type: "xgh:codex-driver"` to dispatch. The codex-driver agent handles flag detection, command construction, execution, and returns a structured result. Do NOT run Codex via Bash directly — route through the agent.
 
-Build the command with only spawning management flags plus any user-specified passthrough flags:
+Construct the agent prompt from the parsed parameters:
 
-```bash
-OUTPUT_FILE="/tmp/codex-exec-${TIMESTAMP}.md"
-CMD=(
-    codex exec "<prompt>"
-    --full-auto
-    -C "$WORK_DIR"
-    -o "$OUTPUT_FILE"
-    # Same-dir mode only: --add-dir "$WORK_DIR"
-    # User passthrough flags appended here (e.g., -m gpt-5.4-mini --search)
-)
-"${CMD[@]}" 2>&1
+**Exec:**
+```
+Dispatch type: exec
+Working directory: <WORK_DIR>
+Isolation: worktree | same-dir
+Prompt: <full prompt text including verification footer>
+Model: <if specified>
+Effort: <if specified>
+Passthrough flags: <any user-provided flags>
 ```
 
-- **Worktree mode:** Run via Bash with `run_in_background: true`. Claude Code is free to continue other work while Codex runs.
-- **Same-dir mode:** Add `--add-dir "$WORK_DIR"` to give Codex write access. Run synchronously. Claude Code waits for completion.
-
-### Review dispatch
-
-```bash
-OUTPUT_FILE="/tmp/codex-review-${TIMESTAMP}.md"
-(cd "$WORK_DIR" && codex review \
-    # Review target flag (e.g., --base main, --uncommitted, --commit <sha>)
-    # User passthrough flags appended here
-) > "$OUTPUT_FILE" 2>&1
+**Review:**
+```
+Dispatch type: review
+Working directory: <WORK_DIR>
+Review target: --base <branch> | --uncommitted | --commit <sha>
+Effort: <if specified>
+Passthrough flags: <any user-provided flags>
 ```
 
-Custom review instructions via prompt argument:
-```bash
-codex review --base main "Focus on security vulnerabilities and error handling"
-```
+- **Worktree exec:** Set `run_in_background: true` on the Agent call. Confirm to the user that Codex is running.
+- **Same-dir exec / review:** Run synchronously (no `run_in_background`). Wait for the result.
 
 ---
 
 ## Step 3: Collect Results
 
-Read the output file with the Read tool (output is typically short enough for direct context).
-
-For worktree mode, also summarize what Codex changed:
-
-```bash
-git -C "$WORK_DIR" log --oneline "$BRANCH" --not main
-git -C "$WORK_DIR" diff --stat main..."$BRANCH"
-```
-
-Present a structured summary to the user:
+The codex-driver agent returns a structured result block. Surface it to the user:
 
 ```
 ## Codex Dispatch Results
@@ -226,19 +209,16 @@ Present a structured summary to the user:
 | Field | Value |
 |-------|-------|
 | Type | exec / review |
-| Model | gpt-5.4 / gpt-5.4 / etc. |
-| Isolation | worktree ($BRANCH) / same-dir (--add-dir) |
+| Model | gpt-5.4 / etc. |
+| Isolation | worktree ($BRANCH) / same-dir |
 | Files changed | N |
-| Duration | Xs |
 
 ### Codex Output
-<summary or full content of output file>
+<agent result summary>
 
 ### Changes (worktree mode)
-<git log + diff stat>
+<git log + diff stat from agent result>
 ```
-
-If the output file is large (>200 lines), summarize the key points rather than including the full content.
 
 ---
 

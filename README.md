@@ -1,32 +1,70 @@
-# xgh — The developer's cockpit
+# xgh — Declarative AI Ops
 
-**One install wires memory, compression, context efficiency, and dev methodology into your AI agent.** No glue code. No config drift. No re-setup per project.
+**Declare your agent behavior in YAML. Converge every AI platform to match.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-initial%20release-brightgreen)](#implementation-status)
 
-## What xgh wires together
+---
 
-| What you need | What does it | Installed by xgh |
-|---------------|-------------|------------------|
-| Persistent memory | [lossless-claude](https://github.com/ipedro/lossless-claude) | Automatic |
-| Token compression | [RTK](https://github.com/rtk-ai/rtk) | Automatic |
-| Dev methodology | [superpowers](https://github.com/obra/superpowers) | Optional plugin |
+The same way Terraform lets you declare infrastructure and converge reality to match, xgh lets you declare AI agent behavior and converge every platform to match.
 
-## Your controls
+```yaml
+# config/project.yaml — your variables.tf
+preferences:
+  pair_programming:
+    enabled: true
+    tool: "xgh:codex"
+    effort: high
+  superpowers:
+    implementation_model: sonnet
+    review_model: opus
+```
+
+```bash
+/xgh-seed    # terraform apply — pushes state to Codex, Gemini, OpenCode
+/xgh-brief   # what needs attention right now
+/xgh-init    # first-time setup
+```
+
+## The Stack
+
+| Layer | Role | xgh equivalent |
+|-------|------|----------------|
+| `config/project.yaml` | workspace variables | `variables.tf` |
+| `config/agents.yaml` | platform registry | `providers.tf` |
+| `config/triggers.yaml` | event sources | event bridge rules |
+| `preferences:` block | workspace defaults | workspace vars |
+| `/xgh-seed` | converge platforms to config | `terraform apply` |
+| `AGENTS.md` | rendered view of current config | plan output |
+| `.xgh/context-tree/` | persistent knowledge base | state + history |
+
+The hard problem — as always — is **drift**. Platform skill files go stale, AGENTS.md gets hand-edited, hooks fail silently. xgh solves this the same way Terraform does: one source of truth, derived outputs, explicit apply.
+
+## What it wires together
+
+| What you need | What does it |
+|---------------|-------------|
+| Persistent memory across sessions | [lossless-claude](https://github.com/extreme-go-horse/lossless-claude) — SQLite + FTS5 |
+| Context tree search | BM25/TF-IDF over `.xgh/context-tree/` |
+| Multi-platform dispatch | Codex CLI, Gemini CLI, OpenCode — all driven from one config |
+| Session-start injection | Top knowledge files injected automatically at session start |
+| Dev methodology | [superpowers](https://github.com/obra/superpowers) — optional plugin |
+
+## Commands
 
 | Command | What it does |
 |---------|-------------|
-| `/xgh-init` | First-run onboarding — verify connections, set up profile |
-| `/xgh-brief` | Morning briefing — Slack, Jira, GitHub, what needs attention now |
-| `/xgh-command-center` | Cross-project triage and dispatch |
+| `/xgh-init` | First-run setup — verify connections, seed config, generate AGENTS.md |
+| `/xgh-seed` | Push project context to all detected AI platforms |
+| `/xgh-brief` | Session briefing — Slack, Jira, GitHub, what needs attention now |
 | `/xgh-ask` | Search memory and context tree |
 | `/xgh-implement` | Ticket to working code — full context gathering first |
 | `/xgh-investigate` | Systematic debugging from a bug report |
-| `/xgh-design` | Figma to implementation |
-| `/xgh-doctor` | Validate pipeline health — config, connectivity, scheduler |
-| `/xgh-track` | Add a project to monitoring (Slack, Jira, GitHub, Figma) |
-| `/xgh-index` | Index a codebase into memory |
+| `/xgh-doctor` | Validate pipeline health |
+| `/xgh-track` | Add a project to monitoring |
+| `/xgh-analyze` | Classify inbox, extract memories, generate digest |
+| `/xgh-retrieve` | Pull context from Slack, Jira, GitHub |
 
 <details>
 <summary><b>All commands</b></summary>
@@ -37,59 +75,42 @@
 | `/xgh-help` | Contextual guide and command reference |
 | `/xgh-curate` | Store knowledge in memory and context tree |
 | `/xgh-collab` | Multi-agent collaboration |
-| `/xgh-profile` | Engineer throughput analysis from Jira history |
-| `/xgh-retrieve` | Run context retrieval loop |
-| `/xgh-analyze` | Run context analysis loop |
-| `/xgh-schedule` | Manage background scheduler jobs |
-| `/xgh-calibrate` | Calibrate dedup threshold with F1 scoring |
+| `/xgh-codex` | Dispatch to Codex CLI |
+| `/xgh-gemini` | Dispatch to Gemini CLI |
+| `/xgh-opencode` | Dispatch to OpenCode |
+| `/xgh-design` | Figma to implementation |
+| `/xgh-index` | Index a codebase into memory |
+| `/xgh-profile` | Engineer throughput analysis |
+| `/xgh-schedule` | Manage background scheduler |
+| `/xgh-trigger` | Manage trigger engine |
+| `/xgh-calibrate` | Calibrate dedup threshold |
 | `/xgh-status` | Memory stats and system health |
-| `/xgh-todo-killer` | Resolve TODO comments across the codebase |
+| `/xgh-command-center` | Cross-project triage and dispatch |
 
 </details>
 
 ## Install
 
-<details open>
-<summary><b>Claude Code</b> (recommended)</summary>
-
 ```bash
-claude plugin install xgh@ipedro
-```
-
-Then run first-time setup:
-
-```
+claude plugin install xgh@extreme-go-horse
 /xgh-init
 ```
 
-This creates data directories, checks dependencies (lossless-claude, RTK), sets up your profile, and adds your first project. Takes about 5 minutes.
-
-</details>
+Takes about 5 minutes. Sets up memory, hooks, profile, and seeds your first project.
 
 <details>
-<summary><b>Cursor</b></summary>
+<summary><b>Other platforms</b></summary>
 
-1. Install xgh into your project using the Claude Code one-liner above
-2. xgh writes `.cursor/rules/xgh.md` with agent instructions
-3. Configure the lossless-claude MCP server in Cursor's MCP settings (see `.claude/.mcp.json` for the config)
+xgh installs via Claude Code and then seeds instructions into every other platform automatically:
 
-</details>
-
-<details>
-<summary><b>Windsurf</b></summary>
-
-1. Install xgh into your project using the Claude Code one-liner above
-2. xgh writes `.windsurfrules` with agent instructions
-3. Configure the lossless-claude MCP server in Windsurf's MCP settings (see `.claude/.mcp.json` for the config)
-
-</details>
-
-<details>
-<summary><b>GitHub Copilot</b></summary>
-
-1. Install xgh into your project using the Claude Code one-liner above
-2. xgh writes `.github/copilot-instructions.md` and `.copilot/instructions.md` with agent instructions
-3. Configure the lossless-claude MCP server in your Copilot setup (see `.claude/.mcp.json` for the config)
+| Platform | File | Written by |
+|----------|------|------------|
+| All agents (canonical) | `AGENTS.md` | `/xgh-init` |
+| Claude Code | `CLAUDE.md` | `/xgh-init` |
+| Codex CLI | `.agents/skills/xgh/context.md` + `SKILL.md` | `/xgh-seed` |
+| Gemini CLI | `.gemini/skills/xgh/context.md` + `SKILL.md` | `/xgh-seed` |
+| OpenCode | `.opencode/skills/xgh/context.md` + `SKILL.md` | `/xgh-seed` |
+| GitHub Copilot | `.github/copilot-instructions.md` | `/xgh-init` |
 
 </details>
 
@@ -102,160 +123,81 @@ claude plugin uninstall xgh
 
 </details>
 
-## What changes after install
+## Before / After
 
 | Before | After |
 |--------|-------|
-| Agent forgets everything between sessions | Conventions, decisions, and fixes recalled automatically |
-| CLI output dumps 200 lines into context | RTK compresses to ~20 |
-| You explain project context every session | Top-5 knowledge files injected at session start |
-| Four tools configured separately, if at all | One install, zero drift |
+| Agent forgets decisions between sessions | Conventions, decisions, and fixes recalled automatically |
+| Re-explain project context every session | Top knowledge files injected at session start |
+| Configure Codex, Gemini, OpenCode separately | One YAML, one `apply`, all platforms in sync |
+| Drift between platforms | `/xgh-seed` converges everything to config |
 
 All knowledge is stored as human-readable markdown in `.xgh/context-tree/` — reviewable in PRs, greppable in CI, readable without xgh.
-
-## Try It
-
-After installing, open a Claude Code session and try these:
-
-```bash
-# First-run onboarding
-/xgh-init
-
-# Get a session briefing
-/xgh-brief
-
-# Ask about past decisions
-/xgh-ask "How did we handle auth token refresh?"
-
-# Store a new convention
-/xgh-curate "Always use UTC timestamps in API responses"
-
-# Implement a ticket with full context
-/xgh-implement PROJ-1234
-
-# Debug a production issue
-/xgh-investigate "Users seeing 500 errors on /api/checkout"
-```
-
 
 <details>
 <summary><b>Architecture</b></summary>
 
+### Config is code
+
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    xgh — developer's cockpit                 │
-│               23 commands · 5 hooks · context tree           │
-├──────────┬───────────────┬───────────────────┤
-│          │               │                   │
-│  lossless-claude      RTK          superpowers
-│  (memory)          (compression)  (methodology)
-│  lcm_search        rtk rewrite    brainstorming
-│  lcm_store        rtk git/gh/..   writing-plans
-│  lcm_grep          rtk read        TDD, review
-│          │               │                   │
-├──────────┴───────────────┴───────────────────┤
-│                                                             │
-│  ┌──────────────────────────────┐                           │
-│  │  SQLite + FTS5 (lossless-claude)                         │
-│  └──────────────────────────────┘                           │
-│                         │                                   │
-│  ┌──────────────────────┴────────────────────────────────┐  │
-│  │         .xgh/context-tree/  (git-committed)            │  │
-│  │  ├── domain/ → topic/ → entry.md                       │  │
-│  │  └── _manifest.json (flat entries[] registry)          │  │
-│  └────────────────────────────────────────────────────────┘  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+config/
+  project.yaml   ← workspace identity + preferences (variables.tf)
+  agents.yaml    ← platform registry: codex, gemini, opencode (providers.tf)
+  triggers.yaml  ← event sources: PR opened, Jira assigned, digest ready
+  team.yaml      ← conventions, iron laws, pitfalls
+  workflow.yaml  ← phases, test commands, superpowers table
 ```
+
+All five files feed `scripts/gen-agents-md.sh`, which emits `AGENTS.md` — the human-readable plan output. Edit the YAML; regenerate the doc.
+
+### Runtime injection
+
+At session start, `hooks/session-start.sh` injects top-ranked context tree entries into the system prompt. Skills read `config/project.yaml` at dispatch time for preferences. `/xgh-seed` writes snapshots to platform skill directories.
+
+The YAML is the source of truth. AGENTS.md is a view. Platform skill files are derived artifacts.
 
 ### Tech stack
 
 | Layer | Technology |
 |-------|-----------|
 | Install & hooks | Bash (`set -euo pipefail`) |
-| Config | YAML, JSON (settings) |
+| Config | YAML |
 | Skills / commands / agents | Markdown (Claude Code format) |
 | Context tree search | Python 3 (BM25/TF-IDF) |
 | Persistent memory | lossless-claude (SQLite + FTS5) |
-| Provider framework | Reference configs in `providers/examples/`; active generated providers in `~/.xgh/user_providers/` (primary location, never touched by installer) |
-| LLM | claude-process (via lossless-claude) |
-| Tests | Bash with `assert_*` helpers (33 test suites) |
-
-### Agent instruction files
-
-xgh writes platform-specific agent instructions for every major AI tool:
-
-| Platform | File |
-|----------|------|
-| All agents (canonical) | [`AGENTS.md`](AGENTS.md) |
-| Claude Code | [`CLAUDE.md`](CLAUDE.md) |
-| GitHub Copilot | [`.github/copilot-instructions.md`](.github/copilot-instructions.md) |
-| Copilot Chat (VS Code) | [`.copilot/instructions.md`](.copilot/instructions.md) |
-| Cursor | [`.cursor/rules/xgh.md`](.cursor/rules/xgh.md) |
-| Windsurf | [`.windsurfrules`](.windsurfrules) |
-
-### Multi-agent support
-
-xgh's workspace acts as a message bus between agents. Any MCP-compatible agent can participate.
-
-| Workflow | Pattern | Agents |
-|----------|---------|--------|
-| `plan-review` | Plan -> review -> implement | 2 |
-| `parallel-impl` | Parallel implementation | N |
-| `validation` | Implement -> validate loop | 2 |
-| `security-review` | Implement -> review -> fix -> re-review | 2-3 |
+| Tests | Bash `assert_*` helpers |
 
 </details>
 
 <details>
 <summary><b>Implementation Status</b></summary>
 
-23 skills, 23 commands, 4 workflow templates, 31 test suites.
-
 | Plan | Scope | Status |
 |------|-------|--------|
-| 1 — Foundation | Scaffold, one-liner installer | Done |
-| 2 — Context Tree Engine | CRUD, BM25 search, scoring/maturity, archival, sync | Done |
-| 3 — Hooks & Core Skills | Session-start/prompt-submit hooks, 5 core skills, 3 commands | Done |
-| 4 — Team Collaboration | 6 team skills, collaborate command, dispatcher agent | Done |
-| 5 — Multi-Agent Bus | Agent registry, 4 workflow templates, message protocol | Done |
-| 6 — Workflow Skills | investigate, design, implement workflows | Done |
-| 7 — Best-of-Both Merge | Sourceable library architecture, flat manifest, structured JSON hooks | Done |
-| 8 — Ollama / Linux | Ollama backend, cross-platform support | Done |
-| 9 — Remote Backend | `XGH_BACKEND=remote` — point at another machine's server | Done |
-
-Plan documents are in `docs/plans/`.
+| 1 — Foundation | Scaffold, installer | Done |
+| 2 — Context Tree Engine | CRUD, BM25, scoring, sync | Done |
+| 3 — Hooks & Core Skills | Session-start hooks, core skills | Done |
+| 4 — Team Collaboration | Team skills, dispatcher agent | Done |
+| 5 — Multi-Agent Bus | Agent registry, workflow templates | Done |
+| 6 — Workflow Skills | investigate, design, implement | Done |
+| 7 — Briefing | Session briefing | Done |
+| 8 — Ollama / Linux | Cross-platform backend support | Done |
+| 9 — Remote Backend | `XGH_BACKEND=remote` | Done |
 
 </details>
 
 ## Trust & Privacy
 
-- **Nothing leaves your machine.** All memory, vectors, and context stay local. No telemetry, no cloud sync, no account.
-- **No vendor lock-in.** Swap providers without reinstalling. Open standards, no proprietary formats.
-- **Git-native knowledge.** The context tree is plain markdown committed to your repo. Review it in PRs, grep it in CI, read it without xgh.
-- **Fully open source.** MIT licensed. Read every line.
+- **Nothing leaves your machine.** All memory and context stay local. No telemetry, no cloud sync.
+- **Git-native knowledge.** Context tree is plain markdown in your repo — reviewable in PRs, greppable in CI.
+- **Fully open source.** MIT licensed.
 
 ## Contributing
 
-1. Read [`AGENTS.md`](AGENTS.md) for development conventions
+1. Read [`AGENTS.md`](AGENTS.md) for conventions
 2. Write a failing test first (`tests/`)
-3. Implement the feature
-4. Run tests: `for t in tests/test-*.sh; do bash "$t"; done`
-5. Open a PR — context tree diffs are normal and expected
-
-<details>
-<summary><b>Development tips</b></summary>
-
-```bash
-# Install from local repo for development
-claude plugin install .
-/xgh-init
-
-# Run all tests
-for t in tests/test-*.sh; do echo -n "$(basename $t): "; bash "$t" 2>&1 | tail -1; done
-```
-
-</details>
+3. Run tests: `bash tests/test-config.sh && bash tests/test-skills.sh && bash tests/test-commands.sh`
+4. Open a PR targeting `develop`
 
 ## License
 
@@ -263,4 +205,4 @@ MIT — see [LICENSE](LICENSE).
 
 ---
 
-*xgh is inspired by [Fastlane](https://fastlane.tools), [ByteRover](https://byterover.dev), and the [Superpowers methodology](https://www.claudesuperpowers.com). It is an open, self-hosted, provider-agnostic alternative.*
+*Inspired by [Fastlane](https://fastlane.tools), [Terraform](https://terraform.io), and the [Superpowers methodology](https://www.claudesuperpowers.com).*

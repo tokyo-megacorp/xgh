@@ -64,7 +64,6 @@ field_mapping:
   customfield_10002: "effort_points"    # Story points
   customfield_10003: "customer_impact"  # Customer impact flag
 
----
 # SCENARIO: Engineering team (coordinating sprint work)
 #
 # projects:
@@ -95,7 +94,6 @@ field_mapping:
 #   - key: RELIABILITY
 #     jql: 'project = RELIABILITY AND sprint in openSprints()'
 
----
 # JQL SYNTAX QUICK REFERENCE:
 #
 # • Updated since cursor:
@@ -121,7 +119,6 @@ field_mapping:
 #
 # Full JQL reference: https://support.atlassian.com/jira-cloud-platform/docs/jql-fields/
 
----
 # TIPS:
 #
 # • Cursor performance: Start with a small page_size (50) and test.

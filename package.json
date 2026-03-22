@@ -1,0 +1,29 @@
+{
+  "name": "@extreme-go-horse/xgh",
+  "version": "2.0.0",
+  "description": "The developer's cockpit — memory, compression, context efficiency, and dev methodology",
+  "keywords": [
+    "claude-code",
+    "claude-code-plugin",
+    "memory",
+    "context",
+    "workflow",
+    "cockpit",
+    "devtools",
+    "ai",
+    "llm"
+  ],
+  "author": {
+    "name": "Pedro Almeida",
+    "email": "ipedro@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/extreme-go-horse/xgh",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/extreme-go-horse/xgh.git"
+  },
+  "license": "MIT",
+  "files": [
+    ".claude-plugin/"
+  ]
+}

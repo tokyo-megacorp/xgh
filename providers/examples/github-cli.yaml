@@ -20,7 +20,7 @@ cursor_strategy: iso8601
 
 repos:
   # PRIMARY PROJECT
-  - owner: ipedro
+  - owner: extreme-go-horse
     repo: xgh
     sources: [pull_requests, issues, discussions, actions, security_alerts, releases]
     watch_prs:

@@ -1,0 +1,6 @@
+name: briefing
+headline: "Start every session briefed"
+description: "One command pulls Slack, Jira, GitHub, and past sessions into an actionable summary."
+detail: "Before you type a single command, your AI has already read your Slack threads, checked Jira tickets, and scanned GitHub PRs. A prioritized summary tells you what needs attention right now."
+icon: "📋"
+order: 2

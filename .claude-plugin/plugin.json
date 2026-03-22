@@ -4,10 +4,10 @@
   "version": "2.0.0",
   "author": {
     "name": "Pedro Almeida",
-    "email": "ipedro@users.noreply.github.com"
+    "email": "pedro.almeida@users.noreply.github.com"
   },
-  "homepage": "https://github.com/ipedro/xgh",
-  "repository": "https://github.com/ipedro/xgh",
+  "homepage": "https://github.com/extreme-go-horse/xgh",
+  "repository": "https://github.com/extreme-go-horse/xgh",
   "license": "MIT",
   "keywords": ["memory", "context", "workflow", "cockpit", "devtools"]
 }

@@ -1,0 +1,6 @@
+name: methodology
+headline: "Built-in dev methodology"
+description: "Superpowers skills enforce TDD, plans, reviews, and branch hygiene automatically."
+detail: "Planning, test-driven development, code review, and branch hygiene — enforced at every step. Your AI follows the methodology so you can focus on the architecture."
+icon: "🏗️"
+order: 5

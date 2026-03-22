@@ -57,6 +57,7 @@ Output using this exact format:
 | `/xgh-gemini` | Dispatch tasks to Gemini CLI (exec or review) |
 | `/xgh-opencode` | Dispatch tasks to OpenCode CLI (exec or review) |
 | `/xgh-seed` | Inject xgh project context into other CLI agents' skill directories |
+| `/xgh-copilot-pr-review` | Manage GitHub Copilot PR code reviews — request, re-review, status, comments, reply, delegate |
 | `/xgh-collab` | Coordinate with other AI agents |
 | `/xgh-curate` | Store knowledge in memory + context tree |
 | `/xgh-profile` | Analyze an engineer's Jira throughput |

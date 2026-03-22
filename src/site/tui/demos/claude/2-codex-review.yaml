@@ -1,0 +1,35 @@
+name: codex-review
+label: "codex review"
+label_color: orange
+command: "/xgh-codex review --base main"
+
+steps:
+  - skill: "xgh:codex"
+
+  - tool: Bash
+    args: "codex --version"
+    output: "0.116.0"
+    delay: 500
+
+  - response:
+      - { dim: "Dispatch type:", blue: " review", dim2: " · target:", yellow: " --base main" }
+
+  - agent: "xgh:codex-driver · dispatching..."
+    lines:
+      - "sandbox: disk-full-read-access"
+      - "dir: /Users/pedro/Developer/xgh"
+    delay: 1200
+
+  - tool: Bash
+    args: "codex review --base main -c 'sandbox_permissions=[...]'"
+    output:
+      - "Reviewing 14 changed files vs main..."
+      - { green: "✓ No critical issues found" }
+      - { yellow: "⚠ 2 suggestions (low priority)" }
+    delay: 2200
+
+  - blank: true
+
+  - response:
+      - { green: "✓ Codex review complete" }
+      - { dim: "0 critical · 2 suggestions · ready to merge" }

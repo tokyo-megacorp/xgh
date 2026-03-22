@@ -26,7 +26,7 @@ cursor_strategy: iso8601
 
 repos:
   # Flagship project — all sources, watch important PRs
-  - owner: ipedro
+  - owner: extreme-go-horse
     repo: xgh
     sources: [issues, pull_requests, discussions, actions, security_alerts, releases]
     watch_prs:
@@ -63,7 +63,7 @@ repos:
 # state_filter: "open"                    # "open", "closed", "all" (default: "all")
 # labels_include: ["urgent", "team"]      # Match any label (OR logic)
 # labels_exclude: ["wontfix"]             # Skip issues with these labels (AND logic)
-# assignee_filter: ["ipedro", "pedro"]    # Match any assignee (OR logic)
+# assignee_filter: ["extreme-go-horse", "pedro"]    # Match any assignee (OR logic)
 
 # ── Advanced: Notifications (Global) ────────────────────────────────────
 # Unlike repo-specific sources, notifications span your entire GitHub account:
@@ -73,7 +73,6 @@ watch_notifications:
   - "reason:assign"              # Assigned directly
   - "reason:review_requested"    # Code review requested
 
----
 # SCENARIO: Solo developer tracking multiple active projects
 #
 # Replace repos with your active projects. For each:
@@ -108,7 +107,6 @@ watch_notifications:
 #
 # Then use /xgh-analyze to synthesize alerts into a digest.
 
----
 # TIPS:
 #
 # • Watch filters use GitHub search syntax (https://github.com/search/syntax)

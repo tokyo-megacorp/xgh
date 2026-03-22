@@ -1,1 +1,1 @@
-Work on PROJ-42 — the OAuth Jira ticket.
+/xgh-implement https://linear.app/myteam/issue/PROJ-42

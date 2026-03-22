@@ -1,3 +1,4 @@
+.xgh/babysit-prs-state.json
 .xgh/connectors.json
 .xgh/models.env
 .xgh/ingest.yaml
@@ -6,8 +7,17 @@
 .xgh/inbox/
 data/cipher-sessions.db*
 .claude/settings.local.json
+CLAUDE.md
 .worktrees/
 .mcp.json
 .xgh/local/
+.xgh/model-profiles.yaml
 .worktrees/
 .lossless-claude/
+.serena/
+CLAUDE.md
+CLAUDE.local.md
+node-compile-cache/
+playwright-transform-cache-*/
+playwright_chromiumdev_profile-*/
+.claude/worktrees/

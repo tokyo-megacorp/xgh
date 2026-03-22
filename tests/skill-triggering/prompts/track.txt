@@ -1,1 +1,1 @@
-Add my new iOS project to xgh monitoring. The Slack channel is #mobile-app and the Jira board is MOBILE.
+add this repo to xgh monitoring

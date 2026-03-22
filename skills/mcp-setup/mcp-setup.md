@@ -149,7 +149,7 @@ Then add to `.claude/.mcp.json`:
 
 lossless-claude should already be configured by xgh install. If missing:
 1. Check if `.claude/.mcp.json` exists with lossless-claude config
-2. If not: run `claude plugin install xgh@ipedro` then `/xgh-init`
+2. If not: run `claude plugin install xgh@extreme-go-horse` then `/xgh-init`
 
 ### GitHub
 

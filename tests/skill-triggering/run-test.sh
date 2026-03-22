@@ -37,9 +37,9 @@ LOG_DIR="${XGH_TEST_LOG_DIR:-/tmp/xgh-test-logs}"
 [ -f "$PROMPT_FILE" ] || { echo "Error: prompt file not found: $PROMPT_FILE"; exit 1; }
 PROMPT=$(cat "$PROMPT_FILE")
 
-# Persistent log dir keyed by skill name (overwritten each run for easy debugging)
-SKILL_SLUG="${SKILL_NAME//:/--}"
-OUTPUT_DIR="${LOG_DIR}/skill-${SKILL_SLUG}"
+# Output dir: use LOG_DIR directly. When called from run-all.sh, LOG_DIR is
+# already per-variant; when called standalone it lands in the base log dir.
+OUTPUT_DIR="${LOG_DIR}"
 mkdir -p "$OUTPUT_DIR"
 
 LOG_FILE="$OUTPUT_DIR/claude-output.json"

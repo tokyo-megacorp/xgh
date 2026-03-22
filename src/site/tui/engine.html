@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>/* %%PAGE_TITLE%% */</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* %%CSS_VARS%% */
+    }
+
+    body {
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3rem;
+    }
+
+    /* ── macOS window ── */
+    .window {
+      width: 860px;
+      height: 580px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 40px 100px rgba(0,0,0,0.9),
+        0 0 80px rgba(0,0,0,0.6);
+      background: var(--window);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title-bar {
+      height: 38px;
+      background: var(--titlebar);
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: relative;
+      user-select: none;
+    }
+    .traffic-lights { display: flex; gap: 6px; flex-shrink: 0; }
+    .tl { width: 12px; height: 12px; border-radius: 50%; }
+    .tl-red    { background: var(--tl-red); }
+    .tl-yellow { background: var(--tl-yellow); }
+    .tl-green  { background: var(--tl-green); }
+    .title-text {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      font-size: 12px; color: var(--text-dim); letter-spacing: 0.01em; white-space: nowrap;
+    }
+    .title-text .dim    { color: var(--text-muted); }
+    .title-text .bright { color: var(--text-dim); }
+    .title-text .star   { color: var(--accent); }
+
+    /* ── Header ── */
+    .cc-header {
+      padding: 16px 20px 14px;
+      display: flex; align-items: flex-start; gap: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    canvas.cc-icon { display: block; width: 52px; height: 52px; flex-shrink: 0; image-rendering: pixelated; }
+    .cc-info { line-height: 1.5; }
+    .cc-name    { font-size: 14px; font-weight: 700; color: var(--text-bright); display: inline; }
+    .cc-version { font-size: 14px; font-weight: 400; color: var(--text-dim); display: inline; margin-left: 6px; }
+    .cc-model   { font-size: 12px; color: var(--text-dim); display: block; margin-top: 1px; }
+    .cc-path    { font-size: 12px; color: var(--text-dim); display: block; text-decoration: none; cursor: pointer; transition: color 0.15s ease; }
+    .cc-path:hover { color: var(--accent); }
+
+    /* ── Conversation ── */
+    .conversation { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+    .conv-inner {
+      min-height: 100%; display: flex; flex-direction: column;
+      justify-content: flex-end; padding: 12px 20px 8px;
+    }
+    .conversation::-webkit-scrollbar { width: 4px; }
+    .conversation::-webkit-scrollbar-track { background: transparent; }
+    .conversation::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+    /* ── Input area ── */
+    .input-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.07);
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .input-label {
+      position: absolute;
+      right: 0; top: 50%;
+      transform: translateY(-50%);
+      color: var(--window);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.2s;
+      pointer-events: none;
+    }
+
+    .input-row {
+      padding: 8px 20px 10px;
+      display: flex; align-items: center; gap: 6px;
+      cursor: text;
+    }
+    .prompt-chevron { color: var(--text-bright); font-size: 14px; font-weight: 600; flex-shrink: 0; padding-top: 1px; }
+    .prompt-input   { color: var(--text-bright); font-size: 13px; flex: 1; }
+    .prompt-cursor  {
+      display: inline-block; width: 8px; height: 15px;
+      background: var(--text-bright); vertical-align: text-bottom;
+      animation: blink 1s step-end infinite; margin-left: 1px;
+    }
+    .prompt-cursor.hidden { display: none; }
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
+    /* ── Animations ── */
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Autocomplete panel ── */
+    .autocomplete {
+      display: none;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 4px 0;
+      max-height: 180px;
+      overflow-y: auto;
+      animation: fadeSlideIn 0.15s ease-out;
+    }
+    .autocomplete.visible { display: block; }
+    .ac-row {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 0;
+      padding: 3px 20px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .ac-row { transition: background 0.1s ease; }
+    .ac-row:hover { background: rgba(255,255,255,0.04); }
+    .ac-row.highlighted .ac-cmd { color: var(--accent); }
+    .ac-cmd  { color: var(--blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ac-desc { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 12px; }
+    .ac-row.highlighted .ac-desc { color: var(--accent); }
+
+    /* ── Status bar ── */
+    .status-bar {
+      height: 26px; background: var(--titlebar);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; font-size: 11.5px;
+    }
+    .status-left  { color: var(--text-muted); }
+    .status-right { color: var(--red); }
+    .status-right .sep { color: var(--text-muted); margin: 0 4px; }
+    .status-cmd   { color: var(--blue); }
+
+    /* ── Turns ── */
+    .turn-human {
+      display: flex; align-items: flex-start; gap: 6px; margin-bottom: 8px;
+      animation: fadeSlideIn 0.2s ease-out;
+    }
+    .prompt-chevron-conv { color: var(--text-bright); font-size: 14px; font-weight: 600; flex-shrink: 0; padding-top: 1px; }
+    .turn-assistant { margin-bottom: 12px; }
+
+    .tool-block { display: flex; align-items: flex-start; margin: 3px 0; color: var(--text-dim); font-size: 12px; animation: fadeSlideIn 0.2s ease-out; }
+    .tool-corner { color: var(--text-muted); flex-shrink: 0; margin-right: 4px; }
+    .tool-name   { color: var(--blue); }
+    .tool-args   { color: var(--text-dim); }
+    .tool-output { padding-left: 16px; font-size: 12px; animation: fadeSlideIn 0.15s ease-out; }
+    .tool-output-line { display: block; color: var(--text-muted); }
+
+    .spinner { display: inline-block; color: var(--blue); font-size: 12px; }
+    .resp-text   { color: var(--text); font-size: 13px; line-height: 1.65; animation: fadeSlideIn 0.2s ease-out; }
+    .resp-bold   { color: var(--text-bright); font-weight: 600; }
+    .resp-green  { color: var(--green); }
+    .resp-orange { color: var(--orange); }
+    .resp-red    { color: var(--red); }
+    .resp-blue   { color: var(--blue); }
+    .resp-dim    { color: var(--text-dim); }
+    .resp-yellow { color: var(--yellow); }
+    .resp-purple { color: var(--purple); }
+    .resp-cyan   { color: var(--cyan); }
+    .resp-pink   { color: var(--pink); }
+    .resp-accent { color: var(--accent); }
+
+    .skill-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: color-mix(in srgb, var(--blue) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent);
+      border-radius: 3px; padding: 3px 8px;
+      font-size: 11px; color: var(--blue); margin: 4px 0;
+      animation: fadeSlideIn 0.2s ease-out;
+    }
+    .agent-block {
+      background: color-mix(in srgb, var(--green) 5%, transparent);
+      border: 1px solid color-mix(in srgb, var(--green) 15%, transparent);
+      border-left: 2px solid var(--green);
+      padding: 6px 10px; margin: 6px 0; font-size: 12px;
+      animation: fadeSlideIn 0.25s ease-out;
+    }
+    .agent-label { color: var(--green); font-weight: 600; font-size: 11px; margin-bottom: 2px; }
+    .agent-text  { color: var(--text-dim); }
+  </style>
+</head>
+<body>
+<div class="window">
+
+  <div class="title-bar">
+    <div class="traffic-lights">
+      <div class="tl tl-red"></div>
+      <div class="tl tl-yellow"></div>
+      <div class="tl tl-green"></div>
+    </div>
+    <div class="title-text" id="title-text">
+      <span class="dim"></span>
+      <span class="dim"> — </span>
+      <span class="star">✳</span>
+      <span class="bright"> Claude Code</span>
+      <span class="dim"></span>
+    </div>
+  </div>
+
+  <div class="cc-header">
+    <canvas class="cc-icon" width="52" height="52" id="cc-icon"></canvas>
+    <div class="cc-info">
+      <span class="cc-name" id="cc-name"></span>
+      <span class="cc-version" id="cc-version"></span>
+      <span class="cc-model" id="cc-model"></span>
+      <a class="cc-path" id="cc-path" href="#" target="_blank" rel="noopener"></a>
+    </div>
+  </div>
+
+  <div class="conversation" id="conv-scroll">
+    <div class="conv-inner" id="conv"></div>
+  </div>
+
+  <div class="input-divider" id="input-divider">
+    <div class="input-label" id="input-label"></div>
+  </div>
+  <div class="input-row" id="input-row">
+    <span class="prompt-chevron" id="prompt-chevron">›</span>
+    <span class="prompt-input" id="input-text"></span>
+    <span class="prompt-cursor hidden" id="cursor"></span>
+  </div>
+  <div class="autocomplete" id="autocomplete"></div>
+
+  <div class="status-bar">
+    <span class="status-left" id="status-left"></span>
+    <span class="status-right" id="status-right"></span>
+  </div>
+</div>
+
+<script>
+// ── Fallback test config (used when file is opened directly in browser) ────────
+if (typeof window.__TUI_SHELL === 'undefined') {
+  window.__TUI_SHELL = {
+    name: "claude",
+    title: "eXtreme Go Horse",
+    version: "v2.0.0",
+    path: { text: "claude plugin install xgh@extreme-go-horse", url: "#install" },
+    prompt: "›",
+    titlebar: { text: "extreme-go-horse", detail: "— bun • claude --dangerously-skip-permissions — 102×31" },
+    models: [
+      "medium effort",
+      "high effort",
+      "max effort",
+      "low effort",
+      "xhigh effort"
+    ],
+    theme: {
+      bg: "#0d0e17", window: "#1a1b26", titlebar: "#16171f",
+      text: "#a9b1d6", "text-bright": "#c0caf5", "text-dim": "#565f89",
+      "text-muted": "#3b3f5c", accent: "#7aa2f7", scrollbar: "#2e3154",
+      green: "#9ece6a", orange: "#ff9e64", red: "#f7768e", yellow: "#e0af68",
+      blue: "#7aa2f7", purple: "#bb9af7", cyan: "#7dcfff", pink: "#ff6ec7",
+      "tl-red": "#ff5f57", "tl-yellow": "#febc2e", "tl-green": "#28c840"
+    },
+    status: { left: "? for shortcuts · hold Space to speak", right: null },
+    icon: "claude",
+    colors: {
+      pink: "#ff6ec7", yellow: "#e0af68", orange: "#ff9e64",
+      green: "#9ece6a", blue: "#7aa2f7", purple: "#bb9af7",
+      red: "#f7768e", cyan: "#7dcfff"
+    }
+  };
+}
+
+if (typeof window.__TUI_DEMOS === 'undefined') {
+  window.__TUI_DEMOS = [
+    {
+      name: "briefing", label: "xgh brief", label_color: "cyan",
+      command: "/xgh-brief",
+      steps: [
+        { skill: "xgh:briefing" },
+        { tool: "lcm_search", args: '"today context, recent work"', output: "→ 12 memories matched · last session: 3h ago", delay: 700 },
+        { tool: "Bash", args: "git log --oneline -5", output: ["ba6ccc1 chore: update all public-facing refs to extreme-go-horse org", "c056428 chore: move npm scope to @extreme-go-horse", "9269bcc fix: address Copilot review round-2 comments"], delay: 500 },
+        { tool: "Bash", args: "gh pr list --limit 5 --json number,title,state", output: "#20  feat/agents-md-generator  OPEN", delay: 600 },
+        { blank: true },
+        { response: [
+          { bold: "## Session Briefing" },
+          { dim: "─────────────────────────────────────" },
+          { icon: "✓", color: "green", bold: "PR #20", dim: "open · awaiting Copilot re-review" },
+          { icon: "✓", color: "green", bold: "npm published", dim: "@extreme-go-horse/xgh@2.0.0" },
+          { icon: "→", color: "yellow", bold: "5 commits", dim: "since last session" },
+          { dim: "─────────────────────────────────────" },
+          { dim: "Next: merge PR #20 once review is clean" }
+        ]}
+      ]
+    },
+    {
+      name: "codex-review", label: "codex review", label_color: "orange",
+      command: "/xgh-codex review --base main",
+      steps: [
+        { skill: "xgh:codex" },
+        { tool: "Bash", args: "codex --version", output: "0.116.0", delay: 500 },
+        { response: [{ dim: "Dispatch type:", blue: " review", dim2: " · target:", yellow: " --base main" }] },
+        { agent: "xgh:codex-driver · dispatching...", lines: ["sandbox: disk-full-read-access", "dir: /Users/pedro/Developer/xgh"], delay: 1200 },
+        { tool: "Bash", args: "codex review --base main -c 'sandbox_permissions=[...]'", output: ["Reviewing 14 changed files vs main...", { green: "✓ No critical issues found" }, { yellow: "⚠ 2 suggestions (low priority)" }], delay: 2200 },
+        { blank: true },
+        { response: [{ green: "✓ Codex review complete" }, { dim: "0 critical · 2 suggestions · ready to merge" }] }
+      ]
+    },
+    {
+      name: "memory", label: "memory", label_color: "purple",
+      input: "how does seed-global-config work?",
+      steps: [
+        { tool: "lcm_search", args: '"seed-global-config, marker injection"', output: ['→ Memory: "uses <!-- xgh:begin --> markers for idempotent injection"', '→ Memory: "arg-count guard added in fix commit 9269bcc"'], delay: 700 },
+        { tool: "Read", args: "scripts/seed-global-config.sh", output: "57 lines · last modified: today", delay: 500 },
+        { blank: true },
+        { response: [
+          { bold: "seed-global-config.sh", dim: " — idempotent marker injection" },
+          "",
+          { dim: "Args:", yellow: " <target> <marker-name> <content-file>" },
+          { green: "  1.", dim: " File missing → create with markers" },
+          { green: "  2.", dim: " File exists, no markers → append section" },
+          { green: "  3.", dim: " Markers present → replace only that section" },
+          "",
+          { dim: "Tilde expansion +", yellow: " mkdir -p", dim2: " handle all path cases." }
+        ]}
+      ]
+    }
+  ];
+}
+
+if (typeof window.__TUI_COMMANDS === 'undefined') {
+  window.__TUI_COMMANDS = [
+    { command: "/install",   description: "How to install xgh",                        response: [{ bold: "Install xgh" }, "", { dim: "1. Install the plugin:" }, { blue: "   claude plugin install xgh@extreme-go-horse" }, "", { dim: "2. Run first-time setup:" }, { blue: "   /xgh-init" }, "", { dim: "3. Start your session:" }, { blue: "   /xgh-brief" }, "", { dim: "Or via npm:", blue: " npm i @extreme-go-horse/xgh" }] },
+    { command: "/about",     description: "What is xgh",                               response: [{ bold: "xgh — eXtreme Go Horse" }, { dim: "Claude on the fastlane. 🐴" }, "", { dim: "The developer's cockpit for Claude Code:" }, { icon: "✓", color: "green", dim: "Persistent memory across sessions (lossless-claude)" }, { icon: "✓", color: "green", dim: "Context compression — 60–90% token savings" }, { icon: "✓", color: "green", dim: "9 specialized agents (codex-driver, pr-reviewer…)" }, { icon: "✓", color: "green", dim: "Automated Slack/Jira/GitHub retrieval" }, { icon: "✓", color: "green", dim: "Superpowers workflow methodology" }, "", { dim: "github.com/extreme-go-horse/xgh" }] },
+    { command: "/help",      description: "List all commands",                         handler: "help" },
+    { command: "/xgh-brief", description: "Run a session briefing" },
+    { command: "/xgh-codex", description: "Dispatch to Codex CLI" },
+    { command: "/color",     description: "Change prompt accent color for this session", handler: "color" },
+    { command: "/rename",    description: "Set a custom label on the input divider",   handler: "rename" }
+  ];
+}
+
+// ── Data injection points ─────────────────────────────────────────────────────
+// %%SHELL_DATA%%
+// %%DEMOS_DATA%%
+// %%COMMANDS_DATA%%
+
+// ── Aliases ───────────────────────────────────────────────────────────────────
+const S    = window.__TUI_SHELL;
+const DEMOS = window.__TUI_DEMOS;
+const CMDS  = window.__TUI_COMMANDS;
+
+// ── Icon renderers ────────────────────────────────────────────────────────────
+const ICONS = {
+  claude(canvas) {
+    const ctx = canvas.getContext('2d');
+    const PS = 3.25;
+    const O = '#C87941', B = '#A8622F';
+    // Eye color uses the window bg so pupils are "cut out"
+    const D = (S.theme && S.theme.window) ? S.theme.window : '#1a1b26';
+    const px = [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+      [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,0,1,1,2,2,1,1,2,2,1,1,0,0,0],
+      [0,0,0,1,1,2,2,1,1,2,2,1,1,0,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,0,1,1,2,2,2,2,2,2,1,1,0,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+      [0,0,0,3,3,1,1,3,3,1,1,3,3,0,0,0],
+      [0,0,0,3,3,1,1,3,3,1,1,3,3,0,0,0],
+      [0,0,0,3,3,3,3,3,3,3,3,3,3,0,0,0],
+      [0,0,0,3,3,3,3,3,3,3,3,3,3,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ];
+    for (let r = 0; r < 16; r++)
+      for (let c = 0; c < 16; c++) {
+        const v = px[r][c];
+        if (!v) continue;
+        ctx.fillStyle = v === 1 ? O : v === 2 ? D : B;
+        ctx.fillRect(c * PS, r * PS, PS, PS);
+      }
+  }
+};
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const convScroll = document.getElementById('conv-scroll');
+const conv       = document.getElementById('conv');
+const inputEl    = document.getElementById('input-text');
+const cursorEl   = document.getElementById('cursor');
+const dividerEl  = document.getElementById('input-divider');
+const labelEl    = document.getElementById('input-label');
+const acEl       = document.getElementById('autocomplete');
+
+// ── Init: populate from __TUI_SHELL ──────────────────────────────────────────
+(function initShell() {
+  // Apply CSS vars from theme
+  if (S.theme) {
+    const root = document.documentElement;
+    for (const [k, v] of Object.entries(S.theme)) {
+      root.style.setProperty('--' + k, v);
+    }
+  }
+
+  // Title bar
+  const titleEl = document.getElementById('title-text');
+  if (titleEl && S.titlebar) {
+    titleEl.innerHTML =
+      `<span class="dim">${esc(S.titlebar.text)}</span>` +
+      `<span class="dim"> — </span>` +
+      `<span class="star">✳</span>` +
+      `<span class="bright"> ${esc(S.title)}</span>` +
+      `<span class="dim"> ${esc(S.titlebar.detail)}</span>`;
+  }
+
+  // Header
+  document.getElementById('cc-name').textContent = S.title || '';
+  document.getElementById('cc-version').textContent = S.version || '';
+  document.getElementById('cc-model').textContent =
+    S.models ? S.models[Math.floor(Math.random() * S.models.length)] : '';
+
+  const pathEl = document.getElementById('cc-path');
+  if (pathEl && S.path) {
+    pathEl.textContent = S.path.text || '';
+    pathEl.href = S.path.url || '#';
+    pathEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      const installCmd = S.path.text || '';
+      navigator.clipboard.writeText(installCmd).then(() => {
+        const original = pathEl.textContent;
+        pathEl.textContent = 'Copied!';
+        pathEl.style.color = 'var(--green)';
+        setTimeout(() => {
+          pathEl.textContent = original;
+          pathEl.style.color = '';
+        }, 1500);
+      });
+    });
+  }
+
+  // Prompt char
+  const chevronEl = document.getElementById('prompt-chevron');
+  if (chevronEl && S.prompt) chevronEl.textContent = S.prompt;
+
+  // Status bar
+  document.getElementById('status-left').textContent = (S.status && S.status.left) ? S.status.left : '';
+  if (S.status && S.status.right) {
+    document.getElementById('status-right').innerHTML =
+      `${esc(S.status.right)}<span class="sep">·</span><span class="status-cmd">/mcp</span>`;
+  }
+
+  // Icon
+  const canvas = document.getElementById('cc-icon');
+  if (canvas && S.icon && ICONS[S.icon]) {
+    ICONS[S.icon](canvas);
+  }
+})();
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function scrollBottom() {
+  convScroll.scrollTop = convScroll.scrollHeight;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function clearConv() { conv.innerHTML = ''; }
+
+// ── Spinner ───────────────────────────────────────────────────────────────────
+const SPIN = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
+let spinIdx = 0;
+setInterval(() => { spinIdx = (spinIdx+1) % SPIN.length; }, 80);
+
+// ── Interactive state ─────────────────────────────────────────────────────────
+let interactive = false;
+let demoRunning = false;
+let demoAbort   = false;
+let exitGen     = 0;
+let typedValue  = '';
+
+// User preferences (persist through demo/interactive cycles)
+const userPrefs = { label: null, color: null };
+
+// ── Divider helpers ───────────────────────────────────────────────────────────
+function updateDivider(label, color) {
+  dividerEl.style.background = color || 'rgba(255,255,255,0.07)';
+  if (label) {
+    labelEl.textContent = label;
+    labelEl.style.background = color || getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#3b3f5c';
+    labelEl.style.opacity = '1';
+  } else {
+    labelEl.style.opacity = '0';
+  }
+}
+
+function setDemoContext(label, color) {
+  document.documentElement.style.setProperty('--accent', color);
+  updateDivider(label, color);
+}
+
+function applyUserPrefs() {
+  const color = userPrefs.color || null;
+  const defaultAccent = (S.theme && S.theme.accent) ? S.theme.accent : '#7aa2f7';
+  document.documentElement.style.setProperty('--accent', color || defaultAccent);
+  updateDivider(userPrefs.label, color);
+}
+
+// ── Resolve label_color string → hex ─────────────────────────────────────────
+function resolveColor(colorName) {
+  if (!colorName) return null;
+  // If already a hex value, return as-is
+  if (colorName.startsWith('#')) return colorName;
+  // Look up in theme
+  if (S.theme && S.theme[colorName]) return S.theme[colorName];
+  // Look up in colors palette
+  if (S.colors && S.colors[colorName]) return S.colors[colorName];
+  return colorName;
+}
+
+// ── Response line renderer ────────────────────────────────────────────────────
+function renderLine(line) {
+  // Empty string → empty line
+  if (line === '' || line === null || line === undefined) return '';
+
+  // Plain string → escaped text
+  if (typeof line === 'string') return esc(line);
+
+  // Object with color keys → render in fixed order
+  let html = '';
+
+  if (line.icon !== undefined) {
+    const rawColor = resolveColor(line.color) || 'inherit';
+    // Sanitize: strip characters that could break out of a CSS value context
+    const iconColor = rawColor.replace(/["';\\]/g, '');
+    html += `<span style="color:${iconColor}">${esc(line.icon)}</span> `;
+  }
+  if (line.bold !== undefined) html += `<span class="resp-bold">${esc(line.bold)}</span>`;
+  if (line.green !== undefined) html += `<span class="resp-green">${esc(line.green)}</span>`;
+  if (line.blue !== undefined)  html += `<span class="resp-blue">${esc(line.blue)}</span>`;
+  if (line.yellow !== undefined) html += `<span class="resp-yellow">${esc(line.yellow)}</span>`;
+  if (line.orange !== undefined) html += `<span class="resp-orange">${esc(line.orange)}</span>`;
+  if (line.red !== undefined)   html += `<span class="resp-red">${esc(line.red)}</span>`;
+  if (line.purple !== undefined) html += `<span class="resp-purple">${esc(line.purple)}</span>`;
+  if (line.cyan !== undefined)  html += `<span class="resp-cyan">${esc(line.cyan)}</span>`;
+  if (line.pink !== undefined)  html += `<span class="resp-pink">${esc(line.pink)}</span>`;
+  if (line.dim !== undefined)   html += `<span class="resp-dim">${esc(line.dim)}</span>`;
+  if (line.dim2 !== undefined)  html += `<span class="resp-dim">${esc(line.dim2)}</span>`;
+
+  return html;
+}
+
+// ── Turn builders ─────────────────────────────────────────────────────────────
+async function typeInput(text, wpm = 280) {
+  cursorEl.classList.remove('hidden');
+  inputEl.textContent = '';
+  const delay = 60000 / (wpm * 5);
+  for (const ch of text) {
+    if (demoAbort) return;
+    inputEl.textContent += ch;
+    await sleep(delay + (Math.random() * 30 - 15));
+  }
+  await sleep(180);
+}
+
+function clearInput() { inputEl.textContent = ''; }
+
+function commitInput(text) {
+  const turn = document.createElement('div');
+  turn.className = 'turn-human';
+  turn.innerHTML = `<span class="prompt-chevron-conv">${esc(S.prompt || '›')}</span><span class="prompt-input">&nbsp;${esc(text)}</span>`;
+  conv.appendChild(turn);
+  clearInput();
+  scrollBottom();
+}
+
+function assistantTurn() {
+  const div = document.createElement('div');
+  div.className = 'turn-assistant';
+  conv.appendChild(div);
+  return div;
+}
+
+function appendToolBlock(parent, name, args) {
+  const block = document.createElement('div');
+  block.className = 'tool-block';
+  const spinEl = document.createElement('span');
+  spinEl.className = 'spinner';
+  block.innerHTML = `<span class="tool-corner">⎿ </span><span class="tool-name">${esc(name)}</span><span class="tool-args">${esc(args ? '('+args+')' : '')}</span>&nbsp;&nbsp;`;
+  block.appendChild(spinEl);
+  parent.appendChild(block);
+  const outZone = document.createElement('div');
+  outZone.className = 'tool-output';
+  outZone.style.display = 'none';
+  parent.appendChild(outZone);
+  scrollBottom();
+
+  let frame;
+  const tick = () => { if (spinEl.isConnected) { spinEl.textContent = SPIN[spinIdx]; frame = requestAnimationFrame(tick); } };
+  frame = requestAnimationFrame(tick);
+
+  return { spinEl, outZone, cancelSpin: () => cancelAnimationFrame(frame) };
+}
+
+async function resolveToolBlock({ spinEl, outZone, cancelSpin }, lines, delay = 600) {
+  await sleep(delay);
+  cancelSpin();
+  spinEl.remove();
+  if (lines && lines.length) {
+    outZone.style.display = 'block';
+    const lineArr = Array.isArray(lines) ? lines : [lines];
+    for (const line of lineArr) {
+      const s = document.createElement('span');
+      s.className = 'tool-output-line';
+      // tool output lines may be strings or renderLine-compatible objects
+      s.innerHTML = typeof line === 'string'
+        ? `<span class="resp-dim">${esc(line)}</span>`
+        : renderLine(line);
+      outZone.appendChild(s);
+    }
+  }
+  scrollBottom();
+}
+
+function appendLines(parent, htmlLines) {
+  for (const line of htmlLines) {
+    const p = document.createElement('div');
+    p.className = 'resp-text';
+    p.innerHTML = line;
+    parent.appendChild(p);
+  }
+  scrollBottom();
+}
+
+function appendSkillBadge(parent, skill) {
+  const d = document.createElement('div');
+  d.className = 'skill-badge';
+  d.innerHTML = `<span>⚡</span> Using skill: <strong>${esc(skill)}</strong>`;
+  parent.appendChild(d);
+  scrollBottom();
+}
+
+function appendAgentBlock(parent, label, lines) {
+  const d = document.createElement('div');
+  d.className = 'agent-block';
+  d.innerHTML = `<div class="agent-label">▶ ${esc(label)}</div>` +
+    lines.map(l => `<div class="agent-text"><span class="resp-dim">${esc(l)}</span></div>`).join('');
+  parent.appendChild(d);
+  scrollBottom();
+}
+
+function appendBlank(parent) {
+  const d = document.createElement('div');
+  d.style.height = '4px';
+  parent.appendChild(d);
+}
+
+// ── Generic scene player ──────────────────────────────────────────────────────
+async function playScene(demo, { skipInput = false } = {}) {
+  // 1. Set divider context
+  const labelColor = resolveColor(demo.label_color);
+  setDemoContext(demo.label || '', labelColor || 'rgba(255,255,255,0.07)');
+
+  // 2. Type and commit the command/input (skip when called from submitCommand)
+  if (!skipInput) {
+    if (demo.command) {
+      await typeInput(demo.command);
+      if (demoAbort) return;
+      await sleep(200);
+      commitInput(demo.command);
+      cursorEl.classList.add('hidden');
+    } else if (demo.input) {
+      await sleep(800);
+      await typeInput(demo.input);
+      if (demoAbort) return;
+      await sleep(200);
+      commitInput(demo.input);
+      cursorEl.classList.add('hidden');
+    }
+  }
+
+  const at = assistantTurn();
+
+  // 3. Iterate steps
+  for (const step of (demo.steps || [])) {
+    if (demoAbort) return;
+
+    if (step.skill !== undefined) {
+      // Skill badge
+      appendSkillBadge(at, step.skill);
+      await sleep(300);
+      if (demoAbort) return;
+
+    } else if (step.tool !== undefined) {
+      // Tool block
+      const tb = appendToolBlock(at, step.tool, step.args || '');
+      const outputLines = step.output !== undefined
+        ? (Array.isArray(step.output) ? step.output : [step.output])
+        : [];
+      await resolveToolBlock(tb, outputLines, step.delay !== undefined ? step.delay : 600);
+      if (demoAbort) return;
+
+    } else if (step.blank !== undefined && step.blank) {
+      // Blank spacer
+      appendBlank(at);
+
+    } else if (step.response !== undefined) {
+      // Response lines — render each via renderLine
+      const htmlLines = step.response.map(line => renderLine(line));
+      appendLines(at, htmlLines);
+
+    } else if (step.agent !== undefined) {
+      // Agent block
+      appendAgentBlock(at, step.agent, step.lines || []);
+      await sleep(step.delay !== undefined ? step.delay : 600);
+      if (demoAbort) return;
+
+    } else if (step.input !== undefined) {
+      // Inline input step (new command mid-scene)
+      await sleep(800);
+      if (demoAbort) return;
+      await typeInput(step.input);
+      if (demoAbort) return;
+      commitInput(step.input);
+    }
+  }
+
+  // Reveal cursor at end of demo scene
+  await sleep(1000);
+  cursorEl.classList.remove('hidden');
+}
+
+// ── Demo loop ─────────────────────────────────────────────────────────────────
+async function runDemo() {
+  demoAbort   = false;
+  demoRunning = true;
+  clearConv();
+
+  while (!demoAbort) {
+    for (const demo of DEMOS) {
+      if (demoAbort) break;
+      await playScene(demo);
+      if (demoAbort) break;
+      await sleep(1500);
+      if (demoAbort) break;
+      clearConv();
+    }
+  }
+
+  demoRunning = false;
+}
+
+// ── Interactive mode ──────────────────────────────────────────────────────────
+function enterInteractive() {
+  if (interactive) return;
+  interactive = true;
+  demoAbort   = true;
+  applyUserPrefs();
+  cursorEl.classList.remove('hidden');
+  inputEl.textContent = '';
+  typedValue = '';
+  document.addEventListener('keydown', onKey);
+}
+
+function exitInteractive() {
+  interactive = false;
+  demoAbort   = false;
+  cursorEl.classList.add('hidden');
+  acEl.classList.remove('visible');
+  acEl.innerHTML = '';
+  inputEl.textContent = '';
+  typedValue = '';
+  document.removeEventListener('keydown', onKey);
+  clearConv();
+  const gen = ++exitGen;
+  sleep(600).then(() => { if (gen === exitGen) runDemo(); });
+}
+
+// Click: focus without showing autocomplete
+document.getElementById('input-row').addEventListener('click', () => {
+  if (!interactive) enterInteractive();
+});
+
+// Global keydown: start typing anywhere to enter interactive mode
+document.addEventListener('keydown', (e) => {
+  if (interactive) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key.length !== 1) return;
+  enterInteractive();
+  typedValue = e.key;
+  inputEl.textContent = typedValue;
+  acEl.classList.add('visible');
+  renderAutocomplete(typedValue);
+});
+
+function renderAutocomplete(q) {
+  const matches = q.length === 0
+    ? CMDS
+    : CMDS.filter(c => c.command.includes(q));
+  acEl.innerHTML = '';
+  matches.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'ac-row' + (i === 0 ? ' highlighted' : '');
+    row.innerHTML = `<span class="ac-cmd">${esc(c.command)}</span><span class="ac-desc">${esc(c.description || '')}</span>`;
+    row.addEventListener('click', () => submitCommand(c.command));
+    acEl.appendChild(row);
+  });
+}
+
+function onKey(e) {
+  if (!interactive) return;
+
+  if (e.key === 'Escape') { exitInteractive(); return; }
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    submitCommand(typedValue.trim());
+    return;
+  }
+
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    typedValue = typedValue.slice(0, -1);
+  } else if (e.key.length === 1) {
+    typedValue += e.key;
+  } else {
+    return;
+  }
+
+  inputEl.textContent = typedValue;
+  acEl.classList.add('visible');
+  renderAutocomplete(typedValue);
+}
+
+// ── Built-in handlers ─────────────────────────────────────────────────────────
+async function runHandler(handler, at, cmd) {
+  if (handler === 'color') {
+    await handleColor(at, cmd);
+  } else if (handler === 'rename') {
+    await handleRename(at, cmd);
+  } else if (handler === 'help') {
+    await handleHelp(at);
+  }
+}
+
+async function handleColor(at, cmd) {
+  const parts = cmd.split(/\s+/);
+  const name  = parts[1];
+  const palette = S.colors || {};
+
+  if (!name) {
+    appendLines(at, [
+      `<span class="resp-bold">Available colors:</span>`,
+      ...Object.keys(palette).map(c =>
+        `  <span style="color:${esc(palette[c])}">■</span> <span class="resp-dim">${esc(c)}</span>`
+      ),
+      ``,
+      `<span class="resp-dim">Usage: <span class="resp-blue">/color &lt;name&gt;</span></span>`,
+    ]);
+    return;
+  }
+
+  const hex = palette[name];
+  if (!hex) {
+    appendLines(at, [`<span class="resp-red">Unknown color: ${esc(name)}</span>`]);
+    return;
+  }
+
+  userPrefs.color = hex;
+  applyUserPrefs();
+  appendLines(at, [
+    `<span style="color:${esc(hex)}">■</span> Prompt color set to <span style="color:${esc(hex)};font-weight:600">${esc(name)}</span>`,
+  ]);
+}
+
+async function handleRename(at, cmd) {
+  const name = cmd.replace(/^\/rename\s*/, '').trim();
+
+  if (!name) {
+    userPrefs.label = null;
+    applyUserPrefs();
+    appendLines(at, [`<span class="resp-dim">Label cleared.</span>`]);
+    return;
+  }
+
+  userPrefs.label = name;
+  applyUserPrefs();
+  appendLines(at, [
+    `<span class="resp-dim">Label set to </span><span class="resp-bold">${esc(name)}</span>`,
+  ]);
+}
+
+async function handleHelp(at) {
+  await sleep(200);
+  appendLines(at, [`<span class="resp-bold">Available commands:</span>`, ``]);
+  CMDS.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'resp-text';
+    d.innerHTML = `  <span class="resp-blue">${esc(c.command)}</span>  <span class="resp-dim">${esc(c.description || '')}</span>`;
+    at.appendChild(d);
+  });
+  appendLines(at, [
+    ``,
+    `<span class="resp-dim">Press <span class="resp-yellow">Esc</span> to return to demo mode.</span>`,
+  ]);
+}
+
+// ── Command runner ────────────────────────────────────────────────────────────
+async function submitCommand(cmd) {
+  if (!cmd) return;
+  acEl.classList.remove('visible');
+  commitInput(cmd);
+
+  const at = assistantTurn();
+
+  // Find matching command in CMDS
+  const baseCmd = cmd.split(/\s+/)[0];
+  const cmdDef  = CMDS.find(c => c.command === baseCmd || c.command === cmd);
+
+  if (cmdDef && cmdDef.handler) {
+    // Built-in handler
+    await runHandler(cmdDef.handler, at, cmd);
+  } else if (cmdDef && cmdDef.response) {
+    // Static response
+    const htmlLines = cmdDef.response.map(line => renderLine(line));
+    appendLines(at, htmlLines);
+  } else {
+    // Check if it matches a demo command
+    const demo = DEMOS.find(d => d.command && d.command === cmd);
+    if (demo) {
+      await playScene(demo, { skipInput: true });
+    } else {
+      appendLines(at, [
+        `<span class="resp-dim">Unknown command: <span class="resp-red">${esc(cmd)}</span></span>`,
+        `<span class="resp-dim">Type <span class="resp-blue">/help</span> to see available commands.</span>`,
+      ]);
+    }
+  }
+
+  await sleep(400);
+  typedValue = '';
+  inputEl.textContent = '';
+  acEl.classList.add('visible');
+  renderAutocomplete('');
+}
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+runDemo();
+</script>
+</body>
+</html>

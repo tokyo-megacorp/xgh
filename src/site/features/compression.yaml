@@ -1,0 +1,6 @@
+name: compression
+headline: "60–90% fewer tokens"
+description: "RTK transparently compresses CLI output so your context window goes further."
+detail: "Raw conversations eat context windows alive. Lossless compression extracts the signal — decisions, code changes, architecture — and discards the noise. Same meaning, fraction of the tokens."
+icon: "⚡"
+order: 4

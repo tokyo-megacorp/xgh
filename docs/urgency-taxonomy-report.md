@@ -40,7 +40,7 @@
 
 **[MEDIUM]** "for Monday" action list with @-mentions
 - Source: #workgroup-new-web-login, Lucas, 2026-03-13
-- Full text: "for Monday: @Emmanuel can you check android behavior / @ipedro please have a look at this iOS issue again"
+- Full text: "for Monday: @Emmanuel can you check android behavior / @extreme-go-horse please have a look at this iOS issue again"
 - Pattern: day-of-week as deadline + assigned actions
 - Language signal: `for (Monday|Tuesday|Wednesday|Thursday|Friday):\s*\n.*@`
 
@@ -133,7 +133,7 @@
 
 **[HIGH]** Direct assignment with @-mention + "can you"
 - Source: #workgroup-new-web-login, Lucas, 2026-03-12
-- Full text: "@Bahadir can you adjust?" / "@Emmanuel and @ipedro [merge into hotfix]"
+- Full text: "@Bahadir can you adjust?" / "@Emmanuel and @extreme-go-horse [merge into hotfix]"
 - Pattern: @person + action verb
 - Language signal: `<@U\w+>.*can you|<@U\w+>.*please|<@U\w+>.*could you`
 

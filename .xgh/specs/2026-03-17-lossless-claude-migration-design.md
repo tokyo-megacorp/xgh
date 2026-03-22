@@ -8,7 +8,7 @@
 
 ## Problem
 
-xgh's memory persistence layer uses Cipher MCP (`@byterover/cipher`), a stdio MCP server backed by Qdrant for vector storage. Cipher is being replaced by `@ipedro/lossless-claude`, which provides:
+xgh's memory persistence layer uses Cipher MCP (`@byterover/cipher`), a stdio MCP server backed by Qdrant for vector storage. Cipher is being replaced by `@extreme-go-horse/lossless-claude`, which provides:
 
 - A two-layer memory model: episodic (SQLite DAG, per-session) + semantic (Qdrant, persistent cross-session)
 - A full MCP server (same stdio pattern as Cipher)

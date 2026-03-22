@@ -1,0 +1,58 @@
+name: claude
+title: "eXtreme Go Horse"
+version: "v2.0.0"
+
+path:
+  text: "claude plugin install xgh@extreme-go-horse"
+  url: "#install"
+
+prompt: "›"
+
+titlebar:
+  text: "extreme-go-horse"
+  detail: "— bun • claude --dangerously-skip-permissions — 102×31"
+
+models:
+  - "medium effort"
+  - "high effort"
+  - "max effort"
+  - "low effort"
+  - "xhigh effort"
+
+theme:
+  bg: "#0d0e17"
+  window: "#1a1b26"
+  titlebar: "#16171f"
+  text: "#a9b1d6"
+  text-bright: "#c0caf5"
+  text-dim: "#565f89"
+  text-muted: "#3b3f5c"
+  accent: "#7aa2f7"
+  scrollbar: "#2e3154"
+  green: "#9ece6a"
+  orange: "#ff9e64"
+  red: "#f7768e"
+  yellow: "#e0af68"
+  blue: "#7aa2f7"
+  purple: "#bb9af7"
+  cyan: "#7dcfff"
+  pink: "#ff6ec7"
+  tl-red: "#ff5f57"
+  tl-yellow: "#febc2e"
+  tl-green: "#28c840"
+
+status:
+  left: "? for shortcuts · hold Space to speak"
+  right: null
+
+icon: "claude"
+
+colors:
+  pink: "#ff6ec7"
+  yellow: "#e0af68"
+  orange: "#ff9e64"
+  green: "#9ece6a"
+  blue: "#7aa2f7"
+  purple: "#bb9af7"
+  red: "#f7768e"
+  cyan: "#7dcfff"

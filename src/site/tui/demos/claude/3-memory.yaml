@@ -1,0 +1,29 @@
+name: memory
+label: "memory"
+label_color: purple
+input: "how does seed-global-config work?"
+
+steps:
+  - tool: lcm_search
+    args: '"seed-global-config, marker injection"'
+    output:
+      - '→ Memory: "uses <!-- xgh:begin --> markers for idempotent injection"'
+      - '→ Memory: "arg-count guard added in fix commit 9269bcc"'
+    delay: 700
+
+  - tool: Read
+    args: "scripts/seed-global-config.sh"
+    output: "57 lines · last modified: today"
+    delay: 500
+
+  - blank: true
+
+  - response:
+      - { bold: "seed-global-config.sh", dim: " — idempotent marker injection" }
+      - ""
+      - { dim: "Args:", yellow: " <target> <marker-name> <content-file>" }
+      - { green: "  1.", dim: " File missing → create with markers" }
+      - { green: "  2.", dim: " File exists, no markers → append section" }
+      - { green: "  3.", dim: " Markers present → replace only that section" }
+      - ""
+      - { dim: "Tilde expansion +", yellow: " mkdir -p", dim2: " handle all path cases." }

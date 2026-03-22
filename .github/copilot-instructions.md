@@ -18,7 +18,7 @@ xgh is a **Model Context Server (MCS) tech pack** for Claude Code that provides 
 ## Install
 
 ```bash
-claude plugin install xgh@ipedro
+claude plugin install xgh@extreme-go-horse
 /xgh-init
 ```
 

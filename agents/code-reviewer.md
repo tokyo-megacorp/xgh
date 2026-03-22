@@ -1,6 +1,7 @@
 ---
 name: code-reviewer
-description: Use this agent to review code quality within a collaboration workflow — evaluates implementations against architecture, conventions, and team patterns stored in lossless-claude memory. Handles in-session file-level review; for GitHub PR review, use pr-reviewer instead. Examples:
+description: |
+  Use this agent to review code quality within a collaboration workflow — evaluates implementations against architecture, conventions, and team patterns stored in lossless-claude memory. Handles in-session file-level review; for GitHub PR review, use pr-reviewer instead. Examples:
 
   <example>
   Context: Implementation task completed in a collaboration thread
@@ -20,9 +21,10 @@ description: Use this agent to review code quality within a collaboration workfl
   </commentary>
   </example>
 
-model: inherit
-color: blue
-tools: ["Read", "Grep", "Glob"]
+model: sonnet
+capabilities: [code-review, architecture, conventions]
+color: default
+tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 
 A subagent that performs structured code review using lossless-claude memory. It evaluates implementation quality, flags convention violations, and stores review findings so future sessions can learn from recurring patterns.

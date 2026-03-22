@@ -17,6 +17,24 @@ agents:
     invocation:
       method: native
       notes: "Claude Code is the host agent — no external invocation needed"
+    profile:
+      role: orchestrator
+      strengths:
+        - Multi-turn reasoning and ambiguous task clarification
+        - Holding full project context across a session
+        - Quick edits faster than secondary agent startup (~30s)
+        - Integrating subagent results back into the session
+        - Architectural decisions, spec writing, planning
+      delegate_when:
+        - Isolated implementation with a complete written spec
+        - Parallel execution while Claude handles other work
+        - Large diffs that would flood the context window
+        - Code review of a known diff (--base main, --uncommitted)
+        - Numbered task list execution from a plan
+      watch_outs:
+        - Protect context window — delegate large tasks early
+        - Don't over-engineer beyond the spec
+        - Dispatch rule — if you'd need to interrupt mid-run to ask a question, clarify first
 
   codex:
     type: secondary
@@ -31,6 +49,7 @@ agents:
       exec: "codex exec \"<prompt>\" --full-auto -C <dir> -o <output> [passthrough flags]"
       review: "codex review [target] -s read-only -C <dir> [passthrough flags]"
       notes: "Only spawning flags (--full-auto, -C, -o) are injected. All other flags forwarded from user. Requires: npm i -g @openai/codex"
+      tested_version: "0.116.0"  # version all xgh-codex behaviors were validated against
       skill_dir: ".agents/skills/xgh/"
       rules_file: "AGENTS.md"
       auto_detect: codex
@@ -52,6 +71,7 @@ agents:
       exec: "gemini -p \"<prompt>\" --yolo [passthrough flags]"
       review: "gemini -p \"<prompt>\" --approval-mode plan [passthrough flags]"
       notes: "Only spawning flags (-p, --yolo/--approval-mode) are injected. Working dir via cd, output via redirection. Requires: Gemini CLI"
+      tested_version: null  # not yet recorded — run /xgh-doctor to prompt
       skill_dir: ".gemini/skills/xgh/"
       rules_file: "GEMINI.md"
       auto_detect: gemini
@@ -73,6 +93,7 @@ agents:
       exec: "cd <dir> && opencode run \"<prompt>\" [passthrough flags] > <output>"
       review: "cd <dir> && opencode run \"Code review: <prompt>. Do NOT modify any files.\" [passthrough flags]"
       notes: "Non-interactive mode auto-approves all permissions (no --full-auto equivalent needed). OpenCode natively reads .claude/skills. Working dir via cd, output via redirect. Model: --model <provider>/<name>. Requires: npm i -g opencode-ai"
+      tested_version: null  # not yet recorded — run /xgh-doctor to prompt
       skill_dir: ".opencode/skills/xgh/"
       rules_file: "AGENTS.md"
       auto_detect: opencode
@@ -102,6 +123,70 @@ agents:
     invocation:
       method: mcp
       notes: "Configure via environment variables or .xgh/config.yaml"
+
+local_agents:
+  code-reviewer:
+    type: agent
+    model: sonnet
+    color: default
+    tools: ["Read", "Grep", "Glob", "Bash"]
+    capabilities: [code-review, architecture, conventions]
+
+  collaboration-dispatcher:
+    type: agent
+    model: sonnet
+    color: green
+    tools: ["Read", "Grep", "Glob"]
+    capabilities: [dispatch, routing, coordination]
+
+  context-curator:
+    type: agent
+    model: haiku
+    color: purple
+    tools: ["Read", "Grep", "Glob", "Write", "Edit"]
+    capabilities: [context-tree, curation, indexing]
+
+  investigation-lead:
+    type: agent
+    model: opus
+    color: red
+    tools: ["Read", "Grep", "Glob", "Bash", "Agent"]
+    capabilities: [debugging, investigation, root-cause]
+
+  onboarding-guide:
+    type: agent
+    model: sonnet
+    color: pink
+    tools: ["Read", "Grep", "Glob"]
+    capabilities: [onboarding, documentation, guidance]
+
+  pipeline-doctor:
+    type: agent
+    model: sonnet
+    color: orange
+    tools: ["Read", "Grep", "Glob", "Bash"]
+    capabilities: [health-check, diagnostics, pipeline]
+
+  pr-reviewer:
+    type: agent
+    model: sonnet
+    color: green
+    tools: ["Read", "Grep", "Glob", "Bash"]
+    capabilities: [pr-review, code-review, github]
+
+  retrieval-auditor:
+    type: agent
+    model: haiku
+    color: blue
+    tools: ["Read", "Grep", "Glob"]
+    capabilities: [retrieval, audit, memory]
+
+  codex-driver:
+    type: agent
+    model: sonnet
+    color: cyan
+    tools: ["Bash", "Read", "Glob", "Write"]
+    capabilities: [codex-dispatch, flag-detection, retry-logic, result-parsing]
 
 # Message protocol metadata fields (used by all agents):
 #   type: plan | review | feedback | result | decision | question

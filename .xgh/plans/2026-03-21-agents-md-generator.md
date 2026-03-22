@@ -259,8 +259,10 @@ defaults:
     answer: ".xgh/plans/YYYY-MM-DD-<feature>.md"
   - question: "Test command"
     answer: "bash tests/test-config.sh"
+  - question: "Branch strategy"
+    answer: "feature/* and docs/* branch from develop → PR to develop. develop → main triggers publish."
   - question: "Branch prefix"
-    answer: "feat/, fix/, docs/"
+    answer: "feat/, fix/, docs/ — always branch from develop"
   - question: "Implementation approach"
     answer: "Subagent-driven development (superpowers:subagent-driven-development)"
 

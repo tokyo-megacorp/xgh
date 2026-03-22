@@ -102,11 +102,20 @@ After scanning new messages, perform a thread reply pass to catch replies on rec
 
 **Rate limiting:** Apply the same back-off rules (2s → 4s → 8s, up to `retriever.max_retries`) for this pass as for the main channel scan.
 
+**Cursor update (per channel):** After each channel completes successfully (main scan + thread pass), update its cursor immediately:
+```bash
+bash scripts/update-cursor.sh "<channel-id>" "<latest-message-timestamp>"
+```
+This runs inside the per-channel loop — not deferred to Step 9 — so a mid-run failure on channel 3 does not roll back cursors for channels 1 and 2.
+
 ## Step 2b — MCP Provider Dispatch (generic)
 
 For each provider in `~/.xgh/user_providers/` with `mode: mcp` in `provider.yaml`:
 
-1. Read `provider.yaml` to get the `tools:` section and `cursor_strategy`
+1. Read `provider.yaml` to get the `tools:` section and `cursor_strategy`. Accepted values:
+   - `iso8601` — cursor is an ISO 8601 timestamp string; substitute into `{cursor}` param (used by Jira, Slack)
+   - `offset` — cursor is an integer page/offset; increment after each page fetch
+   - `id` — cursor is the ID (string or integer) of the last-seen item; substitute into `{cursor}` param
 2. Read the cursor file (`~/.xgh/user_providers/<name>/cursor`) — if missing, use default lookback
 3. For each tool role declared in `tools:`:
    - `channels` → Run channel scan pass (fetch messages since cursor for each configured channel)
@@ -124,6 +133,9 @@ For each provider in `~/.xgh/user_providers/` with `mode: mcp` in `provider.yaml
    - Parse results into inbox items (standard YAML frontmatter + markdown body)
    - Write to `~/.xgh/inbox/` with dedup by filename
 5. Update the cursor file with the timestamp of the most recent item
+6. **Enrichment queue:** For any item that references a URL matching a known provider type (Jira, Confluence, GitHub, Figma) that is **not already in `~/.xgh/ingest.yaml`** for the project, add it to the enrichment queue (same format as Step 8). This mirrors the link-following enrichment in Step 3 for MCP-sourced content.
+
+> **Enrichment TTL:** Items in `.enrichments.json` older than `enrichment.max_queue_age` (default: 48h) are discarded by the analyzer on its next run to prevent unbounded queue growth. If enrichment of a discovered URL is not completed within 48h, the item is not re-queued automatically.
 
 This replaces the hardcoded per-service tool calls. The retrieve skill no longer needs to know
 about specific services — it reads what tools are available from the provider config.
@@ -132,7 +144,11 @@ about specific services — it reads what tools are available from the provider 
 
 > **Access level guard:** Before following links, check the relevant `providers.<type>.access` level for the target provider (jira, confluence, github, figma). If `read`, only fetch data. If `ask` or `auto`, write actions (e.g., transitioning Jira tickets, posting PR comments) may be performed in later steps.
 
-For each message containing a URL, up to `retriever.max_links_to_follow` per cycle:
+For each message containing a URL, up to `retriever.max_links_to_follow` per cycle. If the cap is reached, log one line per skipped link to `~/.xgh/logs/retriever.log`:
+```
+[SKIPPED LINK] <url> — cap reached (max_links_to_follow=N) — source: <channel>/<ts>
+```
+Retry of skipped links is handled by `xgh:deep-retrieve` on its next hourly run.
 
 | Link matches | Tool | Extract |
 |---|---|---|
@@ -241,6 +257,7 @@ source_channel: "#ptech-31204-engineering"
 source_ts: 2026-03-15T14:30:00Z
 project: passcode-feature
 urgency_score: 75
+raw_score: 142
 processed: false
 awaiting_direction: null
 links_followed:
@@ -258,8 +275,11 @@ Status: In Progress | Assignee: lucas
 [Description excerpt, max 500 chars]
 ```
 
+`raw_score` is the pre-cap composite value (base × multipliers × relevance, before the `min(..., 100)` clamp). It is **informational only** — do not use it for threshold comparisons. Its value is tied to the scoring formula at the time it was written; if multipliers change, stored `raw_score` values from older runs are not comparable.
+
 ## Step 7 — Handle critical urgency (score ≥ 80)
 
+0. **Flush stale queue entries:** Before sending any DM, read `~/.xgh/logs/dm-queue.json` (if it exists). Discard any entries older than `notifications.max_queue_age` (default: 4h) — log them to `~/.xgh/logs/retriever.log` as `[DM EXPIRED]` but do not send them. Update `dm-queue.json` with only the remaining (non-expired) entries, and write `queue_flushed_at: <current-iso-timestamp>` to `~/.xgh/logs/last-dm.txt`.
 1. Check `~/.xgh/logs/last-dm.txt` for last DM timestamp. If within `notifications.dm_cooldown` (default 15min), add to batch queue `~/.xgh/logs/dm-queue.json` instead.
 2. If not in cooldown (or cooldown passed), send Slack DM to `profile.slack_id` via `slack_send_message`:
    ```
@@ -282,15 +302,11 @@ If new external refs were discovered, write/append to `~/.xgh/inbox/.enrichments
 ```
 If the file exists, merge into the `pending` array. The analyzer reads and clears this.
 
-## Step 9 — Update cursors
+## Step 9 — Verify cursors
 
-For each channel processed, update the cursor atomically:
+Cursors are updated per-channel inside Step 2. This step is a no-op for Slack channels.
 
-```bash
-bash scripts/update-cursor.sh "<channel-id>" "<latest-message-timestamp>"
-```
-
-This ensures cursors are always updated, even if the session is interrupted.
+For MCP providers (Step 2b), confirm each provider's cursor file was updated after its run. If a provider exited early due to an error, its cursor file should not have been advanced — this is the correct outcome and requires no remediation.
 
 ## Step 10 — Log completion
 

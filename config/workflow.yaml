@@ -1,0 +1,93 @@
+# config/workflow.yaml
+# Development workflow — source of truth for AGENTS.md workflow section.
+
+test_commands:
+  - command: "bash tests/test-config.sh"
+    description: "Config files and presets"
+  - command: "bash tests/test-skills.sh"
+    description: "Skill file existence and content"
+  - command: "bash tests/test-commands.sh"
+    description: "Command file existence and content"
+
+defaults:
+  - question: "Spec location"
+    answer: ".xgh/specs/YYYY-MM-DD-<topic>-design.md"
+  - question: "Plan location"
+    answer: ".xgh/plans/YYYY-MM-DD-<feature>.md"
+  - question: "Test command"
+    answer: "bash tests/test-config.sh"
+  - question: "Branch strategy"
+    answer: "feat/*, fix/*, docs/* branch from develop. PRs target develop. main = releases only."
+  - question: "Branch prefix"
+    answer: "feat/, fix/, docs/ — always branch from develop"
+  - question: "Implementation approach"
+    answer: "Subagent-driven development (superpowers:subagent-driven-development)"
+
+phases:
+  - name: "Design"
+    model: opus
+    effort: max
+    steps:
+      - "Run /xgh-brief to load session context"
+      - "Run /xgh-retrieve to pull latest project activity"
+      - "Search lossless-claude memory for related past work"
+      - "Read spec and context tree"
+      - "Propose 2-3 approaches, recommend one"
+      - "If preferences.pair_programming.enabled + 'design' in phases: pair with preferences.pair_programming.tool at preferences.pair_programming.effort — catch schema mismatches and blocking issues before writing the plan"
+      - "Write design spec to .xgh/specs/"
+      - "Write implementation plan to .xgh/plans/"
+      - "Push plan + spec → open PR targeting develop (plan-only PR, no code)"
+      - "Iterate on plan with Copilot PR review until approved"
+      - "Merge plan PR → implementation begins from the merged plan"
+
+  - name: "Implementation"
+    model: sonnet
+    effort: normal
+    steps:
+      - "Branch from develop (feat/* or fix/*)"
+      - "Use superpowers:subagent-driven-development"
+      - "If preferences.pair_programming.enabled + 'per_task' in phases: pair with preferences.pair_programming.tool before dispatching implementer"
+      - "Fresh subagent per task using preferences.superpowers.implementation_model, driven by the merged plan"
+      - "Two-stage review: spec compliance then code quality"
+      - "Add AI unit test (tests/skill-triggering/prompts/) for any skill invoked but not yet tested"
+
+  - name: "Review"
+    model: opus
+    effort: max
+    steps:
+      - "Review all implementation against spec"
+      - "Run full test suite"
+      - "Run /xgh-analyze to capture session learnings into memory"
+      - "Open PR targeting develop → Copilot review → merge"
+      - "Merge develop → main for release"
+
+codex_agent_instructions:
+  self_check:
+    - "Run the test command(s) in your task. All must pass before marking complete."
+    - "Run `git diff --name-only` — verify you only modified files within the stated scope."
+    - "If no test command was given, default to: bash tests/test-config.sh"
+  scope_discipline:
+    - "Modify **only** the files explicitly mentioned in your task."
+    - "If you find a related issue elsewhere, note it in your output — do not fix it silently."
+    - "Never modify AGENTS.md directly — it is auto-generated (run: bash scripts/gen-agents-md.sh)."
+  commit_convention:
+    - "Format: `<type>: <description>` — e.g., `fix:`, `feat:`, `docs:`"
+    - "One commit per logical change. Do not bundle unrelated fixes."
+  reporting:
+    - "List every file modified with a one-line summary of what changed."
+    - "Report exit code and last 5 lines of any test run."
+    - "Flag any ambiguity encountered — never silently guess."
+
+superpowers_table:
+  - situation: "Starting a task"
+    action: "Search context tree + lossless-claude memories"
+  - situation: "Making an architectural decision"
+    action: "Check .xgh/context-tree/ and .xgh/specs/ first"
+  - situation: "Choosing between approaches"
+    action: "Use rationalization table pattern; document in spec"
+  - situation: "Completing significant work"
+    action: "Capture learnings in context tree + lcm_store"
+  - situation: "Deviating from a plan"
+    action: "Document the reason explicitly in plan file"
+  - situation: "Writing new code"
+    action: "Check existing patterns in codebase first"

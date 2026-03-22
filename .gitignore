@@ -11,3 +11,6 @@ data/cipher-sessions.db*
 .xgh/local/
 .worktrees/
 .lossless-claude/
+.serena/
+CLAUDE.md
+CLAUDE.local.md

@@ -13,14 +13,14 @@
 #   XGH_TEST_BUDGET   — max USD per test invocation (default: 0.50)
 #   XGH_TEST_LOG_DIR  — persistent log directory (default: /tmp/xgh-test-logs)
 #
-# Cost estimate: ~12 prompts × 1 turn ≈ ~$0.60 per run (sonnet).
+# Cost estimate: ~36 prompts × 1 turn ≈ ~$1.80 per run (sonnet).
 #
 # Logs are saved to $XGH_TEST_LOG_DIR (default /tmp/xgh-test-logs):
 #   summary.log          — one-line-per-test results
-#   skill-xgh--NAME/     — per-skill logs (claude-output.json, prompt.txt, result.txt)
+#   skill-xgh--NAME--N/  — per-variant logs (claude-output.json, prompt.txt, result.txt)
 #
 # Examples:
-#   ./run-all.sh                         # run all 12 skill tests
+#   ./run-all.sh                         # run all skill tests (auto-discovered)
 #   XGH_TEST_MODEL=haiku ./run-all.sh    # cheaper run with haiku
 
 set -euo pipefail
@@ -32,21 +32,18 @@ export XGH_TEST_LOG_DIR="${XGH_TEST_LOG_DIR:-/tmp/xgh-test-logs}"
 mkdir -p "$XGH_TEST_LOG_DIR"
 SUMMARY_LOG="$XGH_TEST_LOG_DIR/summary.log"
 
-# ── Skill tests (pure NL prompts) ───────────────────────────────────────────
-SKILL_TESTS=(
-    "xgh:retrieve:retrieve.txt"
-    "xgh:analyze:analyze.txt"
-    "xgh:briefing:briefing.txt"
-    "xgh:implement:implement.txt"
-    "xgh:investigate:investigate.txt"
-    "xgh:track:track.txt"
-    "xgh:doctor:doctor.txt"
-    "xgh:index:index.txt"
-    "xgh:trigger:trigger.txt"
-    "xgh:schedule:schedule.txt"
-    "xgh:codex:codex.txt"
-    "xgh:gemini:gemini.txt"
-)
+# ── Auto-discover all prompt files ──────────────────────────────────────────
+# Derive skill name from filename: strip numeric suffix (ask-2 → ask, ask → ask)
+# then prefix with xgh:
+SKILL_TESTS=()
+shopt -s nullglob
+for f in "$PROMPTS_DIR"/*.txt; do
+    basename_no_ext="${f##*/}"
+    basename_no_ext="${basename_no_ext%.txt}"
+    # Strip only a purely numeric suffix (-1, -2, -99) — not alphanumeric like -2fa
+    skill_base="$(echo "$basename_no_ext" | sed 's/-[0-9][0-9]*$//')"
+    SKILL_TESTS+=("xgh:${skill_base}:$(basename "$f")")
+done
 
 echo "=== xgh Skill Triggering Tests ==="
 echo "Plugin dir: $(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -63,26 +60,29 @@ FAILED=0
 RESULTS=()
 
 for entry in "${SKILL_TESTS[@]}"; do
-    SKILL="${entry%:*}"
+    SKILL="${entry%%:*}:$(echo "$entry" | cut -d: -f2)"
     PROMPT_FILE="${entry##*:}"
+    PROMPT_SLUG="${PROMPT_FILE%.txt}"
     FULL_PROMPT="$PROMPTS_DIR/$PROMPT_FILE"
 
     if [ ! -f "$FULL_PROMPT" ]; then
         echo "⚠️  SKIP: No prompt file for $SKILL ($FULL_PROMPT)"
-        echo "SKIP [skill] $SKILL — missing prompt" >> "$SUMMARY_LOG"
+        echo "SKIP [skill] $SKILL ($PROMPT_SLUG) — missing prompt" >> "$SUMMARY_LOG"
         continue
     fi
 
-    echo "--- Testing skill: $SKILL ---"
+    echo "--- Testing: $SKILL ($PROMPT_SLUG) ---"
 
-    if "$SCRIPT_DIR/run-test.sh" "$SKILL" "$FULL_PROMPT"; then
+    # Use per-variant log dir so variants don't overwrite each other
+    VARIANT_LOG_DIR="${XGH_TEST_LOG_DIR}/skill-${SKILL//:/--}--${PROMPT_SLUG}"
+    if XGH_TEST_LOG_DIR="$VARIANT_LOG_DIR" "$SCRIPT_DIR/run-test.sh" "$SKILL" "$FULL_PROMPT"; then
         PASSED=$((PASSED + 1))
-        RESULTS+=("✅ [skill] $SKILL")
-        echo "PASS [skill] $SKILL" >> "$SUMMARY_LOG"
+        RESULTS+=("✅ $SKILL ($PROMPT_SLUG)")
+        echo "PASS [skill] $SKILL ($PROMPT_SLUG)" >> "$SUMMARY_LOG"
     else
         FAILED=$((FAILED + 1))
-        RESULTS+=("❌ [skill] $SKILL")
-        echo "FAIL [skill] $SKILL" >> "$SUMMARY_LOG"
+        RESULTS+=("❌ $SKILL ($PROMPT_SLUG)")
+        echo "FAIL [skill] $SKILL ($PROMPT_SLUG)" >> "$SUMMARY_LOG"
     fi
 
     echo ""

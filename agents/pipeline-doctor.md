@@ -1,6 +1,7 @@
 ---
 name: pipeline-doctor
-description: Use this agent for deep investigation of xgh pipeline health — goes beyond the basic /xgh-doctor checks to find root causes in the retrieval/scheduling/inbox/trigger pipeline. Examples:
+description: |
+  Use this agent for deep investigation of xgh pipeline health — goes beyond the basic /xgh-doctor checks to find root causes in the retrieval/scheduling/inbox/trigger pipeline. Examples:
 
   <example>
   Context: Doctor skill reports failures but cause isn't obvious
@@ -29,8 +30,9 @@ description: Use this agent for deep investigation of xgh pipeline health — go
   </commentary>
   </example>
 
-model: inherit
-color: green
+model: sonnet
+capabilities: [health-check, diagnostics, pipeline]
+color: orange
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 

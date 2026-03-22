@@ -21,7 +21,7 @@ test.describe('TUI Demo Engine — Dogfood', () => {
   });
 
   test('populates shell identity from config', async ({ page }) => {
-    await expect(page.locator('#cc-name')).toHaveText('Lossless Claude');
+    await expect(page.locator('#cc-name')).toHaveText('eXtreme Go Horse');
     await expect(page.locator('#cc-version')).toHaveText('v2.0.0');
     const pathEl = page.locator('#cc-path');
     await expect(pathEl).toHaveText('claude plugin install xgh@extreme-go-horse');

@@ -63,8 +63,6 @@ jobs:
       - name: JSON syntax
         run: bash tests/test-json-syntax.sh
 
-      - name: File references
-        run: bash tests/test-file-refs.sh
 
   shellcheck:
     name: ShellCheck

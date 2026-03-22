@@ -1,11 +1,6 @@
 ---
 name: xgh:briefing
-description: Intelligent session briefing. Aggregates Slack, Jira, GitHub, Gmail, Calendar, Figma, and xgh team memory into a prioritized executive summary with a suggested focus.
-type: flexible
-triggers:
-  - /xgh-briefing command
-  - /xgh-briefing compact
-  - /xgh-briefing focus
+description: "This skill should be used when the user runs /xgh-briefing, /xgh-briefing compact, or /xgh-briefing focus, or asks for a morning briefing or session summary. Aggregates Slack, Jira, GitHub, Gmail, Calendar, Figma, and xgh team memory into a prioritized executive summary with a suggested focus."
 ---
 
 # xgh:briefing — Intelligent Session Briefing

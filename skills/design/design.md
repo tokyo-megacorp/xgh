@@ -1,14 +1,6 @@
 ---
 name: xgh:design
-description: "Figma-driven UI implementation — from design file to convention-compliant code"
-trigger: "/xgh-design"
-mcp_dependencies:
-  required: []
-  optional:
-    - figma: "Figma MCP — read designs, screenshots, variables, Code Connect"
-    - atlassian: "Atlassian MCP — find related tickets, acceptance criteria"
-    - lossless-claude: "lossless-claude MCP — search UI conventions, component patterns"
-    - slack: "Slack MCP — find design discussions"
+description: "This skill should be used when the user runs /xgh-design or asks to implement a Figma design, 'build from Figma', 'implement this design', 'convert design to code'. Figma-driven UI implementation — takes a Figma design URL and produces a complete, convention-compliant implementation with TDD."
 ---
 
 # xgh:design — Figma-Driven UI Implementation

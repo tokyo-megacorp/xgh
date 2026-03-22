@@ -1,14 +1,6 @@
 ---
 name: xgh:implement
-description: "Full-context ticket implementation — from ticket to PR with cross-platform context gathering"
-trigger: "/xgh implement"
-mcp_dependencies:
-  required: []
-  optional:
-    - atlassian: "Atlassian MCP — fetch ticket details, linked tickets, update status"
-    - slack: "Slack MCP — search for ticket discussions, post implementation summary"
-    - figma: "Figma MCP — fetch linked designs"
-    - lossless-claude: "lossless-claude MCP — search past work, conventions, store learnings"
+description: "This skill should be used when the user runs /xgh-implement or asks to implement a ticket, 'implement this Jira ticket', 'build this feature', 'start on this task'. Full-context ticket implementation — gathers context from Jira, Slack, Figma, and lossless-claude memory, then drives a complete implementation from ticket to PR."
 ---
 
 ## Preamble — Execution mode

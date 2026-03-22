@@ -1,18 +1,6 @@
 ---
 name: xgh:retrieve
-description: >
-  Headless retrieval loop. Scans configured Slack channels, follows links 1-hop to
-  Jira/Confluence/GitHub/Figma, stashes raw content to ~/.xgh/inbox/, and detects urgency.
-  Invoked via /xgh-retrieve command by CronCreate every 5 minutes.
-type: rigid
-triggers:
-  - when invoked via /xgh-retrieve command
-  - when invoked by CronCreate (session scheduler, always-on)
-mcp_dependencies:
-  - mcp__claude_ai_Slack__slack_read_channel
-  - mcp__claude_ai_Atlassian__getJiraIssue
-  - mcp__claude_ai_Atlassian__getConfluencePage
-  - mcp__claude_ai_Figma__get_metadata
+description: "This skill should be used when the user runs /xgh-retrieve or when invoked by the CronCreate scheduler (every 5 minutes). Headless retrieval loop — scans configured Slack channels, follows links 1-hop to Jira/Confluence/GitHub/Figma, stashes raw content to ~/.xgh/inbox/, and detects urgency."
 ---
 
 ## Architecture Note

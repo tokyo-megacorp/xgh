@@ -1,11 +1,6 @@
 ---
 name: xgh:gemini
 description: "This skill should be used when the user asks to \"dispatch to gemini\", \"run gemini\", \"use gemini for\", \"send to gemini\", \"gemini review\", or wants to delegate implementation or code review tasks to Google's Gemini CLI agent. Supports worktree-isolated parallel dispatch and same-directory sequential dispatch."
-trigger: "/xgh gemini"
-mcp_dependencies:
-  required: []
-  optional:
-    - lossless-claude: "lossless-claude MCP — search past work, store outcomes"
 ---
 
 > **Context-mode:** This skill primarily runs Bash commands. Use Bash directly for git

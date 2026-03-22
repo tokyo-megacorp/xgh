@@ -1,15 +1,6 @@
 ---
 name: xgh:babysit-prs
-description: >
-  Watch a batch of GitHub PRs through Copilot review cycles. Polls review status,
-  dispatches fix agents for new comments, merges when clean, re-requests when stale,
-  resolves merge conflicts, and terminates when all PRs are merged.
-  Optionally runs a post-merge hook.
-type: rigid
-triggers:
-  - when the user runs /xgh-babysit-prs
-  - when the user says "babysit PRs", "watch these PRs", "monitor PR reviews"
-  - when an agent needs to shepherd multiple PRs through Copilot review to merge
+description: "This skill should be used when the user runs /xgh-babysit-prs or says 'babysit PRs', 'watch these PRs', 'monitor PR reviews', or needs to shepherd multiple PRs through Copilot review to merge. Watches a batch of GitHub PRs through Copilot review cycles — polls review status, dispatches fix agents for new comments, merges when clean, re-requests when stale, resolves merge conflicts, and terminates when all PRs are merged."
 ---
 
 > **Output format:** Start with `## 🐴🤖 xgh babysit-prs`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. Keep per-poll output terse.

@@ -1,17 +1,6 @@
 ---
 name: xgh:test-builder
-description: >
-  Generate and execute tailored test suites from architectural analysis. Reads module
-  boundaries, public surfaces, and integration points from memory to produce a
-  structured manifest of test flows — then executes them.
-type: flexible
-mcp_dependencies: [mcp__lossless-claude__lcm_search]
-triggers:
-  - when the user runs /xgh-test-builder
-  - when the user says "generate tests", "build test suite", "run tests"
-  - when the user says "test-builder", "create test manifest"
-  - when the user says "what should I test", "test my app"
-  - when invoked after /xgh:architecture completes
+description: "This skill should be used when the user runs /xgh-test-builder or asks to 'generate tests', 'build test suite', 'create test manifest', 'what should I test', 'test my app'. Generates and executes tailored test suites from architectural analysis — reads module boundaries, public surfaces, and integration points from memory to produce a structured manifest of test flows."
 ---
 
 # xgh:test-builder — Test Suite Generator

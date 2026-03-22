@@ -1,13 +1,6 @@
 ---
 name: xgh:doctor
-description: >
-  Pipeline health check. Validates config completeness, Slack/Jira/lossless-claude
-  connectivity, scheduler freshness, workspace stats, and codebase index status.
-  Outputs a structured ✓/✗ report with fix suggestions.
-type: rigid
-triggers:
-  - when the user runs /xgh-doctor
-  - when the user says "check ingest", "health check", "is the pipeline running"
+description: "This skill should be used when the user runs /xgh-doctor or asks to 'check health', 'run diagnostics', 'validate pipeline', 'check ingest', 'is the pipeline running'. Validates config completeness, Slack/Jira/lossless-claude connectivity, scheduler freshness, workspace stats, and codebase index status — outputs a structured pass/fail report with fix suggestions."
 ---
 
 # xgh:doctor — Pipeline Health Check

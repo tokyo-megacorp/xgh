@@ -1,10 +1,6 @@
 ---
 name: xgh:command-center
-description: Global orchestrator view — runs a full cross-project briefing, triages signals, and dispatches work to the right project session. Hub-and-spoke for morning reviews and continuous monitoring.
-type: flexible
-triggers:
-  - /xgh-command-center command
-  - user says "open command center", "global view", "orchestrate"
+description: "This skill should be used when the user runs /xgh-command-center or says 'open command center', 'global view', 'orchestrate'. Global orchestrator view — runs a full cross-project briefing, triages signals, and dispatches work to the right project session. Hub-and-spoke for morning reviews and continuous monitoring."
 ---
 
 > **Output format:** Follow the [xgh output style guide](../templates/output-style.md). Start with `## 🐴🤖 xgh command center`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. End with an italicized next step.

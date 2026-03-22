@@ -1,16 +1,6 @@
 ---
 name: xgh:deep-retrieve
-description: >
-  Hourly deep scan for Slack thread activity on old messages. Detects new replies on threads
-  regardless of parent message age — including threads created on previously-clean messages.
-  Complements xgh:retrieve (fast, cursor-based). Invoked by CronCreate every hour.
-type: rigid
-triggers:
-  - when invoked via /xgh-deep-retrieve command
-  - when invoked by CronCreate (session scheduler, always-on)
-mcp_dependencies:
-  - mcp__claude_ai_Slack__slack_read_channel
-  - mcp__claude_ai_Slack__slack_read_thread
+description: "This skill should be used when the user runs /xgh-deep-retrieve or when invoked by the CronCreate scheduler (every hour). Hourly deep scan for Slack thread activity on old messages — detects new replies on threads regardless of parent message age, including threads created on previously-clean messages. Complements xgh:retrieve (fast, cursor-based)."
 ---
 
 # xgh:deep-retrieve — Deep Thread Scan

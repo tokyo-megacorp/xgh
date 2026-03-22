@@ -1,13 +1,6 @@
 ---
 name: xgh:investigate
-description: "Slack-driven systematic debugging workflow — from Slack thread to root cause finding report"
-trigger: "/xgh investigate"
-mcp_dependencies:
-  required: []
-  optional:
-    - slack: "Slack MCP — read threads, search discussions, post findings"
-    - atlassian: "Atlassian MCP — search/create Jira tickets"
-    - lossless-claude: "lossless-claude MCP — search past bugs, store findings"
+description: "This skill should be used when the user runs /xgh-investigate or asks to investigate a bug, 'debug this issue', 'find root cause', 'investigate this Slack thread'. Slack-driven systematic debugging workflow — from Slack thread to root cause finding report."
 ---
 
 ## Preamble — Execution mode

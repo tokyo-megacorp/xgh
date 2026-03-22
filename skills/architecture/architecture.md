@@ -1,16 +1,6 @@
 ---
 name: xgh:architecture
-description: >
-  Higher-level architectural analysis. Reads index inventory, produces structured
-  definitions of how modules connect — boundaries, dependency graph, critical paths,
-  and public surfaces.
-type: flexible
-mcp_dependencies: [mcp__lossless-claude__lcm_store, mcp__lossless-claude__lcm_search]
-triggers:
-  - when the user runs /xgh-architecture
-  - when the user says "analyze architecture", "architecture analysis", "show architecture"
-  - when the user says "how are the modules connected", "map the codebase"
-  - when invoked after /xgh:index completes
+description: "This skill should be used when the user runs /xgh-architecture or asks to 'analyze architecture', 'show architecture', 'how are the modules connected', 'map the codebase'. Higher-level architectural analysis — reads index inventory and produces structured definitions of how modules connect, including boundaries, dependency graph, critical paths, and public surfaces."
 ---
 
 # xgh:architecture — Codebase Architecture Analysis

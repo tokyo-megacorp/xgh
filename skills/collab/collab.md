@@ -1,3 +1,8 @@
+---
+name: xgh:collab
+description: "This skill should be used when the user runs /xgh-collab or asks for multi-agent collaboration workflows. Teaches agents how to participate in structured collaboration via the xgh message protocol and lossless-claude workspace — handles message routing, coordination between agents, and workflow completion."
+---
+
 ## Preamble — Execution mode
 
 Before starting, check whether the user has a saved execution mode preference for this skill.

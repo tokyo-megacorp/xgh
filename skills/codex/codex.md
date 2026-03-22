@@ -1,11 +1,6 @@
 ---
 name: xgh:codex
 description: "This skill should be used when the user asks to \"dispatch to codex\", \"run codex\", \"codex exec\", \"codex review\", \"use codex for\", \"send to codex\", or wants to delegate implementation or code review tasks to OpenAI's Codex CLI agent. Supports worktree-isolated parallel dispatch and same-directory sequential dispatch (--add-dir)."
-trigger: "/xgh codex"
-mcp_dependencies:
-  required: []
-  optional:
-    - lossless-claude: "lossless-claude MCP — search past work, store outcomes"
 ---
 
 > **Context-mode:** This skill primarily runs Bash commands. Use Bash directly for git

@@ -1,14 +1,6 @@
 ---
 name: xgh:copilot-pr-review
-description: >
-  Manage GitHub Copilot PR code reviews. Request, re-review, check status,
-  list comments, reply, and delegate. Encodes all Copilot API pitfalls
-  (bot suffix, delegation vs review, re-review cycle).
-type: rigid
-triggers:
-  - when the user runs /xgh-copilot-pr-review
-  - when the user says "copilot review", "request copilot review", "re-review", "copilot status"
-  - when an agent needs to interact with Copilot PR reviews
+description: "This skill should be used when the user runs /xgh-copilot-pr-review or asks to 'request copilot review', 'copilot review', 're-review', or check 'copilot status'. Manages GitHub Copilot PR code reviews — request, re-review, check status, list comments, reply, and delegate. Encodes all Copilot API pitfalls (bot suffix, delegation vs review, re-review cycle)."
 ---
 
 > **Output format:** Start with `## 🐴🤖 xgh copilot-pr-review`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status.

@@ -1,17 +1,6 @@
 ---
 name: xgh:track
-description: >
-  Interactive project onboarding. Prompts for Slack channels, Jira, Confluence, Figma,
-  and GitHub refs, validates connectivity, runs initial backfill of recent Slack history,
-  and appends the project to ~/.xgh/ingest.yaml.
-type: flexible
-triggers:
-  - when the user runs /xgh-track
-  - when the user says "add project", "track project", "monitor new project"
-mcp_dependencies:
-  - mcp__claude_ai_Slack__slack_search_channels
-  - mcp__claude_ai_Atlassian__getJiraIssue
-  - mcp__claude_ai_Atlassian__getConfluencePage
+description: "This skill should be used when the user runs /xgh-track or asks to 'add project', 'track project', 'monitor new project'. Interactive project onboarding — prompts for Slack channels, Jira, Confluence, Figma, and GitHub refs, validates connectivity, runs initial backfill of recent Slack history, and appends the project to ~/.xgh/ingest.yaml."
 ---
 
 ## Preamble — Execution mode

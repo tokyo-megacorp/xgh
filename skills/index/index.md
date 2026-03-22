@@ -1,13 +1,6 @@
 ---
 name: xgh:index
-description: >
-  Raw codebase inventory — extracts module list, key files, and naming conventions
-  into lossless-claude memory. Reads stack and surfaces from ~/.xgh/ingest.yaml.
-type: flexible
-triggers:
-  - when the user runs /xgh-index
-  - when the user says "index repo", "index codebase", "scan the codebase"
-  - when invoked by ingest-track after adding a GitHub repo
+description: "This skill should be used when the user runs /xgh-index or asks to 'index repo', 'index codebase', 'scan the codebase'. Raw codebase inventory — extracts module list, key files, and naming conventions into lossless-claude memory. Reads stack and surfaces from ~/.xgh/ingest.yaml."
 ---
 
 # xgh:index — Codebase Inventory

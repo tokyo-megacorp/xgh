@@ -9,5 +9,6 @@ data/cipher-sessions.db*
 .worktrees/
 .mcp.json
 .xgh/local/
+.xgh/model-profiles.yaml
 .worktrees/
 .lossless-claude/

@@ -10,7 +10,7 @@ Extends the existing TUI build pipeline. `build.sh` gains a second output: `out/
 
 ### 1. Hero
 
-- Tagline: "Your AI rides faster." (or similar — set in shell config)
+- Tagline: hardcoded in `template.html` — "Your AI rides faster." (not in shell config, since it's page copy not shell identity)
 - The TUI window, embedded inline, autoplay demos running
 - Install command in TUI header styled as a clickable badge — click copies `claude plugin install xgh@extreme-go-horse` to clipboard with a "Copied!" flash
 - Subtle scroll indicator below the TUI
@@ -87,7 +87,7 @@ The TUI path element (`cc-path`) becomes a clickable copy-to-clipboard button:
 - On click: copies install command to clipboard, flashes "Copied!" for 1.5s, then reverts
 - Keeps the `#install` href as fallback for right-click → open in new tab
 
-Implementation: add a `click` handler in `engine.html` that calls `navigator.clipboard.writeText()`, swaps text content, then restores after timeout.
+Implementation: add a `click` handler in `engine.html` that calls `navigator.clipboard.writeText()`, swaps text content, then restores after timeout. Assumes HTTPS deployment; no fallback for insecure contexts.
 
 ## Build Pipeline Extension
 
@@ -104,7 +104,7 @@ Implementation: add a `click` handler in `engine.html` that calls `navigator.cli
 9. **NEW:** Inject install data from commands → render install section
 10. **NEW:** Write `out/index.html`
 
-The template uses the same marker convention: `<!-- %%TUI_EMBED%% -->`, `<!-- %%FEATURES%% -->`, `<!-- %%INSTALL%% -->`.
+The template uses HTML comment markers for body content: `<!-- %%TUI_EMBED%% -->`, `<!-- %%FEATURES%% -->`, `<!-- %%INSTALL%% -->`. This differs from the TUI engine's `//` and `/* */` markers which live inside `<script>` and `<style>` blocks respectively. The convention matches the injection context — HTML comments for HTML body, JS/CSS comments for JS/CSS blocks.
 
 Since the landing page needs rendered HTML (not JSON blobs), the Python build step renders the feature cards and install section as HTML strings before injection. The template contains the CSS and structural HTML; the build injects populated content sections.
 

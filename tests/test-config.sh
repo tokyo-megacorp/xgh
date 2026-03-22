@@ -38,6 +38,21 @@ assert_file_exists "commands/babysit-prs.md"
 assert_file_exists "skills/babysit-prs/babysit-prs.md"
 assert_contains "commands/babysit-prs.md" "babysit-prs"
 
+# --- config: command + skill registration ---
+assert_file_exists "commands/config.md"
+assert_file_exists "skills/config/config.md"
+assert_contains "commands/config.md" "name: xgh-config"
+
+# --- architecture: command + skill registration ---
+assert_file_exists "commands/architecture.md"
+assert_file_exists "skills/architecture/architecture.md"
+assert_contains "commands/architecture.md" "name: xgh-architecture"
+
+# --- test-builder: command + skill registration ---
+assert_file_exists "commands/test-builder.md"
+assert_file_exists "skills/test-builder/test-builder.md"
+assert_contains "commands/test-builder.md" "name: xgh-test-builder"
+
 # --- prompt test coverage for new skills (all variants) ---
 assert_file_exists "tests/skill-triggering/prompts/copilot-pr-review.txt"
 assert_file_exists "tests/skill-triggering/prompts/copilot-pr-review-2.txt"
@@ -45,6 +60,15 @@ assert_file_exists "tests/skill-triggering/prompts/copilot-pr-review-3.txt"
 assert_file_exists "tests/skill-triggering/prompts/babysit-prs.txt"
 assert_file_exists "tests/skill-triggering/prompts/babysit-prs-2.txt"
 assert_file_exists "tests/skill-triggering/prompts/babysit-prs-3.txt"
+assert_file_exists "tests/skill-triggering/prompts/config.txt"
+assert_file_exists "tests/skill-triggering/prompts/config-2.txt"
+assert_file_exists "tests/skill-triggering/prompts/config-3.txt"
+assert_file_exists "tests/skill-triggering/prompts/architecture.txt"
+assert_file_exists "tests/skill-triggering/prompts/architecture-2.txt"
+assert_file_exists "tests/skill-triggering/prompts/architecture-3.txt"
+assert_file_exists "tests/skill-triggering/prompts/test-builder.txt"
+assert_file_exists "tests/skill-triggering/prompts/test-builder-2.txt"
+assert_file_exists "tests/skill-triggering/prompts/test-builder-3.txt"
 
 assert_file_exists "config/project.yaml"
 assert_contains "config/project.yaml" "name: xgh"

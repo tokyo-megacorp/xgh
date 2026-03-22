@@ -1,0 +1,1 @@
+set the stack for this project to typescript

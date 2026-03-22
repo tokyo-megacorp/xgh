@@ -53,19 +53,21 @@ json.dump(p, open(path, 'w'), indent=2)
 
 **Background / check-in mode:**
 1. Ask at most 2 essential clarifying questions in the main session.
-2. Collect context: user's request verbatim, any relevant file paths mentioned, plus:
-   - **Standard skills:** current branch (`git branch --show-current`), recent log (`git log --oneline -5`).
-   - **Dispatch-type skills (codex, gemini, opencode):** dispatch type and model preference instead of current branch and recent log.
+2. Collect context:
+   - **Standard skills:** user's request verbatim, current branch (`git branch --show-current`), recent log (`git log --oneline -5`), any relevant file paths mentioned.
+   - **Dispatch-type skills (codex, gemini, opencode):** user's request verbatim, dispatch type, model preference, any relevant file paths mentioned.
 3. Dispatch via Agent tool with `run_in_background: true`. Prompt must be fully self-contained.
 4. Reply:
    - **Standard skills:** "\<SKILL_LABEL\> running in background — I'll post findings when done."
-   - **Dispatch-type skills (codex, gemini, opencode):** "\<SKILL_LABEL\> running in background -- I'll post results when done."
+   - **Dispatch-type skills (codex, gemini, opencode):** "\<SKILL_LABEL\> running in background — I'll post results when done."
 5. When agent completes: post a ≤5-bullet summary to main session.
 
-**Background / fire-and-forget mode (dispatch-type skills only):**
-1. Collect context automatically (no questions): dispatch type and model preference.
+**Background / fire-and-forget mode:**
+1. Collect context automatically (no questions):
+   - **Standard skills:** user's request verbatim, current branch (`git branch --show-current`), recent log (`git log --oneline -5`), any relevant file paths mentioned.
+   - **Dispatch-type skills (codex, gemini, opencode):** user's request verbatim, dispatch type, model preference, any relevant file paths mentioned.
 2. Dispatch via Agent tool with `run_in_background: true`.
-3. Reply: "\<SKILL_LABEL\> running in background -- I'll post results when done."
+3. Reply: "\<SKILL_LABEL\> running in background — I'll post results when done."
 4. When agent completes: post a ≤5-bullet summary.
 
 ---

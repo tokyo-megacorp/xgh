@@ -33,6 +33,15 @@ assert_file_exists "commands/copilot-pr-review.md"
 assert_file_exists "skills/copilot-pr-review/copilot-pr-review.md"
 assert_contains "commands/copilot-pr-review.md" "copilot-pr-review"
 
+# --- babysit-prs: command + skill registration ---
+assert_file_exists "commands/babysit-prs.md"
+assert_file_exists "skills/babysit-prs/babysit-prs.md"
+assert_contains "commands/babysit-prs.md" "babysit-prs"
+
+# --- prompt test coverage for new skills ---
+assert_file_exists "tests/skill-triggering/prompts/copilot-pr-review.txt"
+assert_file_exists "tests/skill-triggering/prompts/babysit-prs.txt"
+
 assert_file_exists "config/project.yaml"
 assert_contains "config/project.yaml" "name: xgh"
 assert_contains "config/project.yaml" "xgh: Claude on the fastlane"

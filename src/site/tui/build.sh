@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SHELL_NAME="${1:?Usage: build.sh <shell-name>}"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export SHELL_NAME="${1:?Usage: build.sh <shell-name>}"
+export SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Check PyYAML
 if ! python3 -c 'import yaml' 2>/dev/null; then

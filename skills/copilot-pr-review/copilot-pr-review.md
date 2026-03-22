@@ -142,7 +142,7 @@ gh api repos/$REPO/pulls/$PR/comments --paginate \
 
 **Step 3 — Check pending:**
 ```bash
-gh api repos/$REPO/pulls/$PR/requested_reviewers \
+gh api repos/$REPO/pulls/$PR/requested_reviewers --paginate \
   --jq '[.users[] | select(.login == "copilot-pull-request-reviewer[bot]")] | length'
 ```
 

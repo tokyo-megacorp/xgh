@@ -10,7 +10,7 @@
 
 The xgh skill library is generally well-structured. Descriptions follow the "This skill should be used when..." pattern consistently, procedural content is clear, and most skills provide enough context for Claude to execute autonomously. However, three systemic issues stand out:
 
-1. **Duplicated boilerplate across skills (~350 words each):** The "Preamble -- Execution mode" block is copy-pasted verbatim into 7 skills (codex, collab, gemini, implement, investigate, opencode, track). The "Project Resolution" Python code block is duplicated in 3 skills (architecture, index, test-builder). The "MCP Auto-Detection" pattern is copy-pasted into 5 skills with only the degradation rules varying. This is ~4,000 words of duplicated content across the library.
+1. **Duplicated boilerplate across skills (~350 words each):** The "Preamble -- Execution mode" block is copy-pasted verbatim into 7 skills (codex, collab, gemini, implement, investigate, opencode, track). The "Project Resolution" Python code block is duplicated in 3 skills (architecture, index, test-builder). The "MCP Auto-Detection" pattern is copy-pasted into 5 skills with only the degradation rules varying. This is ~3,550 words of duplicated content across the library.
 
 2. **CSO anti-pattern in descriptions:** 8 skills have descriptions exceeding 50 words that summarize the workflow instead of focusing on trigger phrases. The description field should be lean (routing hints for Claude's skill selector), not a mini-abstract.
 
@@ -26,19 +26,19 @@ The xgh skill library is generally well-structured. Descriptions follow the "Thi
 
 **Affected:** codex, collab, gemini, implement, investigate, opencode, track (7 skills)
 **Waste:** ~350 words x 7 = ~2,450 duplicated words
-**Fix:** Extract to `references/execution-mode-preamble.md`. Each skill includes a one-liner: "Run the execution mode preamble from `references/execution-mode-preamble.md`."
+**Fix:** Extract to `skills/_shared/references/execution-mode-preamble.md`. Each skill includes a one-liner: "Run the execution mode preamble from `skills/_shared/references/execution-mode-preamble.md`."
 
 ### S2: Project Resolution code duplication
 
 **Affected:** architecture, index, test-builder (3 skills)
 **Waste:** ~200 words x 3 = ~600 duplicated words of identical Python code
-**Fix:** Extract to `references/project-resolution.md` or a shared utility. Skills reference it by name.
+**Fix:** Extract to `skills/_shared/references/project-resolution.md`. Skills reference it by name.
 
 ### S3: MCP Auto-Detection boilerplate
 
 **Affected:** briefing, design, implement, investigate, profile (5 skills)
 **Content:** Identical preamble + per-skill degradation rules
-**Fix:** Extract the common detection protocol to `references/mcp-auto-detection.md`. Each skill keeps only its specific degradation rules inline.
+**Fix:** Extract the common detection protocol to `skills/_shared/references/mcp-auto-detection.md`. Each skill keeps only its specific degradation rules inline.
 
 ### S4: CSO anti-pattern in descriptions
 

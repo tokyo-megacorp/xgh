@@ -17,3 +17,7 @@ CLAUDE.md
 .serena/
 CLAUDE.md
 CLAUDE.local.md
+node-compile-cache/
+playwright-transform-cache-*/
+playwright_chromiumdev_profile-*/
+.claude/worktrees/

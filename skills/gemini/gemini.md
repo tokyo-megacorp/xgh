@@ -267,26 +267,23 @@ git branch -d "$BRANCH"
 
 ---
 
-## Step 5: Curate (if lossless-claude available)
+## Step 5: Record Observation (always)
 
-Store the dispatch outcome for future reference:
+After the dispatch completes, append one observation to `.xgh/model-profiles.json`. Create the file if it doesn't exist. **Do this regardless of whether lossless-claude is available.**
 
-```
-lcm_store("Gemini dispatch: <type> | model: <model> | isolation: <mode> | <outcome summary>", ["session", "gemini"])
-```
-
-**Write observation to model profiles** (always, regardless of lossless-claude):
-
-After the dispatch completes, append one observation to `.xgh/model-profiles.yaml`. Create the file if it doesn't exist.
-
-```yaml
-# Append to .xgh/model-profiles.yaml
-- agent: gemini
-  model: <the -m flag value, or "default" if none was passed>
-  effort: <the --effort value, or "default" if none was passed>
-  archetype: <set by router if dispatched via /xgh-dispatch, otherwise "unknown">
-  accepted: <true if worktree merged or user continued; false if re-dispatched or discarded>
-  ts: <ISO 8601 timestamp>
+```json
+{
+  "observations": [
+    {
+      "agent": "gemini",
+      "model": "<the -m flag value, or \"default\" if none was passed>",
+      "effort": "<the --effort value, or \"default\" if none was passed>",
+      "archetype": "<set by router if dispatched via /xgh-dispatch, otherwise \"unknown\">",
+      "accepted": "<true if worktree merged or user continued; false if re-dispatched or discarded>",
+      "ts": "<ISO 8601 timestamp>"
+    }
+  ]
+}
 ```
 
 Write using the same python one-liner pattern (stdlib only), with `'agent': 'gemini'`:
@@ -294,7 +291,7 @@ Write using the same python one-liner pattern (stdlib only), with `'agent': 'gem
 ```bash
 python3 -c "
 import json, os, datetime
-path = '.xgh/model-profiles.yaml'
+path = '.xgh/model-profiles.json'
 os.makedirs(os.path.dirname(path), exist_ok=True)
 try:
     data = json.load(open(path))
@@ -318,6 +315,14 @@ Replace `<MODEL>`, `<EFFORT>`, `<ARCHETYPE>` with the actual values from the dis
 - User continued to next task → `true`
 - User re-dispatched same task → `false`
 - User discarded worktree → `false`
+
+## Step 6: Curate (if lossless-claude available)
+
+If lossless-claude MCP is configured, store the dispatch outcome for future reference:
+
+```
+lcm_store("Gemini dispatch: <type> | model: <model> | isolation: <mode> | <outcome summary>", ["session", "gemini"])
+```
 
 ---
 

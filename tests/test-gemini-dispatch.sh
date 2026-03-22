@@ -80,7 +80,7 @@ assert_contains "config/agents.yaml" "approval-mode plan"
 assert_contains "commands/help.md" "/xgh-gemini"
 
 # --- Skill: curate observation write ---
-assert_contains "skills/gemini/gemini.md" "model-profiles.yaml"
+assert_contains "skills/gemini/gemini.md" "model-profiles.json"
 assert_contains "skills/gemini/gemini.md" "observation"
 assert_contains "skills/gemini/gemini.md" "archetype"
 assert_contains "skills/gemini/gemini.md" "accepted"

@@ -83,7 +83,7 @@ assert_contains "config/agents.yaml" "full-auto"
 assert_contains "commands/help.md" "/xgh-codex"
 
 # --- Skill: curate observation write ---
-assert_contains "skills/codex/codex.md" "model-profiles.yaml"
+assert_contains "skills/codex/codex.md" "model-profiles.json"
 assert_contains "skills/codex/codex.md" "observation"
 assert_contains "skills/codex/codex.md" "archetype"
 assert_contains "skills/codex/codex.md" "accepted"

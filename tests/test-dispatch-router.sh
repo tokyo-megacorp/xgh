@@ -38,7 +38,7 @@ assert_contains "skills/dispatch/dispatch.md" "documentation"
 assert_contains "skills/dispatch/dispatch.md" "quick-task"
 
 # --- Skill: profile lookup ---
-assert_contains "skills/dispatch/dispatch.md" "model-profiles.yaml"
+assert_contains "skills/dispatch/dispatch.md" "model-profiles.json"
 
 # --- Skill: override flags ---
 assert_contains "skills/dispatch/dispatch.md" "--model"

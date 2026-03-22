@@ -23,7 +23,7 @@ assert_contains() {
 }
 
 # --- Gitignore includes model-profiles ---
-assert_contains ".gitignore" "model-profiles.yaml"
+assert_contains ".gitignore" "model-profiles.json"
 
 # --- Observation schema documented in router skill ---
 assert_contains "skills/dispatch/dispatch.md" "agent"

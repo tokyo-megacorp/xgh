@@ -154,7 +154,7 @@ command -v lossless-claude
   ```
   lossless-claude not found. Install it?
 
-  curl -fsSL https://raw.githubusercontent.com/ipedro/lossless-claude/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/lossless-claude/main/install.sh | bash
   ```
   If user says yes, run the installer. If no, continue — memory features will be unavailable.
 

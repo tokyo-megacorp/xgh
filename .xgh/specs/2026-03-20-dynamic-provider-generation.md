@@ -70,7 +70,7 @@ When nothing is detected, fall back to asking: "How do I talk to this service? C
 
 ```
 User: "Add GitHub"
-  → Auto-detect: gh CLI found, authenticated as @ipedro
+  → Auto-detect: gh CLI found, authenticated as @extreme-go-horse
   → Read docs: gh --help, gh pr list --help, gh issue list --help,
     gh run list --help, gh api --help (for security alerts, discussions)
   → Ask user: "Which repos?" → reads from ingest.yaml project config
@@ -92,7 +92,7 @@ mode: cli
 binary: gh
 cursor_strategy: iso8601
 repos:
-  - owner: ipedro
+  - owner: extreme-go-horse
     repo: xgh
     sources: [issues, pull_requests, discussions, actions, security_alerts, releases]
     watch_prs: [19]
@@ -128,7 +128,7 @@ mode: cli
 binary: gh                # CLI binary name (must be in PATH)
 cursor_strategy: iso8601
 repos:                    # Per-repo config (optional — some CLIs are global)
-  - owner: ipedro
+  - owner: extreme-go-horse
     repo: xgh
     sources: [issues, pull_requests, actions, security_alerts, discussions, releases]
     watch_prs: [19]       # Always-fetch PR numbers + search queries
@@ -231,18 +231,18 @@ Format (compatible with existing inbox schema):
 type: github_pr
 source_type: github_pr
 source: github
-repo: ipedro/xgh
+repo: extreme-go-horse/xgh
 project: xgh
 title: "feat: add dynamic provider generation"
-url: https://github.com/ipedro/xgh/pull/42
-author: ipedro
+url: https://github.com/extreme-go-horse/xgh/pull/42
+author: extreme-go-horse
 timestamp: 2026-03-20T14:30:00Z
 urgency_score: 0
 processed: false
 tags: []
 ---
 
-PR #42 opened by @ipedro in ipedro/xgh
+PR #42 opened by @extreme-go-horse in extreme-go-horse/xgh
 
 feat: add dynamic provider generation
 
@@ -276,7 +276,7 @@ Key frontmatter fields:
 - **Auth failure:** Log to stderr, exit 1. `/xgh-doctor` detects stale providers via error logs.
 - **Rate limiting:** If `gh` returns 403/429, log the limit reset time to stderr, exit 2. Don't advance cursor for rate-limited repos.
 - **Network timeout:** `retrieve-all.sh` enforces a 30-second timeout per provider. If `fetch.sh` is killed, cursor is not advanced (safe — next run retries).
-- **Partial repo failure:** If 3 of 5 repos succeed, write inbox items for the 3, advance cursor for those 3 only (per-repo cursor tracking in `cursor` file as JSON: `{"ipedro/xgh": "2026-03-20T14:30:00Z", "rtk-ai/rtk": "2026-03-20T13:00:00Z"}`), exit 2.
+- **Partial repo failure:** If 3 of 5 repos succeed, write inbox items for the 3, advance cursor for those 3 only (per-repo cursor tracking in `cursor` file as JSON: `{"extreme-go-horse/xgh": "2026-03-20T14:30:00Z", "rtk-ai/rtk": "2026-03-20T13:00:00Z"}`), exit 2.
 
 ### Deduplication
 
@@ -389,7 +389,7 @@ This keeps orchestration logic in the skill and tool discovery in the provider c
 
 ## Persistence guarantee
 
-`~/.xgh/user_providers/` is user-owned data. The xgh plugin installer (`claude plugin install xgh@ipedro`) and `/xgh-init` must NEVER delete, overwrite, or modify files in this directory. Only `/xgh-track` and `/xgh-track --regenerate` touch it, and only with user confirmation.
+`~/.xgh/user_providers/` is user-owned data. The xgh plugin installer (`claude plugin install xgh@extreme-go-horse`) and `/xgh-init` must NEVER delete, overwrite, or modify files in this directory. Only `/xgh-track` and `/xgh-track --regenerate` touch it, and only with user confirmation.
 
 This guarantee must be documented in:
 - `skills/init/init.md` — do not touch `user_providers/`
@@ -472,7 +472,7 @@ For the GitHub CLI provider, these are the 8 source types the generated `fetch.s
 ## Testing strategy
 
 1. **Contract tests:** Verify that generated `fetch.sh` scripts follow the contract (reads CURSOR_FILE, writes to INBOX_DIR, outputs `fetched=N`, exits 0/1)
-2. **Integration test:** Generate a GitHub CLI provider for `ipedro/xgh`, run one fetch, verify inbox items are created with correct frontmatter format
+2. **Integration test:** Generate a GitHub CLI provider for `extreme-go-horse/xgh`, run one fetch, verify inbox items are created with correct frontmatter format
 3. **Detection tests:** Verify auto-detection finds `gh` CLI when installed, finds MCP servers when registered
 4. **Regeneration test:** Generate, modify config, regenerate, verify config is preserved but script is updated
 

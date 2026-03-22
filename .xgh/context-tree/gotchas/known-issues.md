@@ -23,7 +23,7 @@ updated: 2026-03-18
 
 - The xgh plugin has both `commands/*.md` (slash commands, loaded as `xgh-*`) and `skills/*` (loaded as `xgh:*`)
 - Claude Code loads both directories as skills, causing duplicates
-- Machine fix (applied 2026-03-17): deleted `~/.claude/plugins/cache/ipedro/xgh/1.0.0/commands/`
+- Machine fix (applied 2026-03-17): deleted `~/.claude/plugins/cache/extreme-go-horse/xgh/1.0.0/commands/`
 
 ### 3. Installer superpowers dedup bug
 
@@ -44,5 +44,5 @@ updated: 2026-03-18
 - **Gotcha:** `.claude/.mcp.json` is correct for project MCP config; `.claude/mcp.json` is silently ignored
 - **Gotcha:** xgh plugin loads skills from both `commands/` and `skills/`, causing `xgh-*` and `xgh:*` duplicates
 - **Bug:** `install_plugin()` lacks dedup check for superpowers already installed from a different marketplace
-- **Workaround:** Delete `~/.claude/plugins/cache/ipedro/xgh/1.0.0/commands/` to remove `xgh-*` duplicates
+- **Workaround:** Delete `~/.claude/plugins/cache/extreme-go-horse/xgh/1.0.0/commands/` to remove `xgh-*` duplicates
 - **Constraint:** User-level MCP config (`~/.claude/mcp.json`) uses different naming convention than project-level

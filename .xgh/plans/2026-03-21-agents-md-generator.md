@@ -83,7 +83,7 @@ description: |
     `XGH_BACKEND`
 
 install: |
-  claude plugin install xgh@ipedro
+  claude plugin install xgh@extreme-go-horse
   /xgh-init
 
 tech_stack:

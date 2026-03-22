@@ -4,7 +4,7 @@
 
 **Goal:** Restructure xgh into a Claude plugin bundle (`plugin/`) so skills and commands are auto-discovered from `~/.claude/plugins/cache/` rather than copied into individual projects, and register with a self-hosted GitHub registry.
 
-**Architecture:** Move `skills/`, `commands/`, `hooks/`, `agents/` into a `plugin/` directory that mirrors the established Claude plugin format (e.g., superpowers). `install.sh` caches the plugin to `~/.claude/plugins/cache/ipedro/xgh/<version>/`, writes `~/.claude/plugins/installed_plugins.json`, and still copies hooks to `~/.claude/hooks/` + registers them in `~/.claude/settings.json`. Per-project setup moves entirely to `/xgh-init`, which gains a dependency check and stale-install cleanup.
+**Architecture:** Move `skills/`, `commands/`, `hooks/`, `agents/` into a `plugin/` directory that mirrors the established Claude plugin format (e.g., superpowers). `install.sh` caches the plugin to `~/.claude/plugins/cache/extreme-go-horse/xgh/<version>/`, writes `~/.claude/plugins/installed_plugins.json`, and still copies hooks to `~/.claude/hooks/` + registers them in `~/.claude/settings.json`. Per-project setup moves entirely to `/xgh-init`, which gains a dependency check and stale-install cleanup.
 
 **Tech Stack:** Bash, Python 3 (for JSON manipulation), Claude plugin format (installed_plugins.json v2), launchd (macOS), cron/systemd (Linux).
 
@@ -26,10 +26,10 @@
 {
   "version": 2,
   "plugins": {
-    "xgh@ipedro": [
+    "xgh@extreme-go-horse": [
       {
         "scope": "user",
-        "installPath": "/Users/<user>/.claude/plugins/cache/ipedro/xgh/1.0.0",
+        "installPath": "/Users/<user>/.claude/plugins/cache/extreme-go-horse/xgh/1.0.0",
         "version": "1.0.0",
         "installedAt": "2026-03-16T00:00:00.000Z",
         "lastUpdated": "2026-03-16T00:00:00.000Z",
@@ -140,13 +140,13 @@ Persistent memory and team context for AI-assisted development.
 Full install (includes Qdrant + inference backend):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ipedro/xgh/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/xgh/main/install.sh | bash
 ```
 
 Lite install (assumes infra already running):
 
 ```
-/plugin install github:ipedro/xgh
+/plugin install github:extreme-go-horse/xgh
 ```
 
 ## Per-project setup
@@ -338,13 +338,13 @@ Add to `tests/test-install.sh`:
 # Plugin registration in installed_plugins.json
 PLUGINS_JSON="${HOME}/.claude/plugins/installed_plugins.json"
 assert_file_exists "$PLUGINS_JSON"
-assert_contains    "$PLUGINS_JSON" '"xgh@ipedro"'
+assert_contains    "$PLUGINS_JSON" '"xgh@extreme-go-horse"'
 assert_contains    "$PLUGINS_JSON" '"scope": "user"'
 # Plugin cache populated
-assert_dir_exists  "${HOME}/.claude/plugins/cache/ipedro/xgh"
-assert_file_exists "${HOME}/.claude/plugins/cache/ipedro/xgh/1.0.0/gemini-extension.json"
-assert_dir_exists  "${HOME}/.claude/plugins/cache/ipedro/xgh/1.0.0/skills"
-assert_dir_exists  "${HOME}/.claude/plugins/cache/ipedro/xgh/1.0.0/commands"
+assert_dir_exists  "${HOME}/.claude/plugins/cache/extreme-go-horse/xgh"
+assert_file_exists "${HOME}/.claude/plugins/cache/extreme-go-horse/xgh/1.0.0/gemini-extension.json"
+assert_dir_exists  "${HOME}/.claude/plugins/cache/extreme-go-horse/xgh/1.0.0/skills"
+assert_dir_exists  "${HOME}/.claude/plugins/cache/extreme-go-horse/xgh/1.0.0/commands"
 ```
 
 - [ ] **Step 2: Run to confirm failure**
@@ -363,7 +363,7 @@ Find the block of functions in `install.sh` (after the helper functions, before 
 # ── Plugin Registration ────────────────────────────────────
 register_plugin() {
   local plugin_name="xgh"
-  local registry="ipedro"
+  local registry="extreme-go-horse"
   local registry_key="${plugin_name}@${registry}"
 
   # Read version from gemini-extension.json
@@ -434,7 +434,7 @@ os.makedirs(os.path.dirname(plugins_file), exist_ok=True)
 with open(plugins_file, "w") as f:
     json.dump(data, f, indent=2)
     f.write("\n")
-print("✓ Registered xgh@ipedro in installed_plugins.json")
+print("✓ Registered xgh@extreme-go-horse in installed_plugins.json")
 PYEOF
 
   # Detect old-style per-project skill copies and warn
@@ -478,7 +478,7 @@ Expected output includes:
 ```
 Registering xgh plugin 🔌
 Plugin version: 1.0.0
-✓ Registered xgh@ipedro in installed_plugins.json
+✓ Registered xgh@extreme-go-horse in installed_plugins.json
 Plugin registered ✓
 ```
 
@@ -573,15 +573,15 @@ Add to `tests/test-uninstall.sh` (after uninstall runs):
 # Plugin deregistration
 PLUGINS_JSON="${HOME}/.claude/plugins/installed_plugins.json"
 if [ -f "$PLUGINS_JSON" ]; then
-  if grep -q '"xgh@ipedro"' "$PLUGINS_JSON"; then
-    echo "FAIL: xgh@ipedro still in installed_plugins.json after uninstall"
+  if grep -q '"xgh@extreme-go-horse"' "$PLUGINS_JSON"; then
+    echo "FAIL: xgh@extreme-go-horse still in installed_plugins.json after uninstall"
     FAIL=$((FAIL + 1))
   else
-    echo "PASS: xgh@ipedro removed from installed_plugins.json"
+    echo "PASS: xgh@extreme-go-horse removed from installed_plugins.json"
     PASS=$((PASS + 1))
   fi
 fi
-assert_no_dir "${HOME}/.claude/plugins/cache/ipedro/xgh"
+assert_no_dir "${HOME}/.claude/plugins/cache/extreme-go-horse/xgh"
 ```
 
 - [ ] **Step 3: Run to confirm failure**
@@ -590,7 +590,7 @@ assert_no_dir "${HOME}/.claude/plugins/cache/ipedro/xgh"
 bash tests/test-uninstall.sh 2>&1 | grep "FAIL"
 ```
 
-Expected: failures about `xgh@ipedro` still present.
+Expected: failures about `xgh@extreme-go-horse` still present.
 
 - [ ] **Step 4: Read uninstall.sh to find insertion point**
 
@@ -603,7 +603,7 @@ grep -n "lane\|info\|rm -f\|function" uninstall.sh | head -30
 ```bash
 deregister_plugin() {
   local plugins_json="${HOME}/.claude/plugins/installed_plugins.json"
-  local cache_dir="${HOME}/.claude/plugins/cache/ipedro/xgh"
+  local cache_dir="${HOME}/.claude/plugins/cache/extreme-go-horse/xgh"
 
   # Remove from installed_plugins.json
   if [ -f "$plugins_json" ]; then
@@ -614,11 +614,11 @@ plugins_file = "${plugins_json}"
 try:
     with open(plugins_file) as f:
         data = json.load(f)
-    data.get("plugins", {}).pop("xgh@ipedro", None)
+    data.get("plugins", {}).pop("xgh@extreme-go-horse", None)
     with open(plugins_file, "w") as f:
         json.dump(data, f, indent=2)
         f.write("\n")
-    print("✓ Removed xgh@ipedro from installed_plugins.json")
+    print("✓ Removed xgh@extreme-go-horse from installed_plugins.json")
 except Exception as e:
     print(f"⚠ Could not update installed_plugins.json: {e}")
 PYEOF
@@ -692,7 +692,7 @@ Run in Bash: `curl -sf --max-time 3 "${XGH_REMOTE_URL:-http://localhost:11434}/v
 
 ### Partial mode (all three checks fail)
 Proceed with scaffolding anyway. After completing, tell the user:
-> "xgh memory tools are not yet configured — context tree scaffolded successfully. Run `install.sh` or `/plugin install github:ipedro/xgh` to complete setup. Cipher search will not work until backends are running."
+> "xgh memory tools are not yet configured — context tree scaffolded successfully. Run `install.sh` or `/plugin install github:extreme-go-horse/xgh` to complete setup. Cipher search will not work until backends are running."
 ```
 
 - [ ] **Step 3: Add stale install cleanup section**
@@ -715,7 +715,7 @@ If any `xgh-*` entries are found:
    ```bash
    rm -rf .claude/skills/xgh-* .claude/commands/xgh-* 2>/dev/null || true
    ```
-2. Report: "Removed legacy per-project skill copies. Skills now load from the user-level plugin at `~/.claude/plugins/cache/ipedro/xgh/`."
+2. Report: "Removed legacy per-project skill copies. Skills now load from the user-level plugin at `~/.claude/plugins/cache/extreme-go-horse/xgh/`."
 
 If none found → continue silently.
 ```
@@ -755,7 +755,7 @@ Expected: all `FAIL: 0`.
 - [ ] **Step 3: Verify plugin cache structure**
 
 ```bash
-ls ~/.claude/plugins/cache/ipedro/xgh/1.0.0/
+ls ~/.claude/plugins/cache/extreme-go-horse/xgh/1.0.0/
 ```
 
 Expected: `README.md  agents  commands  gemini-extension.json  hooks  skills`
@@ -766,7 +766,7 @@ Expected: `README.md  agents  commands  gemini-extension.json  hooks  skills`
 python3 -c "
 import json
 d = json.load(open('${HOME}/.claude/plugins/installed_plugins.json'))
-entry = d['plugins'].get('xgh@ipedro', [{}])[0]
+entry = d['plugins'].get('xgh@extreme-go-horse', [{}])[0]
 print('scope:', entry.get('scope'))
 print('version:', entry.get('version'))
 print('installPath:', entry.get('installPath'))
@@ -777,7 +777,7 @@ Expected:
 ```
 scope: user
 version: 1.0.0
-installPath: /Users/<you>/.claude/plugins/cache/ipedro/xgh/1.0.0
+installPath: /Users/<you>/.claude/plugins/cache/extreme-go-horse/xgh/1.0.0
 ```
 
 - [ ] **Step 5: Verify no per-project skill copies in current project**

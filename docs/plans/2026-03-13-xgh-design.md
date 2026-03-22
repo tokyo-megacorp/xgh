@@ -1174,7 +1174,7 @@ set -euo pipefail
 XGH_VERSION="${XGH_VERSION:-latest}"
 XGH_TEAM="${XGH_TEAM:-my-team}"
 XGH_CONTEXT_PATH="${XGH_CONTEXT_PATH:-.xgh/context-tree}"
-XGH_REPO="https://github.com/ipedro/xgh"
+XGH_REPO="https://github.com/extreme-go-horse/xgh"
 
 echo "🐴 Installing xgh (extreme-go-horsebot) ${XGH_VERSION}..."
 

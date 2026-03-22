@@ -93,6 +93,7 @@ Implement the recurring poll loop via **CronCreate** (session scheduler), not a 
 CronCreate:
   cron: */5 * * * *   # matches --interval (default 5m)
   prompt: "/xgh-babysit-prs poll-once <PR1> [<PR2>...]"
+  recurring: true
 ```
 The `poll-once` subcommand is the single-cycle action that CronCreate invokes each tick. Adjust the cron expression to match the `--interval` value provided by the user. CronCreate is stopped when all PRs are merged (see Post-cycle section).
 
@@ -120,7 +121,7 @@ COMMENTS=$(gh api repos/$REPO/pulls/$PR/comments \
   --jq '[.[] | select(.user.login == "Copilot")] | length')
 
 # Mergeability
-MERGEABLE=$(gh pr view $PR --repo $REPO --json mergeable,mergeStateStatus --jq '{mergeable, mergeStateStatus}')
+MERGEABLE=$(gh pr view $PR --repo $REPO --json mergeable --jq '.mergeable')
 ```
 
 Compare against baselines stored in state file.
@@ -239,9 +240,19 @@ If no state file: `ℹ️ No active babysit-prs session.`
 
 1. Load state file
 2. If no session: print info message, exit
-3. Clean up any background process
+3. Cancel the CronCreate scheduler job:
+   - Read `cron_job_id` from the state file (stored by `start` when CronCreate was called)
+   - Call `CronDelete(cron_job_id)` to cancel the recurring poll job
 4. Delete state file
 5. Print confirmation
+
+**Note:** `start` must persist the cron job ID returned by CronCreate into the state file:
+```json
+{
+  "cron_job_id": "<id returned by CronCreate>",
+  ...
+}
+```
 
 ---
 
@@ -296,7 +307,7 @@ All agents run in background. The `active_agent` field in state prevents dispatc
 
 ## Integration with xgh:copilot-pr-review
 
-This skill builds on `xgh:copilot-pr-review` for the underlying API calls (see PR #28 / `skills/copilot-pr-review/`). Key mappings:
+This skill builds on `xgh:copilot-pr-review` for the underlying API calls (requires `xgh:copilot-pr-review` (PR #28 — merge that first)). Key mappings:
 
 | babysit-prs action | copilot-pr-review equivalent |
 |--------------------|------------------------------|

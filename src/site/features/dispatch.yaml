@@ -1,0 +1,6 @@
+name: dispatch
+headline: "Dispatch to any agent"
+description: "Route tasks to Codex, Gemini, or OpenCode with one slash command. Review comes back inline."
+detail: "Send implementation to Claude, Codex, or Gemini in parallel. Each agent works independently while you coordinate. One interface, any model, maximum throughput."
+icon: "🚀"
+order: 3

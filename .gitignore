@@ -6,9 +6,11 @@
 .xgh/inbox/
 data/cipher-sessions.db*
 .claude/settings.local.json
+CLAUDE.md
 .worktrees/
 .mcp.json
 .xgh/local/
+.xgh/model-profiles.yaml
 .worktrees/
 .lossless-claude/
 .serena/

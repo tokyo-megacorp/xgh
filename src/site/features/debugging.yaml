@@ -1,0 +1,6 @@
+name: debugging
+headline: "Investigate, don't guess"
+description: "Systematic debugging from a Slack thread or bug report — evidence first, fix second."
+detail: "Start from a Slack thread or bug report. Gather evidence. Form hypotheses. Test systematically. Fix with confidence — not guesswork."
+icon: "🔍"
+order: 6

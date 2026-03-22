@@ -1,0 +1,6 @@
+name: memory
+headline: "Memory that persists"
+description: "Your agent remembers decisions, patterns, and context across sessions. No more re-explaining."
+detail: "Two-layer memory — episodic for your current session, semantic for everything before. Your AI recalls past decisions, team patterns, and architectural context without you lifting a finger."
+icon: "🧠"
+order: 1

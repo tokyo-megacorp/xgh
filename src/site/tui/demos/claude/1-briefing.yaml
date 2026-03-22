@@ -1,0 +1,36 @@
+name: briefing
+label: "xgh brief"
+label_color: cyan
+command: "/xgh-brief"
+
+steps:
+  - skill: "xgh:briefing"
+
+  - tool: lcm_search
+    args: '"today context, recent work"'
+    output: "→ 12 memories matched · last session: 3h ago"
+    delay: 700
+
+  - tool: Bash
+    args: "git log --oneline -5"
+    output:
+      - "ba6ccc1 chore: update all public-facing refs to extreme-go-horse org"
+      - "c056428 chore: move npm scope to @extreme-go-horse"
+      - "9269bcc fix: address Copilot review round-2 comments"
+    delay: 500
+
+  - tool: Bash
+    args: "gh pr list --limit 5 --json number,title,state"
+    output: "#20  feat/agents-md-generator  OPEN"
+    delay: 600
+
+  - blank: true
+
+  - response:
+      - { bold: "## Session Briefing" }
+      - { dim: "─────────────────────────────────────" }
+      - { icon: "✓", color: green, bold: "PR #20", dim: "open · awaiting Copilot re-review" }
+      - { icon: "✓", color: green, bold: "npm published", dim: "@extreme-go-horse/xgh@2.0.0" }
+      - { icon: "→", color: yellow, bold: "5 commits", dim: "since last session" }
+      - { dim: "─────────────────────────────────────" }
+      - { dim: "Next: merge PR #20 once review is clean" }

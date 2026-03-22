@@ -207,7 +207,11 @@ Built-in handlers: `color`, `rename`, `help`. The `help` handler is auto-generat
    - `window.__TUI_COMMANDS = [ ... ]`
 6. Write `out/<shell-name>-tui.html`
 
+<<<<<<< HEAD
+Dependencies: `bash`, Python 3 with PyYAML (`pip3 install pyyaml`). The build script checks for PyYAML at startup and prints install instructions if missing. No npm, no bundler.
+=======
 Dependencies: `bash`, Python 3 (for YAML→JSON via `python3 -c 'import yaml, json, sys; ...'`). No npm, no bundler.
+>>>>>>> origin/develop
 
 ## TUI Engine (`engine.html`)
 
@@ -229,22 +233,42 @@ An xgh trigger to auto-rebuild when skill files change:
 ```yaml
 schema_version: 1
 name: site-demo-sync
+<<<<<<< HEAD
+description: "Rebuild TUI demos when a skill file is written or edited"
+=======
 description: "Rebuild TUI demos when skill files change"
+>>>>>>> origin/develop
 enabled: true
 
 when:
   source: local
+<<<<<<< HEAD
+  command: ".*skills/.*"    # regex matched against Write/Edit tool paths
+=======
   command: "*skills/*"
+>>>>>>> origin/develop
 
 path: fast
 
 cooldown: 30s
 backoff: none
 
+<<<<<<< HEAD
+action_level: create
+
+then:
+  - name: Rebuild TUI
+    shell: bash
+    run: |
+      cd "$(git rev-parse --show-toplevel)"
+      bash src/site/tui/build.sh claude
+    on_error: continue
+=======
 then:
   - name: Rebuild TUI
     action_type: shell
     run: "bash src/site/tui/build.sh claude"
+>>>>>>> origin/develop
 ```
 
 This is the automation layer. The initial implementation works without it — write YAMLs by hand, run `build.sh` manually. The trigger is added once the pipeline is stable.

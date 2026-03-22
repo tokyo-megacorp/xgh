@@ -28,6 +28,8 @@ GitHub has two **completely separate** Copilot integrations for PRs. Confusing t
 
 This skill uses the **Code Review** system by default. The `delegate` subcommand explicitly opts into the SWE Agent with a safety gate.
 
+**🚫 NEVER tag `@copilot` in PR comments or replies.** Not for questions, not for clarification, not for anything. Every `@copilot` mention triggers the SWE agent to open a new PR. Copilot does NOT read or respond to replies on its review comments — it is a one-way reviewer. If you want it to look again, use `re-review`.
+
 ## Usage
 
 ```

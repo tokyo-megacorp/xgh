@@ -835,6 +835,7 @@ setInterval(() => { spinIdx = (spinIdx+1) % SPIN.length; }, 80);
 let interactive = false;
 let demoRunning = false;
 let demoAbort   = false;
+let exitGen     = 0;
 let typedValue  = '';
 
 // User preferences (persist through demo/interactive cycles)
@@ -1128,7 +1129,8 @@ function exitInteractive() {
   typedValue = '';
   document.removeEventListener('keydown', onKey);
   clearConv();
-  sleep(600).then(runDemo);
+  const gen = ++exitGen;
+  sleep(600).then(() => { if (gen === exitGen) runDemo(); });
 }
 
 // Click: focus without showing autocomplete
@@ -1280,7 +1282,7 @@ async function submitCommand(cmd) {
     appendLines(at, htmlLines);
   } else {
     // Check if it matches a demo command
-    const demo = DEMOS.find(d => d.command && (d.command === cmd || d.command.startsWith(baseCmd)));
+    const demo = DEMOS.find(d => d.command && d.command === cmd);
     if (demo) {
       await playScene(demo, { skipInput: true });
     } else {

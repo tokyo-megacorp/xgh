@@ -1,1 +1,1 @@
-Index this codebase into memory so you understand how it works.
+index the project using xgh

@@ -1,0 +1,4 @@
+name: color
+command: "/color"
+description: "Change prompt accent color for this session"
+handler: color

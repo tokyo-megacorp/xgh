@@ -1,6 +1,6 @@
 ---
 name: xgh:codex
-description: "This skill should be used when the user asks to \"dispatch to codex\", \"run codex\", \"codex exec\", \"codex review\", \"use codex for\", \"send to codex\", or wants to delegate implementation or code review tasks to OpenAI's Codex CLI agent. Supports worktree-isolated parallel dispatch and same-directory sequential dispatch."
+description: "This skill should be used when the user asks to \"dispatch to codex\", \"run codex\", \"codex exec\", \"codex review\", \"use codex for\", \"send to codex\", or wants to delegate implementation or code review tasks to OpenAI's Codex CLI agent. Supports worktree-isolated parallel dispatch and same-directory sequential dispatch (--add-dir)."
 trigger: "/xgh codex"
 mcp_dependencies:
   required: []
@@ -98,19 +98,20 @@ Parse the user's request to determine dispatch parameters. Only extract what the
 | Flag | Purpose |
 |------|---------|
 | `--full-auto` | Non-interactive execution (auto-approve + workspace-write sandbox) — exec only |
-| `-s read-only` | Read-only sandbox — review only |
-| `-C <dir>` | Working directory (worktree path or current dir) |
-| `-o <file>` | Capture final output to file for results collection |
+| `-C <dir>` | Working directory (worktree path or current dir) — exec only |
+| `-o <file>` | Capture final output to file for results collection — exec only |
 
 **User-controlled parameters** (only injected if the user explicitly provides them):
 
 | Parameter | Codex default | User flag |
 |-----------|---------------|-----------|
 | `type` | `exec` | first arg: `exec` or `review` |
-| `isolation` | `worktree` (exec), `same-dir` (review) | `--worktree`, `--same-dir` |
+| `isolation` | `worktree` (exec), `same-dir` (review) | `--worktree`, `--add-dir <dir>` |
 | `prompt` | — | remaining text after type |
 | `review_target` | `--base main` | `--uncommitted`, `--commit <sha>`, `--base <branch>` |
 | `effort` | CLI default | `--effort <level>` or `--thinking <level>` (translated to `-c 'model_reasoning_effort="..."'`) |
+| `session` | stateless (`--ephemeral`) | `--session` — opt-in stateful mode; captures UUID for resumption |
+| `session_id` | — | `--session-id <UUID>` — resume a specific prior session |
 
 **Effort level translation** (accepts `--effort`, `--thinking`, or raw `-c` — all resolve the same way):
 
@@ -157,11 +158,11 @@ git worktree add "$WORKTREE" -b "$BRANCH"
 
 Set `WORK_DIR="$WORKTREE"`.
 
-If `git worktree add` fails (branch exists, dirty state), report the error and suggest `--same-dir` as fallback.
+If `git worktree add` fails (branch exists, dirty state), report the error and suggest `--add-dir <repo-path>` as fallback for same-directory dispatch.
 
 ### Same-dir mode
 
-Set `WORK_DIR` to the current working directory. No setup needed.
+If the user passes `--add-dir <path>`, set `WORK_DIR` to that path. Otherwise set `WORK_DIR` to the current working directory. No worktree setup needed — Codex runs directly in `WORK_DIR` via `cd "$WORK_DIR"` before the command.
 
 **Warning:** Do not use same-dir mode while Claude Code is also writing files. File conflicts will occur.
 
@@ -169,58 +170,38 @@ Set `WORK_DIR` to the current working directory. No setup needed.
 
 ## Step 2: Dispatch
 
-### Exec dispatch
+Use the **Agent tool** with `subagent_type: "xgh:codex-driver"` to dispatch. The codex-driver agent handles flag detection, command construction, execution, and returns a structured result. Do NOT run Codex via Bash directly — route through the agent.
 
-Build the command with only spawning management flags plus any user-specified passthrough flags:
+Construct the agent prompt from the parsed parameters:
 
-```bash
-OUTPUT_FILE="/tmp/codex-exec-${TIMESTAMP}.md"
-CMD=(
-    codex exec "<prompt>"
-    --full-auto
-    -C "$WORK_DIR"
-    -o "$OUTPUT_FILE"
-    # User passthrough flags appended here (e.g., -m gpt-5.4-mini --search)
-)
-"${CMD[@]}" 2>&1
+**Exec:**
+```
+Dispatch type: exec
+Working directory: <WORK_DIR>
+Isolation: worktree | same-dir
+Prompt: <full prompt text including verification footer>
+Model: <if specified>
+Effort: <if specified>
+Passthrough flags: <any user-provided flags>
 ```
 
-- **Worktree mode:** Run via Bash with `run_in_background: true`. Claude Code is free to continue other work while Codex runs.
-- **Same-dir mode:** Run synchronously. Claude Code waits for completion.
-
-### Review dispatch
-
-```bash
-OUTPUT_FILE="/tmp/codex-review-${TIMESTAMP}.md"
-CMD=(
-    codex review
-    # Review target flag (e.g., --base main, --uncommitted, --commit <sha>)
-    -s read-only
-    -C "$WORK_DIR"
-    # User passthrough flags appended here
-)
-"${CMD[@]}" > "$OUTPUT_FILE" 2>&1
+**Review:**
+```
+Dispatch type: review
+Working directory: <WORK_DIR>
+Review target: --base <branch> | --uncommitted | --commit <sha>
+Effort: <if specified>
+Passthrough flags: <any user-provided flags>
 ```
 
-Custom review instructions via prompt argument:
-```bash
-codex review --base main "Focus on security vulnerabilities and error handling"
-```
+- **Worktree exec:** Set `run_in_background: true` on the Agent call. Confirm to the user that Codex is running.
+- **Same-dir exec / review:** Run synchronously (no `run_in_background`). Wait for the result.
 
 ---
 
 ## Step 3: Collect Results
 
-Read the output file with the Read tool (output is typically short enough for direct context).
-
-For worktree mode, also summarize what Codex changed:
-
-```bash
-git -C "$WORK_DIR" log --oneline "$BRANCH" --not main
-git -C "$WORK_DIR" diff --stat main..."$BRANCH"
-```
-
-Present a structured summary to the user:
+The codex-driver agent returns a structured result block. Surface it to the user:
 
 ```
 ## Codex Dispatch Results
@@ -228,19 +209,16 @@ Present a structured summary to the user:
 | Field | Value |
 |-------|-------|
 | Type | exec / review |
-| Model | gpt-5.4 / gpt-5.4 / etc. |
+| Model | gpt-5.4 / etc. |
 | Isolation | worktree ($BRANCH) / same-dir |
 | Files changed | N |
-| Duration | Xs |
 
 ### Codex Output
-<summary or full content of output file>
+<agent result summary>
 
 ### Changes (worktree mode)
-<git log + diff stat>
+<git log + diff stat from agent result>
 ```
-
-If the output file is large (>200 lines), summarize the key points rather than including the full content.
 
 ---
 
@@ -288,12 +266,75 @@ lcm_store("Codex dispatch: <type> | model: <model> | isolation: <mode> | <outcom
 | Mode | Sandbox | Rationale |
 |------|---------|-----------|
 | Worktree exec | `--full-auto` | Isolated directory, safe for auto-approve |
-| Same-dir exec | `--full-auto` | User explicitly chose same-dir |
-| Review | `-s read-only` | Enforced read-only sandbox — no file modifications |
+| Same-dir exec | `--full-auto --add-dir <dir>` | User explicitly chose same-dir |
+| Review | `-c 'sandbox_permissions=["disk-full-read-access"]'` | Read-only access via config (no file modifications) |
+
+## Session Mode
+
+By default every dispatch is **stateless** (`--ephemeral`): fresh context, no history, parallel-safe.
+
+`--session` opts into **stateful mode**: Codex persists the session and returns a UUID. Use `--session-id <UUID>` on follow-up dispatches to resume exactly where it left off (`codex resume`).
+
+### When to use `--session`
+
+Only when the task is **inherently iterative** and Codex genuinely needs to carry state forward:
+
+- Exploratory debugging where each step narrows the root cause and the next step depends on prior findings
+- Multi-turn investigation where Codex needs to remember what it already ruled out
+- A deliberate "pairing session" where you'll prompt Codex several times in sequence
+
+### When NOT to use `--session` (the common case)
+
+- Any task with a complete written spec — stateless is always preferable
+- Running multiple tasks in parallel — sessions serialize, worktrees do not
+- After a failed attempt — session history will carry the wrong assumptions forward
+- If you're not sure — default stateless, no regrets
+
+### Risks — read before enabling
+
+| Risk | What happens |
+|------|-------------|
+| **Context contamination** | Prior failed attempts accumulate. Codex doubles down on wrong paths instead of reconsidering. |
+| **No parallelism** | One session = one process. Parallel worktree dispatch is blocked. |
+| **Non-determinism** | Same prompt → different result depending on what Codex remembers. Hard to reproduce. |
+| **Stale state** | Hours-old session describes a repo state that no longer exists. Codex acts on outdated context. |
+| **Opaque history** | Claude cannot see what Codex "remembers". Unexpected behavior is hard to diagnose. |
+
+**The rule:** if you can write a self-contained prompt Codex can execute from scratch, use stateless. Session mode is for the rare case where accumulated context is the feature, not a liability.
+
+## Prompt Crafting
+
+Codex runs to completion without mid-task steering. The quality of the prompt determines the quality of the result. **Before dispatching, verify the prompt passes all five checks:**
+
+| Check | Bad (will fail or guess wrong) | Good (will succeed) |
+|-------|-------------------------------|---------------------|
+| **Specificity** | "Fix the frontmatter parser" | "Fix `scripts/gen-agents-md.sh:40` — `frontmatter()` silently swallows YAML errors; print `WARNING: <file>: <exception>` to stderr and continue" |
+| **File scope** | "Update the tests" | "Modify only `tests/test-config.sh`. Do not touch any other files." |
+| **Success criteria** | (none) | "After fixing, run: `bash tests/test-config.sh` — all must pass (currently 65/67)" |
+| **Numbered tasks** | "Fix issues 1, 3, 7 and the brittle assertions" | "1. Fix X in `a.py:12`. 2. Fix Y in `b.yaml:5`. 3. Run tests. 4. Commit as `fix: ...`" |
+| **Commit instruction** | (none) | "Commit all changes as: `fix: address review comments`" |
+
+**Scope constraint template** — always include when touching multiple files:
+
+```
+Work in <dir>. Modify only: <file1>, <file2>. Do not touch any other files.
+After changes, run: <test-command> — all must pass.
+Commit as: '<message>'
+```
+
+**Clarification signals** — if any of these are true, do NOT dispatch yet. Clarify first:
+
+- Task description is a single vague sentence with no file references
+- No success criteria (how will Codex know it's done?)
+- Scope is unbounded ("fix everything", "clean up the code")
+- Task requires a decision mid-run ("pick the better approach")
+- The outcome depends on something Codex can't read (Slack thread, verbal context, image)
 
 ## Anti-Patterns
 
-- **Vague prompts.** Codex works best with focused, specific tasks. "Fix all the bugs" will produce poor results. "Add unit tests for the TokenBucket.consume() method in src/lib/token-bucket.ts" will succeed.
-- **Same-dir during parallel work.** Do not use same-dir mode while Claude Code is also editing files. Use worktree mode instead.
-- **Skipping results review.** Always read and verify Codex output before merging. Codex may introduce unexpected changes.
-- **Large monolithic dispatches.** Split large tasks into focused subtasks, dispatching each to a separate Codex invocation. Mirrors the superpowers:dispatching-parallel-agents pattern.
+- **Vague prompts.** "Fix all the bugs" produces poor results. "Fix `src/auth.ts:42` — null check missing before `.userId` access" succeeds.
+- **No verification step.** Always include a test command in the prompt. Codex won't self-verify unless told to.
+- **No scope constraints.** Codex will touch whatever seems related. If you don't say "modify only X", it will modify Y and Z too.
+- **Same-dir during parallel work.** Do not use `--add-dir` while Claude Code is also editing files. Use worktree mode.
+- **Skipping results review.** Always read and verify Codex output before merging.
+- **Large monolithic dispatches.** Split into focused subtasks, one Codex invocation each.

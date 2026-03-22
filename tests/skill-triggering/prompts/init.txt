@@ -1,0 +1,1 @@
+shouldnt it be /xgh-init and then /xgh-brief?

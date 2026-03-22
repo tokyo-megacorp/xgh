@@ -1,0 +1,140 @@
+# xgh default trigger catalog
+# Installed to ~/.xgh/triggers/ by /xgh-init.
+# These entries feed the Automation Map section of the generated AGENTS.md.
+#
+# Schema reference: skills/trigger/trigger.md
+#
+# when: fields supported by the trigger engine:
+#   source:     matches item.source in inbox frontmatter (* = any)
+#   type:       matches item.type from analyze classification (not on fast path)
+#   project:    matches item.project from ingest.yaml (* = any)
+#   match:      regex patterns on item frontmatter fields (! prefix = exclude)
+#   command:    regex on command: field (local events only)
+#   exit_code:  exact match on exit_code: field (local events only)
+#   cron:       matched against current time (schedule events only)
+#
+# then: action_level values (ascending): notify < create < mutate < autonomous
+
+triggers:
+
+  - name: pr-opened
+    installed_by: xgh
+    description: "GitHub PR opened — dispatch pr-reviewer agent via plan-review workflow"
+    when:
+      source: github
+      type: pull_request
+      match:
+        event_type: "^opened$"
+    action:
+      skill: xgh:pr-reviewer
+      workflow: plan-review
+      agent: pr-reviewer
+    then:
+      - action_level: autonomous
+        type: dispatch
+        skill: xgh:pr-reviewer
+        workflow: plan-review
+        agent: pr-reviewer
+        args: "{item.url}"
+    backoff_strategy: none
+    on_error: continue
+
+  - name: pr-review-requested
+    installed_by: xgh
+    description: "GitHub PR review requested — dispatch pr-reviewer agent via plan-review workflow"
+    when:
+      source: github
+      type: pull_request
+      match:
+        event_type: "^review_requested$"
+    action:
+      skill: xgh:pr-reviewer
+      workflow: plan-review
+      agent: pr-reviewer
+    then:
+      - action_level: autonomous
+        type: dispatch
+        skill: xgh:pr-reviewer
+        workflow: plan-review
+        agent: pr-reviewer
+        args: "{item.url}"
+    backoff_strategy: none
+    on_error: continue
+
+  - name: slack-mention
+    installed_by: xgh
+    description: "Slack @mention — run xgh:brief to surface relevant context"
+    when:
+      source: slack
+      type: mention
+    action:
+      skill: xgh:brief
+    then:
+      - action_level: notify
+        type: dispatch
+        skill: xgh:brief
+        args: "{item.channel_id}"
+    cooldown: 300
+    backoff_strategy: fixed
+    on_error: continue
+
+  - name: jira-assigned
+    installed_by: xgh
+    description: "Jira ticket assigned to me — dispatch implement agent via plan-review workflow"
+    when:
+      source: jira
+      type: issue
+      match:
+        event_type: "^assigned$"
+    action:
+      skill: xgh:implement
+      workflow: plan-review
+      agent: implementer
+    then:
+      - action_level: autonomous
+        type: dispatch
+        skill: xgh:implement
+        workflow: plan-review
+        agent: implementer
+        args: "{item.url}"
+    backoff_strategy: none
+    on_error: continue
+
+  - name: digest-ready
+    installed_by: xgh
+    description: "Local digest.md created — seed xgh memory with digest contents"
+    when:
+      source: local
+      type: file_created
+      match:
+        path: "digest\\.md$"
+    action:
+      skill: xgh:seed
+    then:
+      - action_level: create
+        type: dispatch
+        skill: xgh:seed
+        args: "{item.url}"
+    cooldown: 600
+    backoff_strategy: fixed
+    on_error: continue
+
+  - name: security-alert
+    installed_by: xgh
+    description: "GitHub security advisory or Dependabot alert — dispatch investigate agent via security-review workflow"
+    when:
+      source: github
+      type: security_alert
+    action:
+      skill: xgh:investigate
+      workflow: security-review
+      agent: investigator
+    then:
+      - action_level: autonomous
+        type: dispatch
+        skill: xgh:investigate
+        workflow: security-review
+        agent: investigator
+        args: "{item.url}"
+    backoff_strategy: none
+    on_error: abort

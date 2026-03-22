@@ -18,5 +18,5 @@ Run the `xgh:codex` skill to dispatch implementation tasks or code reviews to Op
 /xgh-codex review --base main
 /xgh-codex exec --model gpt-5.4 --effort high "Refactor connection pooling"
 /xgh-codex review --uncommitted --thinking xhigh
-/xgh-codex exec --same-dir "Fix lint warnings in src/utils/"
+/xgh-codex exec --add-dir /path/to/repo "Fix lint warnings in src/utils/"
 ```

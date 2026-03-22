@@ -77,7 +77,7 @@ tagline: "xgh: Claude on the fastlane"
 description: |
   xgh is a Model Context Server (MCS) tech pack for Claude Code...
 install: |
-  claude plugin install xgh@ipedro
+  claude plugin install xgh@extreme-go-horse
   /xgh-init
 tech_stack:
   - layer: Install & hooks

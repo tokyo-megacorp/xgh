@@ -111,7 +111,6 @@ watch_mentions:
   - "cc:@you"                    # Explicit CC patterns
   - "FYI:"                       # Team convention: "FYI: @user"
 
----
 # SCENARIO: Small team (5–10 people)
 #
 # Track: engineering, incidents, product, announcements
@@ -156,7 +155,6 @@ watch_mentions:
 # Advantage: Single /xgh-retrieve call syncs all channels. The analyze skill
 # can then group inbox items by team (via channel name / keywords).
 
----
 # TIPS:
 #
 # • Thread lookback: Controls how deep to search for thread context.

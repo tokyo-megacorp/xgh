@@ -86,14 +86,14 @@
 
 - The installer clones/pulls xgh repo to `~/.xgh/pack/` (lines 103-111).
 - Skills live in the plugin at `~/.xgh/pack/plugin/skills/` (confirmed: 23 skills present there).
-- The installer registers them via `register_plugin()` (lines 272-403), copying to `~/.claude/plugins/cache/ipedro/xgh/<version>/skills/` (confirmed: 23 skills present there too).
+- The installer registers them via `register_plugin()` (lines 272-403), copying to `~/.claude/plugins/cache/extreme-go-horse/xgh/<version>/skills/` (confirmed: 23 skills present there too).
 - There is no `~/.xgh/pack/skills/` directory at all — skills are at `~/.xgh/pack/plugin/skills/`.
 
 **Verdict:** **False alarm / doctor skill bug.** The doctor check is looking at the wrong path (`~/.xgh/pack/skills/`). Skills are correctly installed at two locations:
 - `~/.xgh/pack/plugin/skills/` (source)
-- `~/.claude/plugins/cache/ipedro/xgh/<version>/skills/` (registered for Claude Code)
+- `~/.claude/plugins/cache/extreme-go-horse/xgh/<version>/skills/` (registered for Claude Code)
 
-**Fix needed:** Update the doctor skill (`plugin/skills/doctor/doctor.md`) to check the correct path: `~/.xgh/pack/plugin/skills/` or `~/.claude/plugins/cache/ipedro/xgh/*/skills/`.
+**Fix needed:** Update the doctor skill (`plugin/skills/doctor/doctor.md`) to check the correct path: `~/.xgh/pack/plugin/skills/` or `~/.claude/plugins/cache/extreme-go-horse/xgh/*/skills/`.
 
 ### 6. context-mode CLI Doctor Missing (build/cli.js not found)
 
@@ -179,5 +179,5 @@ fi
 ```
 
 ### Fix 4: Update doctor skill path checks (`plugin/skills/doctor/doctor.md`)
-- Skills check: look at `~/.claude/plugins/cache/ipedro/xgh/*/skills/` instead of `~/.xgh/pack/skills/`
+- Skills check: look at `~/.claude/plugins/cache/extreme-go-horse/xgh/*/skills/` instead of `~/.xgh/pack/skills/`
 - context-mode check: use `claude plugin list | grep context-mode` instead of checking for `build/cli.js`

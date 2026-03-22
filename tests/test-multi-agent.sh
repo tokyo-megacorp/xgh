@@ -37,30 +37,31 @@ for agent in code-reviewer collaboration-dispatcher pipeline-doctor context-cura
   assert_contains "$F" "^name: ${agent}"         "${agent}: name field matches filename"
   assert_contains "$F" "^description:"           "${agent}: has description field"
   assert_contains "$F" "^model:"                 "${agent}: has model field"
+  assert_contains "$F" "^capabilities:"          "${agent}: has capabilities field"
   assert_contains "$F" "^tools:"                 "${agent}: has tools field"
   assert_contains "$F" "<example>"               "${agent}: has dispatch examples"
 done
 
 # ── Model assignments ───────────────────────────────────────────────────────
-assert_contains "$PLUGIN_DIR/agents/code-reviewer.md"              "^model: inherit"   "code-reviewer: model is inherit"
-assert_contains "$PLUGIN_DIR/agents/collaboration-dispatcher.md"   "^model: inherit"   "collaboration-dispatcher: model is inherit"
-assert_contains "$PLUGIN_DIR/agents/pipeline-doctor.md"            "^model: inherit"   "pipeline-doctor: model is inherit"
-assert_contains "$PLUGIN_DIR/agents/context-curator.md"            "^model: inherit"   "context-curator: model is inherit"
-assert_contains "$PLUGIN_DIR/agents/investigation-lead.md"         "^model: inherit"   "investigation-lead: model is inherit"
-assert_contains "$PLUGIN_DIR/agents/pr-reviewer.md"                "^model: inherit"   "pr-reviewer: model is inherit"
-assert_contains "$PLUGIN_DIR/agents/retrieval-auditor.md"          "^model: inherit"   "retrieval-auditor: model is inherit"
-assert_contains "$PLUGIN_DIR/agents/onboarding-guide.md"           "^model: inherit"   "onboarding-guide: model is inherit"
+assert_contains "$PLUGIN_DIR/agents/code-reviewer.md"              "^model: sonnet"    "code-reviewer: model is sonnet"
+assert_contains "$PLUGIN_DIR/agents/collaboration-dispatcher.md"   "^model: sonnet"    "collaboration-dispatcher: model is sonnet"
+assert_contains "$PLUGIN_DIR/agents/pipeline-doctor.md"            "^model: sonnet"    "pipeline-doctor: model is sonnet"
+assert_contains "$PLUGIN_DIR/agents/context-curator.md"            "^model: haiku"     "context-curator: model is haiku"
+assert_contains "$PLUGIN_DIR/agents/investigation-lead.md"         "^model: opus"      "investigation-lead: model is opus"
+assert_contains "$PLUGIN_DIR/agents/pr-reviewer.md"                "^model: sonnet"    "pr-reviewer: model is sonnet"
+assert_contains "$PLUGIN_DIR/agents/retrieval-auditor.md"          "^model: haiku"     "retrieval-auditor: model is haiku"
+assert_contains "$PLUGIN_DIR/agents/onboarding-guide.md"           "^model: sonnet"    "onboarding-guide: model is sonnet"
 
 # ── Tool grants ─────────────────────────────────────────────────────────────
-# Agents with Bash access (investigation/diagnosis agents)
+# Agents with Bash access (review/investigation/diagnosis agents)
 # Check specifically in the tools: line to avoid false positives from prose mentioning "Bash"
+assert_contains "$PLUGIN_DIR/agents/code-reviewer.md"      'tools:.*Bash'  "code-reviewer: has Bash access"
 assert_contains "$PLUGIN_DIR/agents/pipeline-doctor.md"     'tools:.*Bash'  "pipeline-doctor: has Bash access"
 assert_contains "$PLUGIN_DIR/agents/investigation-lead.md"  'tools:.*Bash'  "investigation-lead: has Bash access"
 assert_contains "$PLUGIN_DIR/agents/pr-reviewer.md"         'tools:.*Bash'  "pr-reviewer: has Bash access"
-assert_contains "$PLUGIN_DIR/agents/retrieval-auditor.md"   'tools:.*Bash'  "retrieval-auditor: has Bash access"
 
 # Read-only agents (no Bash in tools line)
-for agent in code-reviewer collaboration-dispatcher context-curator onboarding-guide; do
+for agent in collaboration-dispatcher context-curator onboarding-guide retrieval-auditor; do
   F="$PLUGIN_DIR/agents/${agent}.md"
   if grep -q 'tools:.*Bash' "$F" 2>/dev/null; then
     echo "FAIL: ${agent} should NOT have Bash in tools"; FAIL=$((FAIL+1))
@@ -109,6 +110,12 @@ assert_contains "$PLUGIN_DIR/agents/retrieval-auditor.md"  "quality"     "retrie
 assert_contains "$PLUGIN_DIR/agents/onboarding-guide.md"  "architecture"   "onboarding-guide: covers architecture"
 assert_contains "$PLUGIN_DIR/agents/onboarding-guide.md"  "convention"     "onboarding-guide: covers conventions"
 assert_contains "$PLUGIN_DIR/agents/onboarding-guide.md"  "context-tree"   "onboarding-guide: references context tree"
+
+# codex-driver
+assert_file_exists "$PLUGIN_DIR/agents/codex-driver.md"              "codex-driver exists"
+assert_contains "$PLUGIN_DIR/agents/codex-driver.md"  "^name: codex-driver"  "codex-driver: name field"
+assert_contains "$PLUGIN_DIR/agents/codex-driver.md"  "^model: sonnet"       "codex-driver: model is sonnet"
+assert_contains "$PLUGIN_DIR/agents/codex-driver.md"  "^color: cyan"         "codex-driver: color is cyan"
 
 # ── Result ──────────────────────────────────────────────────────────────────
 echo ""

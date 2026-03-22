@@ -1,6 +1,7 @@
 ---
 name: pr-reviewer
-description: Use this agent for GitHub PR review with cross-referencing — fetches the diff, checks against conventions, and correlates with Jira tickets and Slack threads. For in-session code review within collaboration workflows, use code-reviewer instead. Examples:
+description: |
+  Use this agent for GitHub PR review with cross-referencing — fetches the diff, checks against conventions, and correlates with Jira tickets and Slack threads. For in-session code review within collaboration workflows, use code-reviewer instead. Examples:
 
   <example>
   Context: User asks for a PR review
@@ -29,8 +30,9 @@ description: Use this agent for GitHub PR review with cross-referencing — fetc
   </commentary>
   </example>
 
-model: inherit
-color: magenta
+model: sonnet
+capabilities: [pr-review, code-review, github]
+color: green
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---
 

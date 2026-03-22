@@ -534,7 +534,7 @@ XGH_CONTEXT_PATH="${XGH_CONTEXT_PATH:-.xgh/context-tree}"
 XGH_PRESET="${XGH_PRESET:-local}"
 XGH_DRY_RUN="${XGH_DRY_RUN:-0}"
 XGH_LOCAL_PACK="${XGH_LOCAL_PACK:-}"
-XGH_REPO="https://github.com/ipedro/xgh"
+XGH_REPO="https://github.com/extreme-go-horse/xgh"
 
 # ── Colors ────────────────────────────────────────────────
 RED='\033[0;31m'

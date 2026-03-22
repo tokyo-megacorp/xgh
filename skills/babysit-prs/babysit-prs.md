@@ -88,7 +88,13 @@ Save to `.xgh/babysit-prs-state.json`:
 
 **Step 4 — Start poll loop:**
 
-Begin the poll cycle (Step 5). Repeat every `--interval` (default 5m) until all PRs are merged.
+Implement the recurring poll loop via **CronCreate** (session scheduler), not a custom sleep loop:
+```
+CronCreate:
+  cron: */5 * * * *   # matches --interval (default 5m)
+  prompt: "/xgh-babysit-prs poll-once <PR1> [<PR2>...]"
+```
+The `poll-once` subcommand is the single-cycle action that CronCreate invokes each tick. Adjust the cron expression to match the `--interval` value provided by the user. CronCreate is stopped when all PRs are merged (see Post-cycle section).
 
 **Step 5 — Poll cycle (per PR):**
 
@@ -119,6 +125,15 @@ MERGEABLE=$(gh pr view $PR --repo $REPO --json mergeable,mergeStateStatus --jq '
 
 Compare against baselines stored in state file.
 
+#### B1 — Null REVIEW guard (no Copilot review yet)
+
+If `REVIEW` is null (Copilot has not yet submitted any review for this PR):
+- Skip checks C and D (new-comments and stale-review checks — they require a prior review)
+- Proceed directly to the merge-conflict check: if `MERGEABLE == CONFLICTING`, dispatch conflict-resolution agent
+- Otherwise: re-request Copilot review per section E (with cooldown)
+
+This is the "pending first review" state.
+
 #### C — New review with new comments
 
 **Condition:** `review.submitted_at > baseline_review_at` AND `comment_count > baseline_comment_count`
@@ -126,17 +141,19 @@ Compare against baselines stored in state file.
 **Guard:** If `active_agent != null`, skip (agent still working).
 
 **Action:**
-1. Fetch new comments:
+1. Fetch new comments (comments added since baseline):
    ```bash
+   BASELINE_COUNT=$(jq -r ".prs[\"$PR\"].baseline_comment_count" .xgh/babysit-prs-state.json)
    gh api repos/$REPO/pulls/$PR/comments \
-     --jq '[.[] | select(.user.login == "Copilot")] | sort_by(.created_at) | .[-N:] | .[] | {id, path, line, body: .body[0:250]}'
+     --jq "[.[] | select(.user.login == \"Copilot\")] | sort_by(.created_at) | .[$BASELINE_COUNT:] | .[] | {id, path, line, body: .body[0:250]}"
    ```
+   `$BASELINE_COUNT` is the comment count stored at last baseline update; slicing from that index returns only the newly added comments.
 2. Dispatch a **haiku** Agent (worktree isolation) to fix the comments. Include:
    - Branch name, base branch, repo
    - The new Copilot comments (id, path, line, body)
    - Instructions to fix code issues, reply to out-of-scope comments, push, and re-request review
    - **CRITICAL:** Never tag `@copilot` — it opens new PRs
-3. Update state: `last_action = dispatched-fix-agent`, `active_agent = { type: "fix", started_at: ISO8601 }`
+3. Update state: `last_action = dispatched-fix-agent`, `active_agent = { type: "fix", agent_id: "<id>", started_at: ISO8601 }`
 4. Update baseline: `baseline_review_at = review.submitted_at`, `baseline_comment_count = comment_count`
 
 **Escalation:** If the haiku agent fails or produces broken code (build fails after push), re-dispatch with **sonnet** model.
@@ -172,6 +189,8 @@ This means Copilot re-reviewed and found nothing new. **Merge.**
 gh pr edit $PR --repo $REPO --remove-reviewer copilot-pull-request-reviewer 2>/dev/null
 gh pr edit $PR --repo $REPO --add-reviewer copilot-pull-request-reviewer
 ```
+
+> **Note on `[bot]` suffix:** The jq filters and REST API responses use the full login `copilot-pull-request-reviewer[bot]`. The `gh pr edit` command uses the GraphQL mutation `requestReviews`, which resolves reviewer slugs without the `[bot]` suffix — so `copilot-pull-request-reviewer` (no suffix) is correct here. This is documented behavior, not an inconsistency.
 
 Update: `last_action = re-requested-review`, `last_review_request_at = now`
 
@@ -233,7 +252,13 @@ When a PR is MERGEABLE=CONFLICTING, dispatch a conflict-resolution agent:
 **Agent inputs:**
 - Repo, branch name, base branch
 - PR number
-- Instructions: fetch, checkout branch, merge base, resolve conflicts, verify no conflict markers with `grep -r "^<<<<<<" --include="*.ts" --include="*.md"`, commit, push
+- Instructions: fetch, checkout branch, merge base, resolve conflicts, verify no conflict markers across all tracked files:
+  ```bash
+  git diff --name-only --diff-filter=U
+  # or equivalently:
+  grep -rn "^<<<<<<<" -- . | grep -v node_modules | grep -v .git
+  ```
+  commit, push
 - **CRITICAL:** Do NOT force push. Do NOT tag `@copilot`.
 
 **After resolution:** Set `last_action = dispatched-conflict-agent`. Next cycle will detect the PR is now mergeable and re-request Copilot review.
@@ -251,11 +276,27 @@ When a PR is MERGEABLE=CONFLICTING, dispatch a conflict-resolution agent:
 
 All agents run in background. The `active_agent` field in state prevents dispatching a second agent for the same PR.
 
+### `active_agent` lifecycle
+
+**Set:** When dispatching any agent (fix or conflict), record the agent ID and timestamp:
+```json
+"active_agent": { "type": "fix", "agent_id": "<id>", "started_at": "ISO8601" }
+```
+
+**Check (at START of each poll cycle, before decision tree):**
+1. If `active_agent != null`, check whether the agent has completed:
+   - Use `TaskGet(agent_id)` to query agent status, OR
+   - Run `git log --oneline origin/<branch> --since="<started_at>"` to detect new commits pushed after dispatch
+2. If the agent has **completed** (success or failure): clear `active_agent = null` and proceed with the normal decision tree for this PR
+3. If the agent is **still running**: skip this PR in the current cycle (do not re-dispatch)
+
+**Clear:** Set `active_agent = null` after confirming completion (step 2 above). Never leave `active_agent` set indefinitely — if `TaskGet` is unavailable and no commits appeared within 2× poll interval, treat as failed and clear.
+
 ---
 
 ## Integration with xgh:copilot-pr-review
 
-This skill builds on `xgh:copilot-pr-review` for the underlying API calls. Key mappings:
+This skill builds on `xgh:copilot-pr-review` for the underlying API calls (see PR #28 / `skills/copilot-pr-review/`). Key mappings:
 
 | babysit-prs action | copilot-pr-review equivalent |
 |--------------------|------------------------------|

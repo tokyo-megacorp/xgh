@@ -42,10 +42,13 @@ except FileNotFoundError:
 
 projects = data.get('projects', {})
 for name, cfg in projects.items():
-    github = cfg.get('github', '')
-    if github and (github in remote or remote in github):
-        print(name)
-        sys.exit(0)
+    github_entries = cfg.get('github', [])
+    if isinstance(github_entries, str):
+        github_entries = [github_entries]
+    for gh in github_entries:
+        if gh in remote or remote in gh:
+            print(name)
+            sys.exit(0)
 
 print('NO_MATCH')
 " "<remote-url>"

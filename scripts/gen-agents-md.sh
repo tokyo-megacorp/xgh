@@ -77,8 +77,12 @@ def render_condition(when):
     if "type" in when:
         parts.append(when["type"])
     if "match" in when:
-        match_parts = [f"{k}={v}" for k, v in when["match"].items()]
-        parts.append("match:" + ",".join(match_parts))
+        match_val = when["match"]
+        if isinstance(match_val, dict):
+            match_parts = [f"{k}={v}" for k, v in match_val.items()]
+            parts.append("match:" + ",".join(match_parts))
+        elif match_val is not None:
+            parts.append(f"match:{match_val}")
     return " / ".join(parts)
 
 proj = load("config/project.yaml")

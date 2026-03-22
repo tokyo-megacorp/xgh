@@ -101,7 +101,7 @@ Triggers, workflows, and agents — the full 'what fires when' picture.
 - Slash commands: markdown files in `commands/`, filename is the command name
 - Commands are thin wrappers — all logic lives in `skills/`
 - No context-mode references in xgh skill files (context-mode handles its own enforcement)
-- Skill frontmatter must include `name`, `description`, and `triggers`
+- Skill frontmatter must include `name` and `description`. For the trigger key, both `trigger` (singular string) and `triggers` (list) are valid — use whichever fits.
 
 ### Running tests
 

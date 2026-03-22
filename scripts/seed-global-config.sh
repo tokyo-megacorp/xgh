@@ -29,13 +29,13 @@ if [ ! -f "$CONTENT_FILE" ]; then
   exit 1
 fi
 
-CONTENT=$(cat "$CONTENT_FILE")
-
 mkdir -p "$(dirname "$TARGET")"
 
 if [ ! -f "$TARGET" ]; then
   # File doesn't exist — create fresh
-  printf '%s\n%s\n%s\n' "$START" "$CONTENT" "$END" > "$TARGET"
+  printf '%s\n' "$START" > "$TARGET"
+  cat "$CONTENT_FILE" >> "$TARGET"
+  printf '%s\n' "$END" >> "$TARGET"
   echo "Created $TARGET with [$MARKER_NAME] section"
 elif grep -qF "$START" "$TARGET" && ! grep -qF "$END" "$TARGET"; then
   echo "ERROR: corrupted markers in $TARGET — $START found but $END missing" >&2
@@ -56,6 +56,8 @@ PY
   echo "Updated [$MARKER_NAME] section in $TARGET (preserved existing content)"
 else
   # File exists, no markers — append our section
-  printf '\n%s\n%s\n%s\n' "$START" "$CONTENT" "$END" >> "$TARGET"
+  printf '\n%s\n' "$START" >> "$TARGET"
+  cat "$CONTENT_FILE" >> "$TARGET"
+  printf '%s\n' "$END" >> "$TARGET"
   echo "Appended [$MARKER_NAME] section to $TARGET (preserved existing content)"
 fi

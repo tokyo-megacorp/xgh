@@ -36,12 +36,12 @@ SUMMARY_LOG="$XGH_TEST_LOG_DIR/summary.log"
 # Derive skill name from filename: strip numeric suffix (ask-2 → ask, ask → ask)
 # then prefix with xgh:
 SKILL_TESTS=()
+shopt -s nullglob
 for f in "$PROMPTS_DIR"/*.txt; do
     basename_no_ext="${f##*/}"
     basename_no_ext="${basename_no_ext%.txt}"
-    skill_base="${basename_no_ext%-[0-9]*}"  # strip trailing -N
-    # edge-case: strip -NN too
-    skill_base="$(echo "$skill_base" | sed 's/-[0-9][0-9]*$//')"
+    # Strip only a purely numeric suffix (-1, -2, -99) — not alphanumeric like -2fa
+    skill_base="$(echo "$basename_no_ext" | sed 's/-[0-9][0-9]*$//')"
     SKILL_TESTS+=("xgh:${skill_base}:$(basename "$f")")
 done
 

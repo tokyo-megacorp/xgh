@@ -3,10 +3,182 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lossless Claude — TUI Demo</title>
+  <title>xgh — Claude on the fastlane</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0e17; --window: #1a1b26; --titlebar: #16171f; --text: #a9b1d6; --text-bright: #c0caf5; --text-dim: #565f89; --text-muted: #3b3f5c; --accent: #7aa2f7; --scrollbar: #2e3154; --green: #9ece6a; --orange: #ff9e64; --red: #f7768e; --yellow: #e0af68; --blue: #7aa2f7; --purple: #bb9af7; --cyan: #7dcfff; --pink: #ff6ec7; --tl-red: #ff5f57; --tl-yellow: #febc2e; --tl-green: #28c840;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4rem 2rem 2rem;
+      min-height: 100vh;
+      justify-content: center;
+    }
+
+    .hero-tagline {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 2rem;
+      text-align: center;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-tui {
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 3rem;
+    }
+
+    .scroll-hint {
+      color: var(--text-muted);
+      font-size: 12px;
+      animation: bob 2s ease-in-out infinite;
+    }
+    @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+    /* ── Features ── */
+    .features {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .features-grid { grid-template-columns: 1fr; }
+    }
+
+    .feature-card {
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 1.25rem;
+      background: rgba(255,255,255,0.02);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .feature-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .feature-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .feature-headline {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 0.35rem;
+    }
+    .feature-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* ── Install ── */
+    .install {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+
+    .install-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 1.5rem;
+    }
+
+    .install-steps {
+      list-style: none;
+      counter-reset: step;
+    }
+    .install-step {
+      counter-increment: step;
+      margin-bottom: 1.25rem;
+      font-size: 13px;
+    }
+    .install-step::before {
+      content: counter(step) ".";
+      color: var(--accent);
+      font-weight: 700;
+      margin-right: 0.5rem;
+    }
+    .install-label { color: var(--text-dim); }
+    .install-cmd {
+      display: block;
+      margin-top: 0.35rem;
+      padding: 0.4rem 0.75rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      color: var(--blue);
+      font-size: 13px;
+      width: fit-content;
+    }
+
+    .install-alt {
+      margin-top: 1.5rem;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .install-alt code { color: var(--blue); }
+
+    /* ── Footer ── */
+    .footer {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .footer a {
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .footer a:hover { color: var(--accent); }
+    .footer-links { display: flex; gap: 1.5rem; }
+  </style>
+</head>
+<body>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <h1 class="hero-tagline">Your AI rides faster.</h1>
+  <div class="hero-tui">
+    <style>
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -212,9 +384,8 @@
     }
     .agent-label { color: var(--green); font-weight: 600; font-size: 11px; margin-bottom: 2px; }
     .agent-text  { color: var(--text-dim); }
-  </style>
-</head>
-<body>
+  
+</style>
 <div class="window">
 
   <div class="title-bar">
@@ -261,7 +432,6 @@
     <span class="status-right" id="status-right"></span>
   </div>
 </div>
-
 <script>
 // ── Fallback test config (used when file is opened directly in browser) ────────
 if (typeof window.__TUI_SHELL === 'undefined') {
@@ -1330,5 +1500,78 @@ async function submitCommand(cmd) {
 // ── Start ─────────────────────────────────────────────────────────────────────
 runDemo();
 </script>
+  </div>
+  <div class="scroll-hint">↓ scroll</div>
+</section>
+
+<!-- ── Features ── -->
+<section class="features">
+  <div class="features-grid">
+    <div class="feature-card">
+  <div class="feature-icon">🧠</div>
+  <div class="feature-headline">Memory that persists</div>
+  <div class="feature-desc">Your agent remembers decisions, patterns, and context across sessions. No more re-explaining.</div>
+</div>
+<div class="feature-card">
+  <div class="feature-icon">📋</div>
+  <div class="feature-headline">Start every session briefed</div>
+  <div class="feature-desc">One command pulls Slack, Jira, GitHub, and past sessions into an actionable summary.</div>
+</div>
+<div class="feature-card">
+  <div class="feature-icon">🚀</div>
+  <div class="feature-headline">Dispatch to any agent</div>
+  <div class="feature-desc">Route tasks to Codex, Gemini, or OpenCode with one slash command. Review comes back inline.</div>
+</div>
+<div class="feature-card">
+  <div class="feature-icon">⚡</div>
+  <div class="feature-headline">60-90% fewer tokens</div>
+  <div class="feature-desc">RTK transparently compresses CLI output so your context window goes further.</div>
+</div>
+<div class="feature-card">
+  <div class="feature-icon">🏗️</div>
+  <div class="feature-headline">Built-in dev methodology</div>
+  <div class="feature-desc">Superpowers skills enforce TDD, plans, reviews, and branch hygiene automatically.</div>
+</div>
+<div class="feature-card">
+  <div class="feature-icon">🔍</div>
+  <div class="feature-headline">Investigate, don't guess</div>
+  <div class="feature-desc">Systematic debugging from a Slack thread or bug report — evidence first, fix second.</div>
+</div>
+
+  </div>
+</section>
+
+<!-- ── Install ── -->
+<section class="install" id="install">
+  <h2 class="install-title">Get started</h2>
+  <ol class="install-steps">
+<li class="install-step"><span class="install-label">Install the plugin</span>
+  <code class="install-cmd">claude plugin install xgh@extreme-go-horse</code></li>
+<li class="install-step"><span class="install-label">Run first-time setup</span>
+  <code class="install-cmd">/xgh-init</code></li>
+<li class="install-step"><span class="install-label">Start your session</span>
+  <code class="install-cmd">/xgh-brief</code></li>
+</ol>
+<p class="install-alt">Or via npm: <code>npm i @extreme-go-horse/xgh</code></p>
+
+</section>
+
+<!-- ── Footer ── -->
+<footer class="footer">
+  <span>xgh: Claude on the fastlane.</span>
+  <div class="footer-links">
+    <a href="https://github.com/extreme-go-horse/xgh" target="_blank">GitHub</a>
+    <a href="https://www.npmjs.com/package/@extreme-go-horse/xgh" target="_blank">npm</a>
+  </div>
+</footer>
+
+<!-- ── Scroll animation ── -->
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.feature-card').forEach(c => observer.observe(c));
+</script>
+
 </body>
 </html>

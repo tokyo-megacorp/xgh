@@ -92,4 +92,87 @@ with open(out_file, 'w') as f:
     f.write(engine)
 
 print(f'Built: {out_file}')
+
+# ── Landing page generation ───────────────────────────────────────────────────
+import re
+
+# Parse feature YAML files
+features_dir = os.path.join(script_dir, '..', 'features')
+feature_files = sorted(glob.glob(os.path.join(features_dir, '*.yaml')))
+features_data = []
+for ff in feature_files:
+    with open(ff) as f:
+        features_data.append(yaml.safe_load(f))
+features_data.sort(key=lambda x: x.get('order', 99))
+
+# Read landing page template
+template_file = os.path.join(script_dir, '..', 'template.html')
+if not os.path.exists(template_file):
+    print('Skipping landing page (no template.html)')
+    sys.exit(0)
+
+with open(template_file) as f:
+    page = f.read()
+
+# Render feature cards HTML
+features_html = ''
+for feat in features_data:
+    features_html += (
+        f'<div class="feature-card">\n'
+        f'  <div class="feature-icon">{feat.get("icon", "")}</div>\n'
+        f'  <div class="feature-headline">{feat.get("headline", "")}</div>\n'
+        f'  <div class="feature-desc">{feat.get("description", "")}</div>\n'
+        f'</div>\n'
+    )
+
+# Render install section HTML from commands/install.yaml
+install_cmd = next((c for c in cmds_data if c.get('name') == 'install'), None)
+install_html = '<ol class="install-steps">\n'
+if install_cmd and install_cmd.get('response'):
+    for line in install_cmd['response']:
+        if not isinstance(line, dict):
+            continue
+        if 'dim' in line and 'blue' in line:
+            # Combined line: "Or via npm: npm i ..."
+            install_html += f'</ol>\n<p class="install-alt">{line["dim"]} <code>{line["blue"].strip()}</code></p>\n'
+        elif 'dim' in line and line['dim'][0:1].isdigit():
+            # Step label: "1. Install the plugin:"
+            label = line['dim'].split('.', 1)[1].strip().rstrip(':')
+            install_html += f'<li class="install-step"><span class="install-label">{label}</span>\n'
+        elif 'blue' in line and line['blue'].strip():
+            # Step command
+            install_html += f'  <code class="install-cmd">{line["blue"].strip()}</code></li>\n'
+if install_html.endswith('install-steps">\n'):
+    install_html += '</ol>\n'
+
+# Read generated TUI HTML for inline embedding
+with open(out_file) as f:
+    tui_html = f.read()
+
+# Extract <body> content and <style> from TUI
+style_match = re.search(r'<style>(.*?)</style>', tui_html, re.DOTALL)
+tui_style = style_match.group(1) if style_match else ''
+
+body_match = re.search(r'<body>(.*)</body>', tui_html, re.DOTALL)
+tui_body = body_match.group(1).strip() if body_match else ''
+
+# Split body into HTML structure and scripts
+parts = re.split(r'(<script>)', tui_body, maxsplit=1)
+tui_structure = parts[0].strip()
+tui_scripts = '<script>' + parts[2] if len(parts) > 2 else ''
+
+# Build the TUI embed: style + structure + scripts
+tui_embed = f'<style>\n{tui_style}\n</style>\n{tui_structure}\n{tui_scripts}'
+
+# Inject into page template
+page = page.replace('/* %%CSS_VARS%% */', css_vars)
+page = page.replace('<!-- %%TUI_EMBED%% -->', tui_embed)
+page = page.replace('<!-- %%FEATURES%% -->', features_html)
+page = page.replace('<!-- %%INSTALL%% -->', install_html)
+
+page_out = os.path.join(script_dir, 'out', 'index.html')
+with open(page_out, 'w') as f:
+    f.write(page)
+
+print(f'Built: {page_out}')
 PYEOF

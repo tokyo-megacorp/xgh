@@ -7,50 +7,7 @@ description: "This skill should be used when the user runs /xgh-architecture or 
 
 ## Step 1 — Resolve project from ingest.yaml
 
-Get the git remote of the current directory:
-
-```bash
-git -C . remote get-url origin 2>/dev/null || git -C . remote get-url upstream 2>/dev/null
-```
-
-Match the remote URL against `projects.<name>.github` in `~/.xgh/ingest.yaml`:
-
-```bash
-python3 -c "
-import sys, os
-try:
-    import yaml
-except ImportError:
-    import subprocess
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pyyaml', '-q'])
-    import yaml
-
-remote = sys.argv[1].strip()
-path = os.path.expanduser('~/.xgh/ingest.yaml')
-try:
-    data = yaml.safe_load(open(path))
-except FileNotFoundError:
-    print('NO_INGEST_YAML')
-    sys.exit(0)
-
-projects = data.get('projects', {})
-for name, cfg in projects.items():
-    github_entries = cfg.get('github', [])
-    if isinstance(github_entries, str):
-        github_entries = [github_entries]
-    for gh in github_entries:
-        if gh in remote or remote in gh:
-            print(name)
-            sys.exit(0)
-
-print('NO_MATCH')
-" "<remote-url>"
-```
-
-- If output is `NO_INGEST_YAML` → stop: "No ingest config found. Run `/xgh-init` first."
-- If output is `NO_MATCH` → stop: "No project config found for this repo. Run `/xgh:config add-project` to register it."
-
-Save the matched project name as `<repo-name>`.
+Follow the shared project resolution protocol in `skills/_shared/references/project-resolution.md`. Store the resolved project name for use in subsequent steps. If resolution fails, stop and tell the user to run `/xgh:config add-project`.
 
 ## Step 2 — Hard prerequisite: index freshness
 

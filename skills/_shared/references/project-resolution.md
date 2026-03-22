@@ -30,7 +30,7 @@ remote = sys.argv[1].strip()
 path = os.path.expanduser('~/.xgh/ingest.yaml')
 try:
     data = yaml.safe_load(open(path)) or {}
-except (FileNotFoundError, PermissionError, OSError):
+except (FileNotFoundError, PermissionError, OSError, yaml.YAMLError):
     print('NO_INGEST_YAML')
     sys.exit(0)
 

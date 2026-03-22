@@ -18,7 +18,7 @@ List and manage AI coding CLI agents (Codex, OpenCode, Gemini) and their model c
 
 ## Implementation
 
-See [implementation plan](/Users/pedro/Developer/xgh/docs/superpowers/plans/2026-03-22-dynamic-model-detection.md).
+See [implementation plan](../../docs/superpowers/plans/2026-03-22-dynamic-model-detection.md).
 
 ## OpenCode Probing
 
@@ -41,10 +41,6 @@ probe_opencode() {
   local output_file="$models_dir/models.yaml"
 
   mkdir -p "$models_dir"
-
-  # Probe OpenCode help
-  local help_output
-  help_output=$(opencode --help 2>&1)
 
   # Generate models.yaml
   cat > "$output_file" << YAML

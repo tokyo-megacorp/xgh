@@ -19,6 +19,9 @@ Follow the shared execution mode protocol in `skills/_shared/references/executio
 
 Dispatch implementation tasks or code reviews to OpenCode CLI as a parallel or sequential agent. OpenCode runs non-interactively via `opencode run "<prompt>"`, optionally in an isolated git worktree for safe parallel work alongside Claude Code.
 
+> **Shared workflow:** Steps 1, 3, 4, and 5 follow `skills/_shared/references/dispatch-template.md`.
+> Use `<CLI>` = `opencode`, `<CLI_LABEL>` = `OpenCode`, `<cli>` = `opencode`, `<tag>` = `opencode`.
+
 ## Prerequisites
 
 Check OpenCode CLI availability:
@@ -66,27 +69,9 @@ Any unrecognized flags are forwarded to `opencode run` as-is.
 
 ## Step 1: Setup Workspace
 
-### Worktree mode
+Follow `skills/_shared/references/dispatch-template.md` Step 1. Use `<CLI>` = `opencode`.
 
-Create an isolated git worktree for OpenCode to work in:
-
-```bash
-SLUG=$(echo "<prompt-summary>" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-30)
-TIMESTAMP=$(date +%s)
-BRANCH="opencode/${SLUG}-${TIMESTAMP}"
-WORKTREE=".worktrees/opencode-${TIMESTAMP}"
-git worktree add "$WORKTREE" -b "$BRANCH"
-```
-
-Set `WORK_DIR="$WORKTREE"`.
-
-If `git worktree add` fails (branch exists, dirty state), report the error and suggest `--same-dir` as fallback.
-
-### Same-dir mode
-
-Set `WORK_DIR` to the current working directory. No setup needed.
-
-**Warning:** Do not use same-dir mode while Claude Code is also writing files. File conflicts will occur.
+Same-dir fallback flag: `--same-dir`.
 
 ---
 
@@ -119,65 +104,19 @@ Note: Review is enforced via prompt engineering — OpenCode has no `-s read-onl
 
 ## Step 3: Collect Results
 
-Read the output file with the Read tool (output is typically short enough for direct context).
-
-For worktree mode, also summarize what OpenCode changed:
-
-```bash
-git -C "$WORK_DIR" log --oneline "$BRANCH" --not main
-git -C "$WORK_DIR" diff --stat main..."$BRANCH"
-```
-
-Present a structured summary to the user:
-
-```
-## OpenCode Dispatch Results
-
-| Field | Value |
-|-------|-------|
-| Type | exec / review |
-| Model | <model> |
-| Isolation | worktree ($BRANCH) / same-dir |
-| Files changed | N |
-| Duration | Xs |
-
-### OpenCode Output
-<summary or full content of output file>
-
-### Changes (worktree mode)
-<git log + diff stat>
-```
-
-If the output file is large (>200 lines), summarize the key points rather than including the full content.
+Follow `skills/_shared/references/dispatch-template.md` Step 3. Use `<CLI_LABEL>` = `OpenCode`.
 
 ---
 
 ## Step 4: Integration (worktree mode only)
 
-Ask the user how to integrate OpenCode's changes:
-
-| Option | Command |
-|--------|---------|
-| **Merge** | `git merge $BRANCH` then cleanup |
-| **Cherry-pick** | `git cherry-pick <commit-range>` then cleanup |
-| **Keep for review** | Leave worktree at `$WORKTREE` for manual inspection |
-| **Discard** | `git worktree remove "$WORKTREE" --force && git branch -D "$BRANCH"` |
-
-Cleanup after merge or cherry-pick:
-```bash
-git worktree remove "$WORKTREE"
-git branch -d "$BRANCH"
-```
+Follow `skills/_shared/references/dispatch-template.md` Step 4.
 
 ---
 
 ## Step 5: Curate (if lossless-claude available)
 
-Store the dispatch outcome for future reference:
-
-```
-lcm_store("OpenCode dispatch: <type> | model: <model> | isolation: <mode> | <outcome summary>", ["session", "opencode"])
-```
+Follow `skills/_shared/references/dispatch-template.md` Step 5. Use `<CLI_LABEL>` = `OpenCode`, `<cli>` = `opencode`.
 
 ---
 
@@ -200,8 +139,8 @@ lcm_store("OpenCode dispatch: <type> | model: <model> | isolation: <mode> | <out
 
 ## Anti-Patterns
 
-- **Vague prompts.** OpenCode works best with focused, specific tasks. "Fix all the bugs" will produce poor results. "Add unit tests for the TokenBucket.consume() method in src/lib/token-bucket.ts" will succeed.
-- **Same-dir during parallel work.** Do not use same-dir mode while Claude Code is also editing files. Use worktree mode instead.
-- **Skipping results review.** Always read and verify OpenCode output before merging. OpenCode may introduce unexpected changes.
-- **Large monolithic dispatches.** Split large tasks into focused subtasks, dispatching each to a separate OpenCode invocation.
+See shared anti-patterns in `skills/_shared/references/dispatch-template.md`.
+
+OpenCode-specific additions:
+- **Vague prompts.** OpenCode works best with focused, specific tasks. "Add unit tests for the TokenBucket.consume() method in src/lib/token-bucket.ts" will succeed where "Fix all the bugs" will not.
 - **Review without prompt constraint.** Always include 'Do NOT modify any files' in review prompts — OpenCode has no native read-only sandbox flag.

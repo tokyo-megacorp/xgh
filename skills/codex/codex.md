@@ -37,6 +37,9 @@ Follow the shared execution mode protocol in `skills/_shared/references/executio
 
 Dispatch implementation tasks or code reviews to OpenAI's Codex CLI as a parallel or sequential agent. Codex runs non-interactively via `codex exec` or `codex review`, optionally in an isolated git worktree for safe parallel work alongside Claude Code.
 
+> **Shared workflow:** Steps 1, 3, 4, and 5 follow `skills/_shared/references/dispatch-template.md`.
+> Use `<CLI>` = `codex`, `<CLI_LABEL>` = `Codex`, `<cli>` = `codex`, `<tag>` = `codex`.
+
 ## Prerequisites
 
 Check Codex CLI availability:
@@ -102,27 +105,9 @@ Any unrecognized flags are forwarded to `codex exec` / `codex review` as-is.
 
 ## Step 1: Setup Workspace
 
-### Worktree mode
+Follow `skills/_shared/references/dispatch-template.md` Step 1. Use `<CLI>` = `codex`.
 
-Create an isolated git worktree for Codex to work in:
-
-```bash
-SLUG=$(echo "<prompt-summary>" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-30)
-TIMESTAMP=$(date +%s)
-BRANCH="codex/${SLUG}-${TIMESTAMP}"
-WORKTREE=".worktrees/codex-${TIMESTAMP}"
-git worktree add "$WORKTREE" -b "$BRANCH"
-```
-
-Set `WORK_DIR="$WORKTREE"`.
-
-If `git worktree add` fails (branch exists, dirty state), report the error and suggest `--add-dir <repo-path>` as fallback for same-directory dispatch.
-
-### Same-dir mode
-
-If the user passes `--add-dir <path>`, set `WORK_DIR` to that path. Otherwise set `WORK_DIR` to the current working directory. No worktree setup needed — Codex runs directly in `WORK_DIR` via `cd "$WORK_DIR"` before the command.
-
-**Warning:** Do not use same-dir mode while Claude Code is also writing files. File conflicts will occur.
+Same-dir fallback flag: `--add-dir <repo-path>` (Codex-specific — passes additional directory rather than changing working dir).
 
 ---
 
@@ -159,53 +144,21 @@ Passthrough flags: <any user-provided flags>
 
 ## Step 3: Collect Results
 
-The codex-driver agent returns a structured result block. Surface it to the user:
+Follow `skills/_shared/references/dispatch-template.md` Step 3. Use `<CLI_LABEL>` = `Codex`.
 
-```
-## Codex Dispatch Results
-
-| Field | Value |
-|-------|-------|
-| Type | exec / review |
-| Model | gpt-5.4 / etc. |
-| Isolation | worktree ($BRANCH) / same-dir |
-| Files changed | N |
-
-### Codex Output
-<agent result summary>
-
-### Changes (worktree mode)
-<git log + diff stat from agent result>
-```
+The codex-driver agent returns a structured result block — surface it directly. The `git log` / `diff stat` commands are run by the agent and included in its result.
 
 ---
 
 ## Step 4: Integration (worktree mode only)
 
-Ask the user how to integrate Codex's changes:
-
-| Option | Command |
-|--------|---------|
-| **Merge** | `git merge $BRANCH` then cleanup |
-| **Cherry-pick** | `git cherry-pick <commit-range>` then cleanup |
-| **Keep for review** | Leave worktree at `$WORKTREE` for manual inspection |
-| **Discard** | `git worktree remove "$WORKTREE" --force && git branch -D "$BRANCH"` |
-
-Cleanup after merge or cherry-pick:
-```bash
-git worktree remove "$WORKTREE"
-git branch -d "$BRANCH"
-```
+Follow `skills/_shared/references/dispatch-template.md` Step 4.
 
 ---
 
 ## Step 5: Curate (if lossless-claude available)
 
-Store the dispatch outcome for future reference:
-
-```
-lcm_store("Codex dispatch: <type> | model: <model> | isolation: <mode> | <outcome summary>", ["session", "codex"])
-```
+Follow `skills/_shared/references/dispatch-template.md` Step 5. Use `<CLI_LABEL>` = `Codex`, `<cli>` = `codex`.
 
 ---
 
@@ -290,9 +243,9 @@ Commit as: '<message>'
 
 ## Anti-Patterns
 
+See shared anti-patterns in `skills/_shared/references/dispatch-template.md`.
+
+Codex-specific additions:
 - **Vague prompts.** "Fix all the bugs" produces poor results. "Fix `src/auth.ts:42` — null check missing before `.userId` access" succeeds.
 - **No verification step.** Always include a test command in the prompt. Codex won't self-verify unless told to.
 - **No scope constraints.** Codex will touch whatever seems related. If you don't say "modify only X", it will modify Y and Z too.
-- **Same-dir during parallel work.** Do not use `--add-dir` while Claude Code is also editing files. Use worktree mode.
-- **Skipping results review.** Always read and verify Codex output before merging.
-- **Large monolithic dispatches.** Split into focused subtasks, one Codex invocation each.

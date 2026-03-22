@@ -19,6 +19,9 @@ Follow the shared execution mode protocol in `skills/_shared/references/executio
 
 Dispatch implementation tasks or code reviews to Google's Gemini CLI as a parallel or sequential agent. Gemini runs non-interactively via `-p` (headless mode), optionally in an isolated git worktree for safe parallel work alongside Claude Code.
 
+> **Shared workflow:** Steps 1, 3, 4, and 5 follow `skills/_shared/references/dispatch-template.md`.
+> Use `<CLI>` = `gemini`, `<CLI_LABEL>` = `Gemini`, `<cli>` = `gemini`, `<tag>` = `gemini`.
+
 ## Prerequisites
 
 Check Gemini CLI availability:
@@ -88,27 +91,9 @@ Any unrecognized flags are forwarded to `gemini` as-is.
 
 ## Step 1: Setup Workspace
 
-### Worktree mode
+Follow `skills/_shared/references/dispatch-template.md` Step 1. Use `<CLI>` = `gemini`.
 
-Create an isolated git worktree for Gemini to work in:
-
-```bash
-SLUG=$(echo "<prompt-summary>" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-30)
-TIMESTAMP=$(date +%s)
-BRANCH="gemini/${SLUG}-${TIMESTAMP}"
-WORKTREE=".worktrees/gemini-${TIMESTAMP}"
-git worktree add "$WORKTREE" -b "$BRANCH"
-```
-
-Set `WORK_DIR="$WORKTREE"`.
-
-If `git worktree add` fails (branch exists, dirty state), report the error and suggest `--same-dir` as fallback.
-
-### Same-dir mode
-
-Set `WORK_DIR` to the current working directory. No setup needed.
-
-**Warning:** Do not use same-dir mode while Claude Code is also writing files. File conflicts will occur.
+Same-dir fallback flag: `--same-dir`.
 
 ---
 
@@ -155,65 +140,19 @@ Review prompt examples:
 
 ## Step 3: Collect Results
 
-Read the output file with the Read tool (output is typically short enough for direct context).
-
-For worktree mode, also summarize what Gemini changed:
-
-```bash
-git -C "$WORK_DIR" log --oneline "$BRANCH" --not main
-git -C "$WORK_DIR" diff --stat main..."$BRANCH"
-```
-
-Present a structured summary to the user:
-
-```
-## Gemini Dispatch Results
-
-| Field | Value |
-|-------|-------|
-| Type | exec / review |
-| Model | (if specified via -m) |
-| Isolation | worktree ($BRANCH) / same-dir |
-| Files changed | N |
-| Duration | Xs |
-
-### Gemini Output
-<summary or full content of output file>
-
-### Changes (worktree mode)
-<git log + diff stat>
-```
-
-If the output file is large (>200 lines), summarize the key points rather than including the full content.
+Follow `skills/_shared/references/dispatch-template.md` Step 3. Use `<CLI_LABEL>` = `Gemini`.
 
 ---
 
 ## Step 4: Integration (worktree mode only)
 
-Ask the user how to integrate Gemini's changes:
-
-| Option | Command |
-|--------|---------|
-| **Merge** | `git merge $BRANCH` then cleanup |
-| **Cherry-pick** | `git cherry-pick <commit-range>` then cleanup |
-| **Keep for review** | Leave worktree at `$WORKTREE` for manual inspection |
-| **Discard** | `git worktree remove "$WORKTREE" --force && git branch -D "$BRANCH"` |
-
-Cleanup after merge or cherry-pick:
-```bash
-git worktree remove "$WORKTREE"
-git branch -d "$BRANCH"
-```
+Follow `skills/_shared/references/dispatch-template.md` Step 4.
 
 ---
 
 ## Step 5: Curate (if lossless-claude available)
 
-Store the dispatch outcome for future reference:
-
-```
-lcm_store("Gemini dispatch: <type> | model: <model> | isolation: <mode> | <outcome summary>", ["session", "gemini"])
-```
+Follow `skills/_shared/references/dispatch-template.md` Step 5. Use `<CLI_LABEL>` = `Gemini`, `<cli>` = `gemini`.
 
 ---
 
@@ -237,7 +176,7 @@ The user can override via `--approval-mode <mode>`:
 
 ## Anti-Patterns
 
-- **Vague prompts.** Gemini works best with focused, specific tasks. "Fix all the bugs" will produce poor results. "Add unit tests for the TokenBucket.consume() method in src/lib/token-bucket.ts" will succeed.
-- **Same-dir during parallel work.** Do not use same-dir mode while Claude Code is also editing files. Use worktree mode instead.
-- **Skipping results review.** Always read and verify Gemini output before merging. Gemini may introduce unexpected changes.
-- **Large monolithic dispatches.** Split large tasks into focused subtasks, dispatching each to a separate Gemini invocation. Mirrors the superpowers:dispatching-parallel-agents pattern.
+See shared anti-patterns in `skills/_shared/references/dispatch-template.md`.
+
+Gemini-specific additions:
+- **Vague prompts.** Gemini works best with focused, specific tasks. "Add unit tests for the TokenBucket.consume() method in src/lib/token-bucket.ts" will succeed where "Fix all the bugs" will not.

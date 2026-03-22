@@ -31,7 +31,7 @@ Watch a batch of PRs through GitHub Copilot review cycles until all are merged. 
 
 If `--repo` is provided, use it. Otherwise auto-detect:
 ```bash
-REPO=$(git remote get-url origin 2>/dev/null | sed -E 's|.*github\.com[:/](.+/.+?)(\.git)?$|\1|')
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
 ```
 
 If auto-detect fails: `❌ Could not determine repo. Use --repo owner/repo`
@@ -70,7 +70,6 @@ Save to `.xgh/babysit-prs-state.json`:
   "repo": "owner/repo",
   "merge_method": "squash",
   "post_merge_hook": null,
-  "poll_interval_seconds": 300,
   "created_at": "ISO8601",
   "prs": {
     "101": {
@@ -88,14 +87,20 @@ Save to `.xgh/babysit-prs-state.json`:
 
 **Step 4 — Start poll loop:**
 
-Implement the recurring poll loop via **CronCreate** (session scheduler), not a custom sleep loop:
+Do NOT call CronCreate directly. Instead, print the `/loop` command for the user to run:
+
 ```
-CronCreate:
-  cron: */5 * * * *   # matches --interval (default 5m)
-  prompt: "/xgh-babysit-prs poll-once <PR1> [<PR2>...]"
-  recurring: true
+✅ Session initialized. Start polling with:
+
+   /loop <interval> /xgh-babysit-prs poll-once <PR1> [<PR2>...]
+
+Example:
+   /loop 5m /xgh-babysit-prs poll-once 28 29
+
+The loop skill handles the scheduler. Cancel anytime with CronDelete using the job ID it returns.
 ```
-The `poll-once` subcommand is the single-cycle action that CronCreate invokes each tick. Adjust the cron expression to match the `--interval` value provided by the user. CronCreate is stopped when all PRs are merged (see Post-cycle section).
+
+The `poll-once` subcommand is the single-cycle action that `/loop` invokes each tick. When all PRs are merged, `poll-once` will print a completion summary and exit cleanly — the loop will continue firing but subsequent runs will be instant no-ops.
 
 **Step 5 — Poll cycle (per PR):**
 
@@ -221,15 +226,13 @@ Load `.xgh/babysit-prs-state.json` and display:
 ## 🐴🤖 xgh babysit-prs — status
 
 Repo: ipedro/lossless-claude
-Interval: 5m | Merge: squash
+Merge: squash | Loop: /loop 5m /xgh-babysit-prs poll-once 101 59
 Active since: 2026-03-22T03:00:00Z
 
 | PR   | Status   | Last Action         | Review    | Comments | Agent |
 |------|----------|---------------------|-----------|----------|-------|
 | #101 | ✅ merged | merge-succeeded     | 03:42:40Z | 20       | —     |
 | #59  | 👀 watching | re-requested-review | 00:08:20Z | 28       | —     |
-
-Next poll: 2026-03-22T04:15:00Z
 ```
 
 If no state file: `ℹ️ No active babysit-prs session.`
@@ -240,19 +243,14 @@ If no state file: `ℹ️ No active babysit-prs session.`
 
 1. Load state file
 2. If no session: print info message, exit
-3. Cancel the CronCreate scheduler job:
-   - Read `cron_job_id` from the state file (stored by `start` when CronCreate was called)
-   - Call `CronDelete(cron_job_id)` to cancel the recurring poll job
-4. Delete state file
-5. Print confirmation
+3. Delete state file
+4. Print confirmation:
+   ```
+   ✅ babysit-prs session cleared.
+   ⚠️  Remember to cancel your /loop job if still running (CronDelete <job-id>).
+   ```
 
-**Note:** `start` must persist the cron job ID returned by CronCreate into the state file:
-```json
-{
-  "cron_job_id": "<id returned by CronCreate>",
-  ...
-}
-```
+The state file is the only persistent resource managed by this skill. The `/loop` job is managed externally — the user is responsible for cancelling it via `CronDelete` using the ID that `/loop` printed when they started it.
 
 ---
 

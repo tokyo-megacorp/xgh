@@ -41,7 +41,7 @@ This skill uses the **Code Review** system by default. The `delegate` subcommand
 If `--repo` is provided, use it. Otherwise auto-detect:
 
 ```bash
-REPO=$(git remote get-url origin 2>/dev/null | sed -E 's|.*github\.com[:/](.+/.+?)(\.git)?$|\1|')
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
 ```
 
 If auto-detect fails, print: `❌ Could not determine repo. Use --repo owner/repo`
@@ -205,7 +205,7 @@ Remove any occurrence of `@copilot` (case-insensitive) from the message body.
 **Step 2 — Post reply:**
 ```bash
 gh api repos/$REPO/pulls/comments/$COMMENT_ID/replies \
-  -X POST -f "body=$SANITIZED_MESSAGE"
+  -X POST --raw-field "body=$SANITIZED_MESSAGE"
 ```
 
 **Output:**
@@ -246,7 +246,7 @@ Agents can pass `--yes` to skip the prompt.
 **Step 2 — Post comment:**
 ```bash
 gh api repos/$REPO/issues/$PR/comments \
-  -X POST -f "body=@copilot $INSTRUCTIONS"
+  -X POST --raw-field "body=@copilot $INSTRUCTIONS"
 ```
 
 Note: Uses `/issues/` endpoint (not `/pulls/`) because PR comments are issue comments.

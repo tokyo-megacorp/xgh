@@ -28,5 +28,10 @@ assert_contains "config/agents.yaml" "auto_detect:"
 assert_contains "config/agents.yaml" "auto_detect: codex"
 assert_contains "config/agents.yaml" "auto_detect: gemini"
 
+# --- copilot-pr-review: command + skill registration ---
+assert_file_exists "commands/copilot-pr-review.md"
+assert_file_exists "skills/copilot-pr-review/copilot-pr-review.md"
+assert_contains "commands/copilot-pr-review.md" "copilot-pr-review"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

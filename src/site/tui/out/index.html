@@ -181,11 +181,9 @@
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg: #0d0e17; --window: #1a1b26; --titlebar: #16171f; --text: #a9b1d6; --text-bright: #c0caf5; --text-dim: #565f89; --text-muted: #3b3f5c; --accent: #7aa2f7; --scrollbar: #2e3154; --green: #9ece6a; --orange: #ff9e64; --red: #f7768e; --yellow: #e0af68; --blue: #7aa2f7; --purple: #bb9af7; --cyan: #7dcfff; --pink: #ff6ec7; --tl-red: #ff5f57; --tl-yellow: #febc2e; --tl-green: #28c840;
-    }
+    
 
-    body {
+    .tui-embed {
       background: var(--bg);
       display: flex;
       align-items: center;
@@ -386,6 +384,7 @@
     .agent-text  { color: var(--text-dim); }
   
 </style>
+<div class="tui-embed">
 <div class="window">
 
   <div class="title-bar">
@@ -431,6 +430,7 @@
     <span class="status-left" id="status-left"></span>
     <span class="status-right" id="status-right"></span>
   </div>
+</div>
 </div>
 <script>
 // ── Fallback test config (used when file is opened directly in browser) ────────

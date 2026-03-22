@@ -156,13 +156,20 @@ tui_style = style_match.group(1) if style_match else ''
 body_match = re.search(r'<body>(.*)</body>', tui_html, re.DOTALL)
 tui_body = body_match.group(1).strip() if body_match else ''
 
+# Scope TUI CSS so it doesn't leak into the landing page
+# Replace bare `body {` with `.tui-embed {` and strip html/:root rules
+tui_style = re.sub(r'\bbody\s*\{', '.tui-embed {', tui_style)
+tui_style = re.sub(r'\bhtml\s*\{[^}]*\}', '', tui_style)
+# :root vars are already injected by the landing page, remove TUI's copy
+tui_style = re.sub(r':root\s*\{[^}]*\}', '', tui_style)
+
 # Split body into HTML structure and scripts
 parts = re.split(r'(<script>)', tui_body, maxsplit=1)
 tui_structure = parts[0].strip()
 tui_scripts = '<script>' + parts[2] if len(parts) > 2 else ''
 
-# Build the TUI embed: style + structure + scripts
-tui_embed = f'<style>\n{tui_style}\n</style>\n{tui_structure}\n{tui_scripts}'
+# Wrap structure in scoping div
+tui_embed = f'<style>\n{tui_style}\n</style>\n<div class="tui-embed">\n{tui_structure}\n</div>\n{tui_scripts}'
 
 # Inject into page template
 page = page.replace('/* %%CSS_VARS%% */', css_vars)

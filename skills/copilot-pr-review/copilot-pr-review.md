@@ -58,7 +58,7 @@ Add Copilot as a reviewer for the first time.
 
 **Step 1 — Check if already requested:**
 ```bash
-gh api repos/$REPO/pulls/$PR/requested_reviewers \
+gh api repos/$REPO/pulls/$PR/requested_reviewers --paginate \
   --jq '.users[] | select(.login == "copilot-pull-request-reviewer[bot]") | .login'
 ```
 
@@ -200,7 +200,7 @@ If no comments: `ℹ️ No Copilot comments found on PR #$PR`
 **⚠️ Safety: strip @copilot from the message to prevent accidental delegation.**
 
 **Step 1 — Sanitize message:**
-Remove any occurrence of `@copilot` from the message body.
+Remove any occurrence of `@copilot` (case-insensitive) from the message body.
 
 **Step 2 — Post reply:**
 ```bash

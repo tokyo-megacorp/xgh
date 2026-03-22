@@ -1,0 +1,4 @@
+name: help
+command: "/help"
+description: "List all commands"
+handler: help

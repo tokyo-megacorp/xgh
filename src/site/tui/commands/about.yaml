@@ -1,0 +1,16 @@
+name: about
+command: "/about"
+description: "What is xgh"
+
+response:
+  - { bold: "xgh — eXtreme Go Horse" }
+  - { dim: "Claude on the fastlane. 🐴" }
+  - ""
+  - { dim: "The developer's cockpit for Claude Code:" }
+  - { icon: "✓", color: green, dim: "Persistent memory across sessions (lossless-claude)" }
+  - { icon: "✓", color: green, dim: "Context compression — 60–90% token savings" }
+  - { icon: "✓", color: green, dim: "9 specialized agents (codex-driver, pr-reviewer…)" }
+  - { icon: "✓", color: green, dim: "Automated Slack/Jira/GitHub retrieval" }
+  - { icon: "✓", color: green, dim: "Superpowers workflow methodology" }
+  - ""
+  - { dim: "github.com/extreme-go-horse/xgh" }

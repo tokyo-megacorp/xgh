@@ -1,0 +1,4 @@
+name: rename
+command: "/rename"
+description: "Set a custom label on the input divider"
+handler: rename

@@ -1,0 +1,17 @@
+name: install
+command: "/install"
+description: "How to install xgh"
+
+response:
+  - { bold: "Install xgh" }
+  - ""
+  - { dim: "1. Install the plugin:" }
+  - { blue: "   claude plugin install xgh@extreme-go-horse" }
+  - ""
+  - { dim: "2. Run first-time setup:" }
+  - { blue: "   /xgh-init" }
+  - ""
+  - { dim: "3. Start your session:" }
+  - { blue: "   /xgh-brief" }
+  - ""
+  - { dim: "Or via npm:", blue: " npm i @extreme-go-horse/xgh" }

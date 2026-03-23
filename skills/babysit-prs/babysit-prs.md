@@ -1,6 +1,6 @@
 ---
 name: xgh:babysit-prs
-description: "This skill should be used when the user runs /xgh-babysit-prs or says 'babysit PRs', 'watch these PRs', 'monitor PR reviews', or needs to shepherd multiple PRs through Copilot review to merge. Watches a batch of GitHub PRs through Copilot review cycles — polls review status, dispatches fix agents for new comments, merges when clean, re-requests when stale, resolves merge conflicts, and terminates when all PRs are merged."
+description: "Use when one or more GitHub PRs are open and need to reach merge — waiting on CI, a reviewer hasn't responded, comments need fixes, or you want merge to happen automatically without manually polling GitHub."
 ---
 
 > **Output format:** Start with `## 🐴🤖 xgh babysit-prs`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. Keep per-poll output terse.
@@ -62,6 +62,7 @@ Save to `.xgh/babysit-prs-state.json`:
   "merge_method": "squash",
   "post_merge_hook": null,
   "created_at": "ISO8601",
+  "cron_job_id": null,
   "prs": {
     "101": {
       "status": "watching",
@@ -78,20 +79,33 @@ Save to `.xgh/babysit-prs-state.json`:
 
 **Step 4 — Start poll loop:**
 
-Do NOT call CronCreate directly. Instead, print the `/loop` command for the user to run:
+Use `CronCreate` to schedule recurring polls. Convert `--interval` to a cron expression, avoiding :00/:30 marks (nudge by 1 min to spread load: `5m → "*/5 * * * *"`, `10m → "*/11 * * * *"`).
+
+The sentinel string `BABYSIT:<REPO>:<PR_NUMBERS>` in the prompt makes it findable via `CronList` for stop/status.
 
 ```
-✅ Session initialized. Start polling with:
-
-   /loop <interval> /xgh-babysit-prs poll-once <PR1> [<PR2>...]
-
-Example:
-   /loop 5m /xgh-babysit-prs poll-once 28 29
-
-The loop skill handles the scheduler. Cancel anytime with CronDelete using the job ID it returns.
+CronCreate({
+  cron: "<interval-expression>",
+  recurring: true,
+  prompt: `BABYSIT:<REPO>:<PR_NUMBERS>
+Dispatch the xgh:github-pr-poller agent with:
+- repo: <REPO>
+- prs: [<PR_NUMBERS>]
+- reviewer: copilot-pull-request-reviewer[bot]
+- merge_method: <MERGE_METHOD>
+If the agent returns status ALL_DONE, call CronList, find the job whose prompt contains "BABYSIT:<REPO>:<PR_NUMBERS>", and CronDelete it.`
+})
 ```
 
-The `poll-once` subcommand is the single-cycle action that `/loop` invokes each tick. When all PRs are merged, `poll-once` will print a completion summary and exit cleanly — the loop will continue firing but subsequent runs will be instant no-ops.
+Save the returned job ID to state: `"cron_job_id": "<id>"`.
+
+Report:
+```
+✅ Watching PRs [<numbers>] in <repo> every <interval>.
+   Cron job: <id> (auto-stops when all PRs merge).
+```
+
+The `poll-once` subcommand still works for manual one-shot checks outside the cron cycle.
 
 **Step 5 — Poll cycle (per PR):**
 
@@ -234,14 +248,12 @@ If no state file: `ℹ️ No active babysit-prs session.`
 
 1. Load state file
 2. If no session: print info message, exit
-3. Delete state file
-4. Print confirmation:
+3. If `cron_job_id` is set: call `CronDelete(cron_job_id)`. If not set, scan `CronList` for any job whose prompt contains `BABYSIT:<REPO>:` and delete matches.
+4. Delete state file
+5. Print confirmation:
    ```
-   ✅ babysit-prs session cleared.
-   ⚠️  Remember to cancel your /loop job if still running (CronDelete <job-id>).
+   ✅ babysit-prs stopped. Cron job <id> deleted.
    ```
-
-The state file is the only persistent resource managed by this skill. The `/loop` job is managed externally — the user is responsible for cancelling it via `CronDelete` using the ID that `/loop` printed when they started it.
 
 ---
 

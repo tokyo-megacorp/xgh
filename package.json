@@ -1,6 +1,6 @@
 {
   "name": "@extreme-go-horse/xgh",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "The developer's cockpit — memory, compression, context efficiency, and dev methodology",
   "keywords": [
     "claude-code",

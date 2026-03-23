@@ -79,6 +79,23 @@ gh api repos/<REPO>/pulls/<PR>/comments --paginate \
   --jq '[.[] | select(.user.login == "<REVIEWER_COMMENT_AUTHOR>")] | sort_by(.created_at) | .[] | {id, path, line, body, diff_hunk, pull_request_review_id}'
 ```
 
+**GitHub only — fetch thread metadata before applying the decision tree:**
+
+```bash
+gh api graphql -f query='
+  query($owner:String!,$repo:String!,$pr:Int!) {
+    repository(owner:$owner,name:$repo) {
+      pullRequest(number:$pr) {
+        reviewThreads(first:100) {
+          nodes { id isResolved isOutdated comments(first:1) { nodes { databaseId } } }
+        }
+      }
+    }
+  }' -F owner="<OWNER>" -F repo="<REPO_NAME>" -F pr=<PR>
+```
+
+Match each REST comment to its thread by comparing the comment's `id` to `reviewThreads.nodes[].comments.nodes[].databaseId`. This gives you `isOutdated` and the thread node ID needed for GraphQL mutations.
+
 If comment count > baseline AND a new review was submitted since baseline:
 - Apply the comment decision tree (below) for each new comment
 - Update baseline in state file after dispatching

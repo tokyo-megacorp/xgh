@@ -23,7 +23,7 @@ Analyze an engineer's Jira history to produce throughput profiles, ticket type a
 
 ## MCP Auto-Detection
 
-Before starting, check which integrations are active:
+Follow the shared detection protocol in `skills/_shared/references/mcp-auto-detection.md`. This skill uses two integrations with different availability rules:
 
 | Integration | Detection signal | Capability |
 |-------------|-----------------|------------|

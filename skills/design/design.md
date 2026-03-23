@@ -20,10 +20,7 @@ If no URL is provided, prompt the user for a Figma file URL or node URL.
 
 ## MCP Auto-Detection
 
-Before starting, auto-detect which MCP servers are available. The skill adapts based on what is configured — no hard dependencies.
-
-**MCP detection:** Run the MCP Auto-Detection Protocol from the `xgh:mcp-setup` skill.
-Available integrations are discovered automatically on first invocation.
+Follow the shared detection protocol in `skills/_shared/references/mcp-auto-detection.md`.
 
 **Graceful degradation rules (design-specific):**
 - No Figma MCP → Cannot auto-extract design. Ask user to describe the design, paste screenshots, or provide component specs manually. Skip Code Connect and variable extraction.

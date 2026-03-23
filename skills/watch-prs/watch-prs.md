@@ -95,9 +95,11 @@ gh api repos/$REPO/pulls/$PR/reviews --paginate \
   --jq '[.[] | select(.user.login == "<REVIEWER>")] | if length == 0 then null else last | {state: .state, submitted_at: .submitted_at} end'
 
 # Comment count from reviewer bot (use reviewer_comment_author from provider profile)
-# NOTE: reviewer_comment_author is the .user.login value from the GitHub API —
-# e.g. "Copilot" (capital C) for Copilot inline PR review comments.
-# This is distinct from the review author login "copilot-pull-request-reviewer".
+# Field values for Copilot:
+#   reviewer: "copilot-pull-request-reviewer[bot]"  — used in reviewer list API calls
+#             strip [bot] suffix when using `gh pr edit` (GraphQL)
+#   reviewer_comment_author: "Copilot"  — the .user.login on PR review *comments* (capital C)
+#             NOT "copilot-pull-request-reviewer" — use this value for select(.user.login == ...)
 gh api repos/$REPO/pulls/$PR/comments --paginate \
   --jq '[.[] | select(.user.login == "<REVIEWER_COMMENT_AUTHOR>")] | length'
 ```
@@ -373,7 +375,7 @@ When a PR is MERGEABLE=CONFLICTING, dispatch a conflict-resolution agent:
   grep -rn "^<<<<<<<" -- . | grep -v node_modules | grep -v .git
   ```
   commit, push
-- **CRITICAL:** Do NOT force push. Do NOT tag `@copilot` (except `@copilot review` to trigger a review after resolution).
+- **CRITICAL:** Do NOT force push. Do NOT use `@copilot` in any comment. Re-request review via reviewer list cycle after resolution.
 
 **After resolution:** Set `last_action = dispatched-conflict-agent`. Next cycle detects MERGEABLE and re-requests review.
 
@@ -495,7 +497,7 @@ suggestion_commits: false
 
 This skill builds on `xgh:copilot-pr-review` for GitHub-specific API calls. Key mappings:
 
-| babysit-prs action | copilot-pr-review equivalent |
+| watch-prs action | copilot-pr-review equivalent |
 |--------------------|------------------------------|
 | Initialize baseline | `status <PR>` |
 | Re-request review | `re-review <PR>` |

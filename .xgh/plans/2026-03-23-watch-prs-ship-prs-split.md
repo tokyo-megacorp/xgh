@@ -118,7 +118,7 @@ DELTA: [
   }
 ]
 ```
-No `ACTED` or `ALL_DONE` in observe mode — those are ship-mode-only statuses.
+In observe mode: `ALL_DONE` is returned when all PRs are merged/closed (watch-prs uses this to auto-stop the cron). `ACTED` is never returned — observe mode only reports state, never takes action.
 
 ---
 

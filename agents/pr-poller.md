@@ -134,7 +134,7 @@ Informational only (no action needed)?
 **Accepting suggestion commits (GitHub):**
 ```bash
 # Accept the suggestion commit via GitHub Suggestions REST API
-# https://docs.github.com/en/rest/pulls/comments#create-a-reply-for-a-review-comment
+# https://docs.github.com/en/rest/pulls/comments#create-a-review-comment-for-a-pull-request (suggestion acceptance)
 gh api repos/<REPO>/pulls/<PR>/comments/<COMMENT_ID>/suggestions \
   -X POST --raw-field "commit_message=Accept Copilot suggestion"
 ```
@@ -175,7 +175,7 @@ When dispatching a fix agent, include:
 - Repo path, relevant file(s) + line numbers
 - Exact comment text verbatim
 - "Fix only what the reviewer flagged — no scope creep. Commit and push when done."
-- "NEVER tag @copilot in any comment **except** `@copilot review` to trigger a review cycle."
+- "NEVER use @copilot in any comment — reviewer list cycle is the only safe re-request method."
 
 After any push, Copilot auto-re-reviews if `review_on_push` is enabled — manual re-request may not be needed.
 
@@ -192,7 +192,7 @@ After each poll cycle, update `.xgh/watch-prs-state.json`:
 
 ## Hard rules
 
-- **NEVER** tag `@copilot` in any comment **except** `@copilot review` to trigger a review cycle
+- **NEVER** use `@copilot` in any comment — reviewer list cycle is the only safe re-request method
 - **NEVER** tag bot reviewers in replies — any login ending in `[bot]`
 - **NEVER** merge a PR with `mergeable == CONFLICTING`
 - **NEVER** force push

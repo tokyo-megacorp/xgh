@@ -417,7 +417,7 @@ Embedded profiles — the skill references these directly, no external lookup ne
 provider: github
 reviewer_bot: copilot-pull-request-reviewer[bot]
 reviewer_comment_author: Copilot
-review_request_strategy: copilot-comment  # "@copilot review" comment, fallback to reviewer list
+review_request_strategy: reviewer-list  # gh pr edit --remove-reviewer / --add-reviewer (only safe method)
 threads_api: graphql   # resolveReviewThread mutation available
 suggestion_commits: true
 ```
@@ -506,7 +506,7 @@ This skill builds on `xgh:copilot-pr-review` for GitHub-specific API calls. Key 
 
 ## Known Pitfalls
 
-| Pitfall | How babysit-prs handles it |
+| Pitfall | How watch-prs handles it |
 |---------|--------------------------|
 | `@copilot` in any comment triggers delegation (including `@copilot review`) | Agent prompts include "NEVER use @copilot in comments — reviewer list cycle only" |
 | `[bot]` suffix required in REST API | Encodes suffix in REST calls; uses `gh pr edit` (GraphQL, no suffix) for reviewer list |

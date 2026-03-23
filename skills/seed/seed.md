@@ -1,6 +1,6 @@
 ---
 name: xgh:seed
-description: "This skill should be used when the user asks to \"seed context\", \"inject xgh into gemini\", \"prep opencode with project context\", \"set up context for dispatch\", \"seed agents\", or wants to inject project memory into another AI CLI agent before dispatch. Writes a project-context brief into .gemini/skills/xgh/, .agents/skills/xgh/, .opencode/skills/xgh/ so dispatched agents have project memory pre-loaded."
+description: "Use when injecting xgh project context into another AI CLI agent before dispatch (Gemini, OpenCode, Codex). Writes a project-context brief to .gemini/skills/xgh/, .agents/skills/xgh/, or .opencode/skills/xgh/ so dispatched agents start with project memory pre-loaded."
 ---
 
 # xgh:seed — Context Injection for Dispatched Agents

@@ -1,0 +1,98 @@
+name: Publish Package
+
+on:
+  push:
+    branches: [main]
+    paths: [package.json]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Optional git ref to publish. Leave blank to use the selected branch or tag.
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm-publish
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+          cache: npm
+
+      - name: Check if version already released
+        id: check
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          name="$(node -p "require('./package.json').name")"
+          tag="v$version"
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "Package $name@$version already published to npm — skipping publish"
+            printf 'skip=true\n' >> "$GITHUB_OUTPUT"
+          elif git rev-parse --verify "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "Git tag $tag already exists (but npm version not found) — skipping publish"
+            printf 'skip=true\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'skip=false\n' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Python
+        if: steps.check.outputs.skip == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Python dependencies
+        if: steps.check.outputs.skip == 'false'
+        run: pip install pyyaml
+
+      - name: Run tests
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          bash tests/run-all.sh \
+            test-config test-ct-archive test-ct-crud test-ct-frontmatter \
+            test-ct-integration test-ct-manifest test-ct-scoring test-ct-search \
+            test-ct-sync test-hooks
+
+      - name: Verify npm identity
+        if: steps.check.outputs.skip == 'false'
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm
+        if: steps.check.outputs.skip == 'false'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create and push release tag
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          tag="v${{ steps.check.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "$tag"
+          git push origin "$tag"
+
+      - name: Create GitHub release
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v${{ steps.check.outputs.version }}"
+          gh release create "$tag" --generate-notes --verify-tag

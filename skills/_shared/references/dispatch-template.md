@@ -19,6 +19,7 @@ SLUG=$(echo "<prompt-summary>" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-
 TIMESTAMP=$(date +%s)
 BRANCH="<CLI>/${SLUG}-${TIMESTAMP}"
 WORKTREE=".worktrees/<CLI>-${TIMESTAMP}"
+mkdir -p .worktrees
 git worktree add "$WORKTREE" -b "$BRANCH"
 ```
 

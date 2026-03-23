@@ -30,8 +30,14 @@ remote = sys.argv[1].strip()
 path = os.path.expanduser('~/.xgh/ingest.yaml')
 try:
     data = yaml.safe_load(open(path)) or {}
-except (FileNotFoundError, PermissionError, OSError, yaml.YAMLError):
+except FileNotFoundError:
     print('NO_INGEST_YAML')
+    sys.exit(0)
+except (PermissionError, OSError):
+    print('NO_INGEST_UNREADABLE')
+    sys.exit(0)
+except yaml.YAMLError:
+    print('NO_INGEST_PARSE_ERROR')
     sys.exit(0)
 
 projects = data.get('projects', {})
@@ -54,17 +60,21 @@ print('NO_MATCH')
 2. Pass it to the Python script as the `<remote-url>` argument
 3. Parse the output:
    - **Valid project name**: Resolution succeeded. Store this as `<repo-name>` for use in subsequent steps.
-   - **`NO_INGEST_YAML`**: The `~/.xgh/ingest.yaml` file does not exist, is unreadable, or could not be parsed.
+   - **`NO_INGEST_YAML`**: The `~/.xgh/ingest.yaml` file does not exist.
+   - **`NO_INGEST_UNREADABLE`**: The file exists but cannot be read (permissions or OS error).
+   - **`NO_INGEST_PARSE_ERROR`**: The file exists but contains invalid YAML.
    - **`NO_MATCH`**: The remote URL was not found in any configured project's github entries.
 
 ## Error Handling
 
 If output is `NO_INGEST_YAML`:
-- Stop execution and tell the user one of the following based on context:
-  - File missing: "No ingest config found. Run `/xgh-init` first."
-  - File unreadable: "Cannot read `~/.xgh/ingest.yaml`. Check file permissions."
-  - Parse error: "`~/.xgh/ingest.yaml` is not valid YAML. Fix the syntax and retry."
-  - When the cause is unknown: "Could not load `~/.xgh/ingest.yaml`. Check it exists, is readable, and is valid YAML. Run `/xgh-init` to recreate it."
+- Stop execution and tell the user: "No ingest config found. Run `/xgh-init` first."
+
+If output is `NO_INGEST_UNREADABLE`:
+- Stop execution and tell the user: "Cannot read `~/.xgh/ingest.yaml`. Check file permissions."
+
+If output is `NO_INGEST_PARSE_ERROR`:
+- Stop execution and tell the user: "`~/.xgh/ingest.yaml` is not valid YAML. Fix the syntax and retry."
 
 If output is `NO_MATCH`:
 - Stop execution and tell the user: "No project config found for this repo. Run `/xgh:config add-project` to register it."
@@ -81,6 +91,12 @@ PROJECT=$(python3 -c "..." "$REMOTE")
 # Step 3: Check result
 if [ "$PROJECT" = "NO_INGEST_YAML" ]; then
   echo "No ingest config found. Run \`/xgh-init\` first."
+  exit 1
+elif [ "$PROJECT" = "NO_INGEST_UNREADABLE" ]; then
+  echo "Cannot read ~/.xgh/ingest.yaml. Check file permissions."
+  exit 1
+elif [ "$PROJECT" = "NO_INGEST_PARSE_ERROR" ]; then
+  echo "~/.xgh/ingest.yaml is not valid YAML. Fix the syntax and retry."
   exit 1
 elif [ "$PROJECT" = "NO_MATCH" ]; then
   echo "No project config found for this repo. Run \`/xgh:config add-project\` to register it."

@@ -5,7 +5,7 @@ description: "This skill should be used when the user runs /xgh-test-builder or 
 
 # xgh:test-builder — Test Suite Generator
 
-## Step 1 — Resolve active project
+## Prerequisites — Resolve active project
 
 Follow the shared project resolution protocol in `skills/_shared/references/project-resolution.md`. Store the resolved project name for use in subsequent steps. If resolution fails, follow the error-specific guidance in the shared protocol.
 

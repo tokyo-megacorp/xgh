@@ -30,9 +30,9 @@ opencode --help
 **Implementation note:** Phase 1 uses hardcoded model mappings with correct YAML structure. Future phases will parse `opencode --help` output for dynamic discovery.
 
 **Models to detect:**
-- GLM series: `zai-coding-plan/glm-5`, `glm-5-turbo`, `glm-4.7`
-- Claude series: `anthropic/claude-opus-4-6`, `claude-sonnet-4-6`
-- OpenAI series: `openai/gpt-5.4`, `gpt-5.4-mini`
+- GLM series: `zai-coding-plan/glm-5`, `zai-coding-plan/glm-5-turbo`, `zai-coding-plan/glm-4.7`
+- Claude series: `anthropic/claude-opus-4-6`, `anthropic/claude-sonnet-4-6`
+- OpenAI series: `openai/gpt-5.4`, `openai/gpt-5.4-mini`
 
 **Probe function:**
 ```bash

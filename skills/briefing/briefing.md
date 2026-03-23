@@ -1,11 +1,6 @@
 ---
 name: xgh:briefing
-description: Intelligent session briefing. Aggregates Slack, Jira, GitHub, Gmail, Calendar, Figma, and xgh team memory into a prioritized executive summary with a suggested focus.
-type: flexible
-triggers:
-  - /xgh-briefing command
-  - /xgh-briefing compact
-  - /xgh-briefing focus
+description: "This skill should be used when the user runs /xgh-briefing, /xgh-briefing compact, or /xgh-briefing focus, or asks for a morning briefing or session summary. Aggregates Slack, Jira, GitHub, Gmail, Calendar, Figma, and xgh team memory into a prioritized executive summary with a suggested focus."
 ---
 
 # xgh:briefing — Intelligent Session Briefing
@@ -30,9 +25,9 @@ The briefing respects `XGH_TEAM` from the environment for workspace memory queri
 
 ## MCP Detection
 
-Before gathering data, check which MCPs are available. Call `xgh:mcp-setup` for any missing MCP the user wants to configure. Proceed with whatever is available — the briefing works with any combination.
+Follow the shared detection protocol in `skills/_shared/references/mcp-auto-detection.md`. Run `/xgh-setup` for any missing MCP the user wants to configure. Proceed with whatever is available — the briefing works with any combination.
 
-Available MCP tools by integration:
+**Briefing-specific tool aliases used in this skill:**
 - **lossless-claude**: `lcm_search(query)`, `lcm_store`
 - **Slack**: `slack_search_public_and_private`, `slack_list_channels`
 - **Atlassian/Jira**: `searchJiraIssuesUsingJQL`, `getJiraIssue`
@@ -210,7 +205,7 @@ If no active CronCreate jobs are found or the pause file exists, append to the b
 
 ## Composability
 
-- Uses `xgh:mcp-setup` when a source MCP is missing (optional setup, not blocking)
+- Suggests `/xgh-setup` when a source MCP is missing (optional setup, not blocking)
 - Feeds into `xgh:implement-ticket` (pre-loaded context for chosen ticket)
 - Feeds into `xgh:investigate` (pre-loaded context for chosen incident)
 - Informs `xgh:convention-guardian` (team pulse surfaces new conventions)

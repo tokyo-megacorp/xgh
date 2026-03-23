@@ -1,7 +1,6 @@
 ---
 name: xgh:pr-context-bridge
-description: Auto-curate PR reasoning to lossless-claude workspace so reviewers get deep context without meetings
-type: flexible
+description: "This skill should be used when the user runs /xgh-pr-context-bridge, opens a PR, or asks to 'capture PR reasoning', 'document this PR', 'store PR context'. Auto-curates PR reasoning to lossless-claude workspace so reviewers get deep context — approaches considered, tradeoffs made, tricky parts flagged — without meetings."
 ---
 
 # xgh:pr-context-bridge — PR Context Bridge

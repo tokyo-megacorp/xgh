@@ -1,11 +1,6 @@
 ---
 name: xgh:schedule
-description: Interactive scheduler control panel. Lists, pauses, resumes, and fires xgh CronCreate jobs. Also manages ~/.xgh/prefs.json skill execution mode preferences.
-type: flexible
-triggers:
-  - /xgh-schedule command
-  - when user asks to check, pause, resume, or manage the scheduler
-  - when user asks about skill mode preferences
+description: "This skill should be used when the user runs /xgh-schedule or asks to check, pause, resume, or manage the scheduler, or asks about skill mode preferences. Interactive scheduler control panel — lists, pauses, resumes, and fires xgh CronCreate jobs. Also manages ~/.xgh/prefs.json skill execution mode preferences."
 ---
 
 > **Output format:** Start with `## 🐴🤖 xgh schedule`. Use ✅ ⚠️ ❌ for status. Keep output concise.

@@ -1,12 +1,6 @@
 ---
 name: xgh:curate
-description: "How to structure knowledge for maximum retrieval quality. Guides classification into domain/topic, frontmatter construction, and tag selection."
-type: flexible
-triggers:
-  - after-code-change
-  - after-decision
-  - after-bug-fix
-  - manual-curate
+description: "This skill should be used when the user wants to store knowledge, document a decision, capture a bug fix, or asks 'how do I curate this', 'store this memory', 'save this decision'. Guides structuring knowledge for maximum retrieval quality — classification into domain/topic, frontmatter construction, and tag selection."
 ---
 
 # xgh:curate

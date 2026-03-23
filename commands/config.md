@@ -4,6 +4,8 @@ description: "Structured editor for ~/.xgh/ingest.yaml — show, set, add-projec
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion]
 ---
 
+ARGUMENTS: $ARGUMENTS
+
 # /xgh-config — Manifest Editor
 
 Structured interface for reading and writing `~/.xgh/ingest.yaml`.

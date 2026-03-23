@@ -21,6 +21,12 @@ conventions:
     - "No context-mode references in xgh skill files (context-mode handles its own enforcement)"
     - "Skill frontmatter must include `name` and `description`. For the trigger key, both `trigger` (singular string) and `triggers` (list) are valid — use whichever fits."
 
+  branch_strategy:
+    - "Feature work: branch off `develop` → PR targets `develop`"
+    - "Release: PR from `develop` → `main` (no direct commits to `main`)"
+    - "`develop` is the default branch; all PRs default to it"
+    - "Never open a feature PR against `main`"
+
   dogfooding:
     - "**Use xgh to build xgh**: run `/xgh-brief` at session start, `/xgh-retrieve` before researching, `/xgh-analyze` after significant findings — xgh improves by exercising its own tools"
     - "**If you call it, test it**: whenever a skill is invoked during a session and no AI unit test exists for it, add a prompt to `tests/skill-triggering/prompts/` before the session ends"

@@ -1,14 +1,6 @@
 ---
 name: xgh:copilot-pr-review
-description: >
-  Manage GitHub Copilot PR code reviews. Request, re-review, check status,
-  list comments, reply, and delegate. Encodes all Copilot API pitfalls
-  (bot suffix, delegation vs review, re-review cycle).
-type: rigid
-triggers:
-  - when the user runs /xgh-copilot-pr-review
-  - when the user says "copilot review", "request copilot review", "re-review", "copilot status"
-  - when an agent needs to interact with Copilot PR reviews
+description: "Use when working with GitHub Copilot code reviews on a PR — requesting a first review, re-requesting after pushing fixes, checking review status, reading inline comments, or avoiding the @copilot delegation trap."
 ---
 
 > **Output format:** Start with `## 🐴🤖 xgh copilot-pr-review`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status.
@@ -16,6 +8,18 @@ triggers:
 # /xgh-copilot-pr-review — Copilot PR Review Manager
 
 Manage GitHub Copilot's PR code review bot safely from the CLI. Encodes all known API pitfalls so you never accidentally trigger the SWE delegation agent or hit silent failures.
+
+## Prerequisites — Enable Copilot Code Review
+
+Before the review bot can be requested on any PR, a repo admin must enable it once:
+
+1. Go to **repo Settings → Copilot → Copilot in pull requests**
+2. Enable **"Copilot code review"**
+3. Optionally enable **`review_on_push`** — when on, Copilot automatically re-reviews whenever new commits are pushed to a PR that already has it as a reviewer. **This changes the re-review workflow:** after pushing a fix you do NOT need to call `re-review` — Copilot will pick it up automatically.
+
+If Copilot reviews are not appearing at all, the most likely cause is that it hasn't been enabled at the repo level.
+
+---
 
 ## ⚠️ Critical: Two Copilot Systems
 
@@ -89,7 +93,9 @@ gh api repos/$REPO/pulls/$PR/requested_reviewers \
 
 ### `re-review <PR>` — Trigger re-review after fixes
 
-Remove and re-add Copilot as reviewer to trigger a fresh review.
+**Check `review_on_push` first:** If the repo has `review_on_push` enabled, pushing commits already triggered a new review — manual re-request is unnecessary and wastes quota. Run `status` first to confirm whether a new review has already appeared since your last push.
+
+If no new review yet, remove and re-add Copilot as reviewer to trigger a fresh review.
 
 **Step 1 — Try gh pr edit (preferred):**
 

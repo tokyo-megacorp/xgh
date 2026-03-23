@@ -1,14 +1,6 @@
 ---
 name: xgh:design
-description: "Figma-driven UI implementation — from design file to convention-compliant code"
-trigger: "/xgh-design"
-mcp_dependencies:
-  required: []
-  optional:
-    - figma: "Figma MCP — read designs, screenshots, variables, Code Connect"
-    - atlassian: "Atlassian MCP — find related tickets, acceptance criteria"
-    - lossless-claude: "lossless-claude MCP — search UI conventions, component patterns"
-    - slack: "Slack MCP — find design discussions"
+description: "This skill should be used when the user runs /xgh-design or asks to implement a Figma design, 'build from Figma', 'implement this design', 'convert design to code'. Figma-driven UI implementation — takes a Figma design URL and produces a complete, convention-compliant implementation with TDD."
 ---
 
 # xgh:design — Figma-Driven UI Implementation
@@ -28,10 +20,7 @@ If no URL is provided, prompt the user for a Figma file URL or node URL.
 
 ## MCP Auto-Detection
 
-Before starting, auto-detect which MCP servers are available. The skill adapts based on what is configured — no hard dependencies.
-
-**MCP detection:** Run the MCP Auto-Detection Protocol from the `xgh:mcp-setup` skill.
-Available integrations are discovered automatically on first invocation.
+Follow the shared detection protocol in `skills/_shared/references/mcp-auto-detection.md`.
 
 **Graceful degradation rules (design-specific):**
 - No Figma MCP → Cannot auto-extract design. Ask user to describe the design, paste screenshots, or provide component specs manually. Skip Code Connect and variable extraction.

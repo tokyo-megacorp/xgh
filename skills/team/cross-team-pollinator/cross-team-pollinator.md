@@ -1,7 +1,6 @@
 ---
 name: xgh:cross-team-pollinator
-description: Break knowledge silos between teams via _shared/ directory auto-promotion to org-scope lossless-claude workspace
-type: flexible
+description: "This skill should be used when curating knowledge to the _shared/ directory, when querying memory that should include org-scoped results, or when implementation touches a cross-team API boundary or shared library. Breaks knowledge silos between teams — auto-promotes _shared/ directory entries to org-scope in lossless-claude workspace so other teams benefit."
 ---
 
 # xgh:cross-team-pollinator — Cross-Team Pollinator

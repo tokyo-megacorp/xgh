@@ -1,77 +1,14 @@
 ---
 name: xgh:implement
-description: "Full-context ticket implementation — from ticket to PR with cross-platform context gathering"
-trigger: "/xgh implement"
-mcp_dependencies:
-  required: []
-  optional:
-    - atlassian: "Atlassian MCP — fetch ticket details, linked tickets, update status"
-    - slack: "Slack MCP — search for ticket discussions, post implementation summary"
-    - figma: "Figma MCP — fetch linked designs"
-    - lossless-claude: "lossless-claude MCP — search past work, conventions, store learnings"
+description: "This skill should be used when the user runs /xgh-implement or asks to implement a ticket, 'implement this Jira ticket', 'build this feature', 'start on this task'. Full-context ticket implementation — gathers context from Jira, Slack, Figma, and lossless-claude memory, then drives a complete implementation from ticket to PR."
 ---
 
 ## Preamble — Execution mode
 
-Before starting, check whether the user has a saved execution mode preference for this skill.
+Follow the shared execution mode protocol in `skills/_shared/references/execution-mode-preamble.md`. Apply it to this skill's command name.
 
-**Step P1 — Read preference:**
-```bash
-python3 -c "
-import json, os
-path = os.path.expanduser('~/.xgh/prefs.json')
-try:
-    p = json.load(open(path))
-    v = p.get('skill_mode', {}).get('implement')
-    print(json.dumps(v) if v else '')
-except: print('')
-"
-```
-If output is non-empty JSON, extract `mode` and `autonomy` (if present) and skip to **Dispatch** below.
-
-**Step P2 — If not set, ask the user (one question at a time):**
-- "Run **implement** in background (returns summary when done) or interactive? [b/i, default: i]"
-- If "b": "Check in with a quick question before starting, or fire-and-forget? [c/f, default: c]"
-
-**Step P3 — Write preference:**
-```bash
-python3 -c "
-import json, os, sys
-mode, autonomy = sys.argv[1], sys.argv[2]
-path = os.path.expanduser('~/.xgh/prefs.json')
-os.makedirs(os.path.dirname(path), exist_ok=True)
-try: p = json.load(open(path))
-except: p = {}
-p.setdefault('skill_mode', {})
-entry = {'mode': mode} if mode == 'interactive' else {'mode': mode, 'autonomy': autonomy}
-p['skill_mode']['implement'] = entry
-json.dump(p, open(path, 'w'), indent=2)
-" "<mode>" "<autonomy>"
-```
-
-**Step P4 — Flag overrides** (check the raw invocation text; do not update prefs.json):
-- contains `--bg` → use background mode
-- contains `--interactive` or `--fg` → use interactive mode
-- contains `--checkin` → use check-in autonomy
-- contains `--auto` → use fire-and-forget autonomy
-- contains `--reset` → run `python3 -c "import json,os; p=json.load(open(os.path.expanduser('~/.xgh/prefs.json'))); p.get('skill_mode',{}).pop('implement',None); json.dump(p,open(os.path.expanduser('~/.xgh/prefs.json'),'w'),indent=2)"` then re-prompt
-
-**Dispatch:**
-
-**Interactive mode** → proceed with the skill normally (continue to the rest of this file).
-
-**Background / check-in mode:**
-1. Ask at most 2 essential clarifying questions in the main session.
-2. Collect context: user's request verbatim, current branch (`git branch --show-current`), recent log (`git log --oneline -5`), any relevant file paths mentioned.
-3. Dispatch via Agent tool with `run_in_background: true`. Prompt must be fully self-contained.
-4. Reply: "Implementation running in background — I'll post findings when done."
-5. When agent completes: post a ≤5-bullet summary to main session.
-
-**Background / fire-and-forget mode:**
-1. Collect context automatically (no questions).
-2. Dispatch via Agent tool with `run_in_background: true`.
-3. Reply: "Implementation running in background — I'll post findings when done."
-4. When agent completes: post a ≤5-bullet summary.
+- `<SKILL_NAME>` = `implement`
+- `<SKILL_LABEL>` = `Implementation`
 
 ---
 
@@ -95,10 +32,7 @@ If no ticket ID is provided:
 
 ## MCP Auto-Detection
 
-Before starting, auto-detect which MCP servers are available. The skill adapts based on what is configured — no hard dependencies.
-
-**MCP detection:** Run the MCP Auto-Detection Protocol from the `xgh:mcp-setup` skill.
-Available integrations are discovered automatically on first invocation.
+Follow the shared detection protocol in `skills/_shared/references/mcp-auto-detection.md`.
 
 **Graceful degradation rules (implement-specific):**
 - No task manager MCP → Ask user to paste ticket details (title, description, acceptance criteria). Skip ticket updates.

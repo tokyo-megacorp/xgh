@@ -1,21 +1,6 @@
 ---
 name: xgh:init
-description: >
-  First-run onboarding after install. Verifies MCP connections, sets up profile,
-  adds first project, runs initial retrieval, and optionally profiles the team
-  and indexes the codebase. Run once per project setup.
-type: flexible
-triggers:
-  - when invoked via /xgh-init command
-  - when the user says "set up xgh" or "initialize xgh" or "get started"
-mcp_dependencies:
-  required:
-    - lossless-claude: "lossless-claude MCP — core memory (lcm_search)"
-  optional:
-    - slack: "Slack MCP — channel access (slack_read_channel)"
-    - atlassian: "Atlassian MCP — Jira/Confluence (getJiraIssue)"
-    - figma: "Figma MCP — design files (get_design_context)"
-    - github: "GitHub CLI — gh command available"
+description: "This skill should be used when the user runs /xgh-init or says 'set up xgh', 'initialize xgh', 'get started'. First-run onboarding after install — verifies MCP connections, sets up profile, adds first project, runs initial retrieval, and optionally profiles the team and indexes the codebase."
 ---
 
 # xgh:init — First-Run Onboarding

@@ -23,8 +23,8 @@ description: |
 
   <example>
   Context: User wants to use a specific model.
-  user: "dispatch to opencode with model glm-4.7: implement the auth flow"
-  assistant: "I'll dispatch via opencode-driver with the GLM-4.7 model specified."
+  user: "dispatch to opencode with model zai-coding-plan/glm-4.7: implement the auth flow"
+  assistant: "I'll dispatch via opencode-driver with the zai-coding-plan/glm-4.7 model specified."
   <commentary>
   Model-specific dispatch — opencode-driver handles the --model flag format for OpenCode.
   </commentary>
@@ -111,13 +111,17 @@ WORK_DIR="$WORKTREE"
 
 ## Step 4: Determine Model
 
-Parse model from task if specified. OpenCode uses format: `--model provider/name`
+Parse model from task if specified. OpenCode uses format: `--model provider/name`.
 
-| Provider | Models |
-|----------|--------|
-| `zai-coding-plan` | `glm-5`, `glm-5-turbo`, `glm-4.7` |
-| `anthropic` | `claude-opus-4-6`, `claude-sonnet-4-6` |
-| `openai` | `gpt-5.4`, `gpt-5.4-mini` |
+| `--model` value |
+|-----------------|
+| `zai-coding-plan/glm-5` |
+| `zai-coding-plan/glm-5-turbo` |
+| `zai-coding-plan/glm-4.7` |
+| `anthropic/claude-opus-4-6` |
+| `anthropic/claude-sonnet-4-6` |
+| `openai/gpt-5.4` |
+| `openai/gpt-5.4-mini` |
 
 If no model is specified, omit `--model` flag and use OpenCode's default.
 

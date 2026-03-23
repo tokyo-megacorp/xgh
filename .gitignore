@@ -1,4 +1,5 @@
 .xgh/watch-prs-state.json
+.xgh/ship-prs-state.json
 .xgh/connectors.json
 .xgh/models.env
 .xgh/ingest.yaml

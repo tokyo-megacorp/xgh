@@ -125,6 +125,8 @@ assert_contains "$PLUGIN_DIR/agents/pr-poller.md"  "^capabilities:"        "pr-p
 assert_contains "$PLUGIN_DIR/agents/pr-poller.md"  "^color:"               "pr-poller: has color field"
 assert_contains "$PLUGIN_DIR/agents/pr-poller.md"  "<example>"             "pr-poller: has dispatch example"
 assert_contains "$PLUGIN_DIR/agents/pr-poller.md"  'tools:.*Bash'          "pr-poller: has Bash access"
+assert_contains "$PLUGIN_DIR/agents/pr-poller.md"  "mode: observe"         "pr-poller: documents observe mode"
+assert_contains "$PLUGIN_DIR/agents/pr-poller.md"  "Ship mode only"        "pr-poller: gates active steps behind ship mode"
 
 # ── Result ──────────────────────────────────────────────────────────────────
 echo ""

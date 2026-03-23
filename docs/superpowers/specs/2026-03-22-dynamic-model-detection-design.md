@@ -104,7 +104,7 @@ MODELS_FILE="$HOME/.xgh/user_providers/opencode/models.yaml"
 
 # Probe if missing or stale (>7 days)
 if [ ! -f "$MODELS_FILE" ] || [ $(find "$MODELS_FILE" -mtime +7) ]; then
-  /xgh-coding-agents opencode --probe
+  /xgh-coding-agents opencode --refresh
 fi
 ```
 
@@ -133,7 +133,7 @@ fi
 **Test probe → dispatch flow:**
 ```bash
 # Setup: Mock opencode --help output
-# Run: /xgh-coding-agents opencode --probe
+# Run: /xgh-coding-agents opencode --refresh
 # Verify: models.yaml created with correct entries
 
 # Run: /xgh-opencode "review with GLM 4.7"
@@ -145,7 +145,7 @@ fi
 ### 3. Manual Verification
 
 ```bash
-/xgh-coding-agents --all           # Probe all CLIs
+/xgh-coding-agents --refresh        # Probe all CLIs
 /xgh-coding-agents opencode         # Show OpenCode models
 /xgh-opencode "fix bug with GLM 4.7"   # Verify routing
 ```

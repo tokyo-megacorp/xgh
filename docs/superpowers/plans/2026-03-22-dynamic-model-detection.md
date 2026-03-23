@@ -361,8 +361,8 @@ case "$AGENT" in
       cat "$HOME/.xgh/user_providers/gemini/models.yaml" 2>/dev/null || echo "No models data. Run: /xgh-coding-agents gemini --refresh"
     fi
     ;;
-  --all|-a)
-    # Refresh all agents
+  --refresh)
+    # Refresh all agents (when no specific agent is set)
     probe_opencode
     probe_codex
     probe_gemini
@@ -509,7 +509,7 @@ THRESHOLD_DAYS="${XGH_MODELS_REFRESH_THRESHOLD_DAYS:-7}"
 
 # Probe if missing or stale
 if [ ! -f "$MODELS_FILE" ] || [ $(find "$MODELS_FILE" -mtime +"$THRESHOLD_DAYS" 2>/dev/null | wc -l) -gt 0 ]; then
-  /xgh-coding-agents "$AGENT" --probe
+  /xgh-coding-agents "$AGENT" --refresh
 fi
 ```
 ```

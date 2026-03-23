@@ -1,32 +1,20 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "extreme-go-horse",
   "owner": {
-    "name": "Pedro Almeida",
-    "email": "extreme-go-horse@users.noreply.github.com"
-  },
-  "metadata": {
-    "description": "xgh — AI Team Memory and context tools",
-    "version": "1.0.0"
+    "name": "extreme-go-horse",
+    "url": "https://github.com/extreme-go-horse"
   },
   "plugins": [
     {
       "name": "xgh",
       "source": {
-        "source": "url",
-        "url": "https://github.com/extreme-go-horse/xgh.git"
+        "source": "github",
+        "repo": "extreme-go-horse/xgh"
       },
-      "description": "Persistent memory and team context for AI-assisted development",
-      "version": "1.0.0",
+      "description": "Declare your agent behavior in YAML. Converge every AI platform to match.",
+      "version": "2.1.1",
       "strict": true
-    },
-    {
-      "name": "lossless-claude",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/extreme-go-horse/lossless-claude.git"
-      },
-      "description": "Lossless context management — DAG-based summarization that preserves every message",
-      "version": "0.3.0"
     }
   ]
 }

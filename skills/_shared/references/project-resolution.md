@@ -27,6 +27,9 @@ except ImportError:
     import yaml
 
 remote = sys.argv[1].strip()
+if not remote:
+    print('NO_REMOTE')
+    sys.exit(0)
 path = os.path.expanduser('~/.xgh/ingest.yaml')
 try:
     data = yaml.safe_load(open(path)) or {}
@@ -60,12 +63,16 @@ print('NO_MATCH')
 2. Pass it to the Python script as the `<remote-url>` argument
 3. Parse the output:
    - **Valid project name**: Resolution succeeded. Store this as `<repo-name>` for use in subsequent steps.
+   - **`NO_REMOTE`**: No git remote was found in the current directory.
    - **`NO_INGEST_YAML`**: The `~/.xgh/ingest.yaml` file does not exist.
    - **`NO_INGEST_UNREADABLE`**: The file exists but cannot be read (permissions or OS error).
    - **`NO_INGEST_PARSE_ERROR`**: The file exists but contains invalid YAML.
    - **`NO_MATCH`**: The remote URL was not found in any configured project's github entries.
 
 ## Error Handling
+
+If output is `NO_REMOTE`:
+- Stop execution and tell the user: "No git remote found. Make sure you're in a git repo with an `origin` or `upstream` remote."
 
 If output is `NO_INGEST_YAML`:
 - Stop execution and tell the user: "No ingest config found. Run `/xgh-init` first."
@@ -89,7 +96,10 @@ REMOTE=$(git -C . remote get-url origin 2>/dev/null || git -C . remote get-url u
 PROJECT=$(python3 -c "..." "$REMOTE")
 
 # Step 3: Check result
-if [ "$PROJECT" = "NO_INGEST_YAML" ]; then
+if [ "$PROJECT" = "NO_REMOTE" ]; then
+  echo "No git remote found. Make sure you're in a git repo with an origin or upstream remote."
+  exit 1
+elif [ "$PROJECT" = "NO_INGEST_YAML" ]; then
   echo "No ingest config found. Run \`/xgh-init\` first."
   exit 1
 elif [ "$PROJECT" = "NO_INGEST_UNREADABLE" ]; then

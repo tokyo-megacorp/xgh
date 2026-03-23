@@ -30,7 +30,7 @@ Follow the shared detection protocol in `skills/_shared/references/mcp-auto-dete
 **Briefing-specific tool aliases used in this skill:**
 - **lossless-claude**: `lcm_search(query)`, `lcm_store`
 - **Slack**: `slack_search_public_and_private`, `slack_list_channels`
-- **Atlassian/Jira**: `searchJiraIssuesUsingJQL`, `getJiraIssue`
+- **Atlassian/Jira**: `searchJiraIssuesUsingJql`, `getJiraIssue`
 - **GitHub**: `gh pr list`, `gh issue list`, `gh run list`
 - **Gmail**: `gmail_search_messages`, `gmail_read_message`
 - **Figma**: `figma_get_file`, `figma_get_comments`
@@ -79,8 +79,8 @@ slack_search_public_and_private("urgent OR ASAP OR blocked", limit=5)
 ### 3. Jira/Atlassian (if available)
 
 ```
-searchJiraIssuesUsingJQL("assignee = currentUser() AND status != Done ORDER BY priority DESC", limit=10)
-searchJiraIssuesUsingJQL("assignee = currentUser() AND status = 'In Progress'", limit=5)
+searchJiraIssuesUsingJql("assignee = currentUser() AND status != Done ORDER BY priority DESC", limit=10)
+searchJiraIssuesUsingJql("assignee = currentUser() AND status = 'In Progress'", limit=5)
 ```
 
 If project-scoped, append `AND project IN (KEY1, KEY2)` to JQL queries using Jira keys from in-scope projects.

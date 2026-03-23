@@ -116,3 +116,44 @@ YAML
   echo "Codex: 5 models probed to $output_file"
 }
 ```
+
+## Gemini Probing
+
+**Discovery command:**
+```bash
+gemini --help
+```
+
+**Implementation note:** Phase 1 uses hardcoded model mappings. Future phases will parse `gemini --help` output for dynamic discovery.
+
+**Models to detect:**
+- Gemini series: `gemini/gemini-2.5-pro`, `gemini/gemini-2.5-flash`, `gemini/gemini-2.0-flash`
+
+**Probe function:**
+```bash
+probe_gemini() {
+  local models_dir="$HOME/.xgh/user_providers/gemini"
+  local output_file="$models_dir/models.yaml"
+
+  mkdir -p "$models_dir"
+
+  # Generate models.yaml
+  cat > "$output_file" << YAML
+agent: gemini
+cli_binary: gemini
+last_probed: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+models:
+  - friendly: Gemini 2.5 Pro
+    cli_format: gemini/gemini-2.5-pro
+    aliases: [gemini-pro, gemini-2.5-pro, pro]
+  - friendly: Gemini 2.5 Flash
+    cli_format: gemini/gemini-2.5-flash
+    aliases: [gemini-flash, gemini-2.5-flash, flash]
+  - friendly: Gemini 2.0 Flash
+    cli_format: gemini/gemini-2.0-flash
+    aliases: [gemini-2.0-flash]
+YAML
+
+  echo "Gemini: 3 models probed to $output_file"
+}
+```

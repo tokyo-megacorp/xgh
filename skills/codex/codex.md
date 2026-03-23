@@ -107,7 +107,7 @@ Any unrecognized flags are forwarded to `codex exec` / `codex review` as-is.
 
 Follow `skills/_shared/references/dispatch-template.md` Step 1. Use `<CLI>` = `codex`.
 
-Same-dir fallback flag: `--add-dir <repo-path>` (Codex-specific — passes additional directory rather than changing working dir).
+Same-dir fallback flag: `--add-dir <repo-path>` (Codex-specific — passes an additional readable directory to Codex but does not change the working directory). In same-dir mode, set `WORK_DIR=$(pwd)`.
 
 ---
 

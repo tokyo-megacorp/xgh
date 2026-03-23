@@ -49,6 +49,23 @@ jobs:
             printf 'skip=false\n' >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Verify version files are in sync
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          version="${{ steps.check.outputs.version }}"
+          plugin_version="$(node -p "require('./.claude-plugin/plugin.json').version")"
+          marketplace_version="$(node -p "require('./.claude-plugin/marketplace.json').plugins[0].version")"
+          ok=true
+          if [ "$plugin_version" != "$version" ]; then
+            echo "ERROR: .claude-plugin/plugin.json version '$plugin_version' != package.json '$version'" >&2
+            ok=false
+          fi
+          if [ "$marketplace_version" != "$version" ]; then
+            echo "ERROR: .claude-plugin/marketplace.json version '$marketplace_version' != package.json '$version'" >&2
+            ok=false
+          fi
+          [ "$ok" = "true" ] || exit 1
+
       - name: Set up Python
         if: steps.check.outputs.skip == 'false'
         uses: actions/setup-python@v5

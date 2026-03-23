@@ -13,7 +13,7 @@
         "repo": "extreme-go-horse/xgh"
       },
       "description": "Declare your agent behavior in YAML. Converge every AI platform to match.",
-      "version": "2.1.1",
+      "version": "2.1.2",
       "strict": true
     }
   ]

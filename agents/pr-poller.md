@@ -123,7 +123,7 @@ Comment thread isOutdated == true (GitHub)?
   → Resolve thread via GraphQL mutation — no code change
 
 Comment body contains ```suggestion ``` AND accept_suggestion_commits == true?
-  → Dispatch haiku Agent to accept suggestion via GitHub API
+  → Dispatch haiku Agent to apply suggestion locally and push
 
 Simple rename / string / style nit?
   → Dispatch haiku Agent to fix and push
@@ -136,10 +136,15 @@ Informational only (no action needed)?
 ```
 
 **Accepting suggestion commits (GitHub):**
+
+The suggestion diff is embedded in the review comment body between ` ```suggestion ` and ` ``` ` fences. Dispatch a haiku agent with the comment body, the file path, and the starting line number; instruct it to:
+
 ```bash
-# Apply the suggested change locally and push a commit
+# 1. Switch to the PR branch and apply the suggested change
 git switch "<PR_BRANCH_NAME>"
-# Edit the file(s) to match the suggested change from the review comment
+# 2. Apply the change: replace the original line(s) with the suggestion lines from the comment body
+# 3. Verify only the intended lines changed
+git diff
 git commit -am "Accept reviewer suggestion from <COMMENT_URL>"
 git push origin HEAD
 ```

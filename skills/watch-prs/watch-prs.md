@@ -1,13 +1,13 @@
 ---
 name: xgh:watch-prs
-description: "Use /xgh-watch-prs when you want to watch PRs / babysit PRs until they reach merge — waiting on CI, a reviewer hasn't responded, comments need fixes, or you want merge to happen automatically without manually polling GitHub. Detects the host (GitHub, GitLab, Bitbucket, etc.) and adapts reviewer automation accordingly."
+description: "Use /xgh-watch-prs when you want to watch PRs / babysit PRs until they reach merge — waiting on CI, a reviewer hasn't responded, comments need fixes, or you want merge to happen automatically without manually polling GitHub. GitHub-only: uses gh CLI + GitHub APIs; auto-triggers Copilot reviews."
 ---
 
 > **Output format:** Start with `## 🐴🤖 xgh watch-prs`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. Keep per-poll output terse.
 
 # /xgh-watch-prs — PR Merge Orchestrator
 
-Watch a batch of PRs through review cycles until all are merged. Detects the host platform and adapts: on GitHub it auto-triggers Copilot reviews; on other platforms it works with any specified reviewer. Each poll cycle takes the next correct action: accept suggestion commits, dispatch fix agents, reply to comments, resolve outdated threads, re-request review, or merge.
+Watch a batch of PRs through review cycles until all are merged. GitHub-only: uses the GitHub CLI and APIs, auto-triggers Copilot reviews, and takes the next correct action each poll cycle — accept suggestion commits, dispatch fix agents, reply to comments, resolve outdated threads, re-request review, or merge.
 
 ## Usage
 
@@ -94,7 +94,7 @@ gh pr view $PR --repo $REPO --json state,mergeable --jq '{state, mergeable}'
 gh api repos/$REPO/pulls/$PR/reviews --paginate \
   --jq '[.[] | select(.user.login == "<REVIEWER>")] | if length == 0 then null else last | {state: .state, submitted_at: .submitted_at} end'
 
-# Comment count from reviewer bot (use reviewer_comment_author from provider profile)
+# Comment count from reviewer bot (use reviewer_comment_author from state file — must be the actual GitHub login, i.e. the value returned in .user.login)
 gh api repos/$REPO/pulls/$PR/comments --paginate \
   --jq '[.[] | select(.user.login == "<REVIEWER_COMMENT_AUTHOR>")] | length'
 ```
@@ -107,7 +107,7 @@ Save to `.xgh/watch-prs-state.json`:
   "repo": "owner/repo",
   "provider": "github",
   "reviewer": "copilot-pull-request-reviewer[bot]",
-  "reviewer_comment_author": "Copilot",
+  "reviewer_comment_author": "copilot-pull-request-reviewer[bot]",
   "merge_method": "merge",
   "accept_suggestion_commits": false,
   "require_resolved_threads": false,
@@ -133,13 +133,13 @@ Save to `.xgh/watch-prs-state.json`:
 
 Use `CronCreate` to schedule recurring polls. Convert `--interval` to a standard cron expression (`5m → "*/5 * * * *"`, `10m → "*/10 * * * *"`). To avoid :00/:30 load spikes, prefer an offset minute list (e.g. `1,11,21,31,41,51 * * * *` for a 10m cadence starting at :01) — optional.
 
-The sentinel string `BABYSIT:<REPO>:<PR_NUMBERS>` in the prompt makes it findable via `CronList` for stop/status.
+The sentinel string `WATCH:<REPO>:<PR_NUMBERS>` in the prompt makes it findable via `CronList` for stop/status.
 
 ```
 CronCreate({
   cron: "<interval-expression>",
   recurring: true,
-  prompt: `BABYSIT:<REPO>:<PR_NUMBERS>
+  prompt: `WATCH:<REPO>:<PR_NUMBERS>
 Dispatch the xgh:pr-poller agent with:
 - repo: <REPO>
 - provider: <PROVIDER>
@@ -347,7 +347,7 @@ Active since: 2026-03-22T03:00:00Z
 | #59  | 👀 watching | re-requested-review  | 00:08:20Z | 28       | —     |
 ```
 
-If no state file: `ℹ️ No active babysit-prs session.`
+If no state file: `ℹ️ No active watch-prs session.`
 
 ---
 
@@ -355,12 +355,12 @@ If no state file: `ℹ️ No active babysit-prs session.`
 
 1. Load state file
 2. If no session: print info message, exit
-3. If `cron_job_id` is set: call `CronDelete(cron_job_id)`. If not set, scan `CronList` for any job whose prompt contains `BABYSIT:<REPO>:` and delete matches.
+3. If `cron_job_id` is set: call `CronDelete(cron_job_id)`. If not set, scan `CronList` for any job whose prompt contains `WATCH:<REPO>:` and delete matches.
 4. Delete state file
 5. Print confirmation:
-   - If `cron_job_id` was set and deleted: `✅ babysit-prs stopped. Cron job <id> deleted.`
-   - If scan was used (0 found): `✅ babysit-prs stopped. (No active cron job found.)`
-   - If scan was used (1+ found): `✅ babysit-prs stopped. Deleted <N> cron job(s): <id1> <id2> ...`
+   - If `cron_job_id` was set and deleted: `✅ watch-prs stopped. Cron job <id> deleted.`
+   - If scan was used (0 found): `✅ watch-prs stopped. (No active cron job found.)`
+   - If scan was used (1+ found): `✅ watch-prs stopped. Deleted <N> cron job(s): <id1> <id2> ...`
 
 ---
 

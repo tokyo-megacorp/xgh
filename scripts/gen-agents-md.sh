@@ -183,6 +183,13 @@ out.append("")
 for c in team['conventions']['naming'] + team['conventions']['skills']:
     out.append(f"- {c}")
 out.append("")
+branch_strat = team['conventions'].get('branch_strategy', [])
+if branch_strat:
+    out.append("### Branch strategy")
+    out.append("")
+    for c in branch_strat:
+        out.append(f"- {c}")
+    out.append("")
 out.append("### Running tests")
 out.append("")
 out.append("```bash")

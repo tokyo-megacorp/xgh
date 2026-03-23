@@ -1,7 +1,6 @@
 ---
 name: xgh:onboarding-accelerator
-description: New dev first-session knowledge dump — architecture, conventions, gotchas, incidents, and ownership map
-type: flexible
+description: "This skill should be used when a new developer starts their first session, runs /xgh-onboard, or asks for a project overview or team context. Surfaces architecture decisions, conventions, gotchas, incidents, and an ownership map from team memory — years of context in minutes."
 ---
 
 # xgh:onboarding-accelerator — Onboarding Accelerator

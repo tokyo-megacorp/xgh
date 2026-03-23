@@ -1,83 +1,44 @@
 ---
 name: xgh:codex
 description: "This skill should be used when the user asks to \"dispatch to codex\", \"run codex\", \"codex exec\", \"codex review\", \"use codex for\", \"send to codex\", or wants to delegate implementation or code review tasks to OpenAI's Codex CLI agent. Supports worktree-isolated parallel dispatch and same-directory sequential dispatch (--add-dir)."
-trigger: "/xgh codex"
-mcp_dependencies:
-  required: []
-  optional:
-    - lossless-claude: "lossless-claude MCP — search past work, store outcomes"
 ---
 
 > **Context-mode:** This skill primarily runs Bash commands. Use Bash directly for git
 > and codex commands (short output). Use `Read` to review codex output files.
 
+## How to dispatch
+
+**ALWAYS dispatch via the `xgh:codex-driver` agent** using the Agent tool with `subagent_type: "xgh:codex-driver"`.
+
+The `xgh:codex-driver` agent handles:
+- Flag detection and command construction
+- Model fallback
+- Sandbox config
+- Output parsing
+- Retry logic
+
+> **WARNING: Do NOT run `codex` CLI commands directly via Bash.**
+> Invoking `codex exec` or `codex review` directly bypasses flag detection, model fallback, sandbox config, output parsing, and retry logic. All dispatch MUST go through the `xgh:codex-driver` agent.
+
+See [Step 2: Dispatch](#step-2-dispatch) for the agent prompt format.
+
+---
+
 ## Preamble — Execution mode
 
-Before starting, check whether the user has a saved execution mode preference for this skill.
+Follow the shared execution mode protocol in `skills/_shared/references/execution-mode-preamble.md`. Apply it to this skill's command name.
 
-**Step P1 — Read preference:**
-```bash
-python3 -c "
-import json, os
-path = os.path.expanduser('~/.xgh/prefs.json')
-try:
-    p = json.load(open(path))
-    v = p.get('skill_mode', {}).get('codex')
-    print(json.dumps(v) if v else '')
-except: print('')
-"
-```
-If output is non-empty JSON, extract `mode` and `autonomy` (if present) and skip to **Dispatch** below.
-
-**Step P2 — If not set, ask the user (one question at a time):**
-- "Run **codex dispatch** in background (returns summary when done) or interactive? [b/i, default: i]"
-- If "b": "Check in with a quick question before starting, or fire-and-forget? [c/f, default: c]"
-
-**Step P3 — Write preference:**
-```bash
-python3 -c "
-import json, os, sys
-mode, autonomy = sys.argv[1], sys.argv[2]
-path = os.path.expanduser('~/.xgh/prefs.json')
-os.makedirs(os.path.dirname(path), exist_ok=True)
-try: p = json.load(open(path))
-except: p = {}
-p.setdefault('skill_mode', {})
-entry = {'mode': mode} if mode == 'interactive' else {'mode': mode, 'autonomy': autonomy}
-p['skill_mode']['codex'] = entry
-json.dump(p, open(path, 'w'), indent=2)
-" "<mode>" "<autonomy>"
-```
-
-**Step P4 — Flag overrides** (check the raw invocation text; do not update prefs.json):
-- contains `--bg` -> use background mode
-- contains `--interactive` or `--fg` -> use interactive mode
-- contains `--checkin` -> use check-in autonomy
-- contains `--auto` -> use fire-and-forget autonomy
-- contains `--reset` -> run `python3 -c "import json,os; p=json.load(open(os.path.expanduser('~/.xgh/prefs.json'))); p.get('skill_mode',{}).pop('codex',None); json.dump(p,open(os.path.expanduser('~/.xgh/prefs.json'),'w'),indent=2)"` then re-prompt
-
-**Dispatch:**
-
-**Interactive mode** -> proceed with the skill normally (continue to the rest of this file).
-
-**Background / check-in mode:**
-1. Ask at most 2 essential clarifying questions in the main session.
-2. Collect context: user's request verbatim, dispatch type, model preference, current branch.
-3. Dispatch via Agent tool with `run_in_background: true`. Prompt must be fully self-contained.
-4. Reply: "Codex dispatch running in background -- I'll post results when done."
-5. When agent completes: post results summary to main session.
-
-**Background / fire-and-forget mode:**
-1. Collect context automatically (no questions).
-2. Dispatch via Agent tool with `run_in_background: true`.
-3. Reply: "Codex dispatch running in background -- I'll post results when done."
-4. When agent completes: post results summary.
+- `<SKILL_NAME>` = `codex`
+- `<SKILL_LABEL>` = `Codex dispatch`
 
 ---
 
 # xgh:codex -- Codex CLI Dispatch
 
 Dispatch implementation tasks or code reviews to OpenAI's Codex CLI as a parallel or sequential agent. Codex runs non-interactively via `codex exec` or `codex review`, optionally in an isolated git worktree for safe parallel work alongside Claude Code.
+
+> **Shared workflow:** Steps 1, 3, 4, and 5 follow `skills/_shared/references/dispatch-template.md`.
+> Use `<CLI>` = `codex`, `<CLI_LABEL>` = `Codex`, `<cli>` = `codex`, `<tag>` = `codex`.
 
 ## Prerequisites
 
@@ -144,27 +105,9 @@ Any unrecognized flags are forwarded to `codex exec` / `codex review` as-is.
 
 ## Step 1: Setup Workspace
 
-### Worktree mode
+Follow `skills/_shared/references/dispatch-template.md` Step 1. Use `<CLI>` = `codex`.
 
-Create an isolated git worktree for Codex to work in:
-
-```bash
-SLUG=$(echo "<prompt-summary>" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-30)
-TIMESTAMP=$(date +%s)
-BRANCH="codex/${SLUG}-${TIMESTAMP}"
-WORKTREE=".worktrees/codex-${TIMESTAMP}"
-git worktree add "$WORKTREE" -b "$BRANCH"
-```
-
-Set `WORK_DIR="$WORKTREE"`.
-
-If `git worktree add` fails (branch exists, dirty state), report the error and suggest `--add-dir <repo-path>` as fallback for same-directory dispatch.
-
-### Same-dir mode
-
-If the user passes `--add-dir <path>`, set `WORK_DIR` to that path. Otherwise set `WORK_DIR` to the current working directory. No worktree setup needed — Codex runs directly in `WORK_DIR` via `cd "$WORK_DIR"` before the command.
-
-**Warning:** Do not use same-dir mode while Claude Code is also writing files. File conflicts will occur.
+**Same-dir mode:** Set `WORK_DIR=$(pwd)`. No worktree is created. For exec, pass `--add-dir $(pwd)` in the Codex invocation so the sandbox grants write access to the repo directory. Note: `--add-dir` is a Codex sandbox flag, not the isolation selector — same-dir mode is chosen when the user does not want worktree isolation (e.g. for reviews, or explicit `--add-dir` choice).
 
 ---
 
@@ -201,53 +144,21 @@ Passthrough flags: <any user-provided flags>
 
 ## Step 3: Collect Results
 
-The codex-driver agent returns a structured result block. Surface it to the user:
+Follow `skills/_shared/references/dispatch-template.md` Step 3. Use `<CLI_LABEL>` = `Codex`.
 
-```
-## Codex Dispatch Results
-
-| Field | Value |
-|-------|-------|
-| Type | exec / review |
-| Model | gpt-5.4 / etc. |
-| Isolation | worktree ($BRANCH) / same-dir |
-| Files changed | N |
-
-### Codex Output
-<agent result summary>
-
-### Changes (worktree mode)
-<git log + diff stat from agent result>
-```
+The codex-driver agent returns a structured result block — surface it directly. The `git log` / `diff stat` commands are run by the agent and included in its result.
 
 ---
 
 ## Step 4: Integration (worktree mode only)
 
-Ask the user how to integrate Codex's changes:
-
-| Option | Command |
-|--------|---------|
-| **Merge** | `git merge $BRANCH` then cleanup |
-| **Cherry-pick** | `git cherry-pick <commit-range>` then cleanup |
-| **Keep for review** | Leave worktree at `$WORKTREE` for manual inspection |
-| **Discard** | `git worktree remove "$WORKTREE" --force && git branch -D "$BRANCH"` |
-
-Cleanup after merge or cherry-pick:
-```bash
-git worktree remove "$WORKTREE"
-git branch -d "$BRANCH"
-```
+Follow `skills/_shared/references/dispatch-template.md` Step 4.
 
 ---
 
 ## Step 5: Curate (if lossless-claude available)
 
-Store the dispatch outcome for future reference:
-
-```
-lcm_store("Codex dispatch: <type> | model: <model> | isolation: <mode> | <outcome summary>", ["session", "codex"])
-```
+Follow `skills/_shared/references/dispatch-template.md` Step 5. Use `<CLI_LABEL>` = `Codex`, `<cli>` = `codex`.
 
 ---
 
@@ -332,9 +243,9 @@ Commit as: '<message>'
 
 ## Anti-Patterns
 
+See shared anti-patterns in `skills/_shared/references/dispatch-template.md`.
+
+Codex-specific additions:
 - **Vague prompts.** "Fix all the bugs" produces poor results. "Fix `src/auth.ts:42` — null check missing before `.userId` access" succeeds.
 - **No verification step.** Always include a test command in the prompt. Codex won't self-verify unless told to.
 - **No scope constraints.** Codex will touch whatever seems related. If you don't say "modify only X", it will modify Y and Z too.
-- **Same-dir during parallel work.** Do not use `--add-dir` while Claude Code is also editing files. Use worktree mode.
-- **Skipping results review.** Always read and verify Codex output before merging.
-- **Large monolithic dispatches.** Split into focused subtasks, one Codex invocation each.

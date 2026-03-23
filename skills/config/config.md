@@ -1,13 +1,6 @@
 ---
 name: xgh:config
-description: >
-  Structured YAML editor for ~/.xgh/ingest.yaml. Supports showing sections (dot-path),
-  setting values with type validation, adding/removing projects interactively,
-  and validating all projects for required fields (stack, surfaces, github) and type correctness.
-type: flexible
-triggers:
-  - when the user runs /xgh-config
-  - when the user says "edit config", "configure project", "add project to xgh"
+description: "This skill should be used when the user runs /xgh-config or asks to 'edit config', 'configure project', 'add project to xgh'. Structured YAML editor for ~/.xgh/ingest.yaml — supports showing sections by dot-path, setting values with type validation, adding/removing projects interactively, and validating required fields."
 ---
 
 # xgh:config — Manifest Editor

@@ -1,11 +1,6 @@
 ---
 name: xgh:seed
 description: "This skill should be used when the user asks to \"seed context\", \"inject xgh into gemini\", \"prep opencode with project context\", \"set up context for dispatch\", \"seed agents\", or wants to inject project memory into another AI CLI agent before dispatch. Writes a project-context brief into .gemini/skills/xgh/, .agents/skills/xgh/, .opencode/skills/xgh/ so dispatched agents have project memory pre-loaded."
-trigger: "/xgh seed"
-mcp_dependencies:
-  required: []
-  optional:
-    - lossless-claude: "lossless-claude MCP — retrieve project memories for context brief"
 ---
 
 # xgh:seed — Context Injection for Dispatched Agents

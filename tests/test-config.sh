@@ -33,18 +33,54 @@ assert_file_exists "commands/copilot-pr-review.md"
 assert_file_exists "skills/copilot-pr-review/copilot-pr-review.md"
 assert_contains "commands/copilot-pr-review.md" "copilot-pr-review"
 
-# --- babysit-prs: command + skill registration ---
-assert_file_exists "commands/babysit-prs.md"
-assert_file_exists "skills/babysit-prs/babysit-prs.md"
-assert_contains "commands/babysit-prs.md" "babysit-prs"
+# --- watch-prs: command + skill registration ---
+assert_file_exists "commands/watch-prs.md"
+assert_file_exists "skills/watch-prs/watch-prs.md"
+assert_contains "commands/watch-prs.md" "watch-prs"
+
+# --- ship-prs: command + skill registration ---
+assert_file_exists "commands/ship-prs.md"
+assert_file_exists "skills/ship-prs/ship-prs.md"
+assert_contains "commands/ship-prs.md" "ship-prs"
+assert_contains "skills/ship-prs/ship-prs.md" "^name: xgh:ship-prs"
+assert_contains "skills/ship-prs/ship-prs.md" "pause"
+assert_contains "skills/ship-prs/ship-prs.md" "dry-run"
+assert_contains "skills/ship-prs/ship-prs.md" "fix_cycle_count"
+
+# --- config: command + skill registration ---
+assert_file_exists "commands/config.md"
+assert_file_exists "skills/config/config.md"
+assert_contains "commands/config.md" "name: xgh-config"
+
+# --- architecture: command + skill registration ---
+assert_file_exists "commands/architecture.md"
+assert_file_exists "skills/architecture/architecture.md"
+assert_contains "commands/architecture.md" "name: xgh-architecture"
+
+# --- test-builder: command + skill registration ---
+assert_file_exists "commands/test-builder.md"
+assert_file_exists "skills/test-builder/test-builder.md"
+assert_contains "commands/test-builder.md" "name: xgh-test-builder"
 
 # --- prompt test coverage for new skills (all variants) ---
 assert_file_exists "tests/skill-triggering/prompts/copilot-pr-review.txt"
 assert_file_exists "tests/skill-triggering/prompts/copilot-pr-review-2.txt"
 assert_file_exists "tests/skill-triggering/prompts/copilot-pr-review-3.txt"
-assert_file_exists "tests/skill-triggering/prompts/babysit-prs.txt"
-assert_file_exists "tests/skill-triggering/prompts/babysit-prs-2.txt"
-assert_file_exists "tests/skill-triggering/prompts/babysit-prs-3.txt"
+assert_file_exists "tests/skill-triggering/prompts/watch-prs.txt"
+assert_file_exists "tests/skill-triggering/prompts/watch-prs-2.txt"
+assert_file_exists "tests/skill-triggering/prompts/watch-prs-3.txt"
+assert_file_exists "tests/skill-triggering/prompts/ship-prs.txt"
+assert_file_exists "tests/skill-triggering/prompts/ship-prs-2.txt"
+assert_file_exists "tests/skill-triggering/prompts/ship-prs-3.txt"
+assert_file_exists "tests/skill-triggering/prompts/config.txt"
+assert_file_exists "tests/skill-triggering/prompts/config-2.txt"
+assert_file_exists "tests/skill-triggering/prompts/config-3.txt"
+assert_file_exists "tests/skill-triggering/prompts/architecture.txt"
+assert_file_exists "tests/skill-triggering/prompts/architecture-2.txt"
+assert_file_exists "tests/skill-triggering/prompts/architecture-3.txt"
+assert_file_exists "tests/skill-triggering/prompts/test-builder.txt"
+assert_file_exists "tests/skill-triggering/prompts/test-builder-2.txt"
+assert_file_exists "tests/skill-triggering/prompts/test-builder-3.txt"
 
 assert_file_exists "config/project.yaml"
 assert_contains "config/project.yaml" "name: xgh"
@@ -98,6 +134,8 @@ assert_contains "AGENTS.md" "## Automation Map"
 assert_contains "AGENTS.md" "| Trigger | Condition | Skill | Workflow | Lead Agent |"
 assert_contains "AGENTS.md" "## Iron Laws"
 assert_contains "AGENTS.md" "## Implementation Status"
+assert_contains "AGENTS.md" "### Branch strategy"
+assert_contains "AGENTS.md" 'Feature work: branch off `develop`'
 
 assert_contains ".xgh/specs/2026-03-21-xgh-agents-design.md" '| 1 | `code-reviewer` | sonnet |'
 assert_contains ".xgh/specs/2026-03-21-xgh-agents-design.md" "sonnet/haiku/opus"

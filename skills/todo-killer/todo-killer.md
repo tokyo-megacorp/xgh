@@ -1,14 +1,6 @@
 ---
 name: xgh:todo-killer
-description: Use when the user wants to systematically find and fix TODOs, FIXMEs, HACKs, or deprecated comments in a codebase, or when /xgh-index needs to populate .xgh/patterns.yaml with comment-based migration signals.
-type: flexible
-triggers:
-  - when the user runs /xgh-todo-killer
-  - when /xgh-index runs a full scan and comment harvesting is enabled
-  - when the user says "kill todos", "fix todos", "clean up comments"
-mcp_dependencies:
-  - mcp__lossless-claude__lcm_search
-  - mcp__lossless-claude__lcm_store
+description: "This skill should be used when the user runs /xgh-todo-killer or asks to 'kill todos', 'fix todos', 'clean up comments'. Systematically finds and fixes TODOs, FIXMEs, HACKs, and deprecated comments in the codebase — turns them into structured migration signals and resolves them highest impact first."
 ---
 
 # xgh:todo-killer — Systematic TODO Resolution

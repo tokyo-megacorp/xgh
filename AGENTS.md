@@ -56,11 +56,12 @@ claude plugin install xgh@extreme-go-horse
 | Agent | Model | Capabilities |
 |-------|-------|-------------|
 | code-reviewer | sonnet | `code-review`, `architecture`, `conventions` |
-| codex-driver | sonnet | `codex-dispatch`, `flag-detection`, `retry-logic`, `result-parsing` |
+| codex-driver | sonnet | `codex`, `dispatch`, `execution` |
 | collaboration-dispatcher | sonnet | `dispatch`, `routing`, `coordination` |
 | context-curator | haiku | `context-tree`, `curation`, `indexing` |
 | investigation-lead | opus | `debugging`, `investigation`, `root-cause` |
 | onboarding-guide | sonnet | `onboarding`, `documentation`, `guidance` |
+| opencode-driver | sonnet | `opencode`, `dispatch`, `execution` |
 | pipeline-doctor | sonnet | `health-check`, `diagnostics`, `pipeline` |
 | pr-reviewer | sonnet | `pr-review`, `code-review`, `github` |
 | retrieval-auditor | haiku | `retrieval`, `audit`, `memory` |
@@ -102,6 +103,13 @@ Triggers, workflows, and agents — the full 'what fires when' picture.
 - Commands are thin wrappers — all logic lives in `skills/`
 - No context-mode references in xgh skill files (context-mode handles its own enforcement)
 - Skill frontmatter must include `name` and `description`. For the trigger key, both `trigger` (singular string) and `triggers` (list) are valid — use whichever fits.
+
+### Branch strategy
+
+- Feature work: branch off `develop` → PR targets `develop`
+- Release: PR from `develop` → `main` (no direct commits to `main`)
+- `develop` is the default branch; all PRs default to it
+- Never open a feature PR against `main`
 
 ### Running tests
 

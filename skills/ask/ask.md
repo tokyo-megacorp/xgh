@@ -1,11 +1,6 @@
 ---
 name: xgh:ask
-description: "Tiered query routing: when to use lossless-claude semantic search vs context tree BM25 vs both. Query refinement patterns for maximum recall."
-type: flexible
-triggers:
-  - before-code-write
-  - before-decision
-  - manual-query
+description: "This skill should be used when the user wants to query project memory, ask about architecture or decisions, or needs help routing a question to the right memory engine. Teaches tiered query routing — when to use lossless-claude semantic search vs context tree BM25 vs both — with query refinement patterns for maximum recall."
 ---
 
 # xgh:ask

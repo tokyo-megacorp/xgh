@@ -1,60 +1,13 @@
 ---
 name: xgh:index
-description: >
-  Raw codebase inventory — extracts module list, key files, and naming conventions
-  into lossless-claude memory. Reads stack and surfaces from ~/.xgh/ingest.yaml.
-type: flexible
-triggers:
-  - when the user runs /xgh-index
-  - when the user says "index repo", "index codebase", "scan the codebase"
-  - when invoked by ingest-track after adding a GitHub repo
+description: "This skill should be used when the user runs /xgh-index or asks to 'index repo', 'index codebase', 'scan the codebase'. Raw codebase inventory — extracts module list, key files, and naming conventions into lossless-claude memory. Reads stack and surfaces from ~/.xgh/ingest.yaml."
 ---
 
 # xgh:index — Codebase Inventory
 
 ## Step 1 — Resolve project from ingest.yaml
 
-Get the git remote of the current directory:
-
-```bash
-git -C . remote get-url origin 2>/dev/null || git -C . remote get-url upstream 2>/dev/null
-```
-
-Match the remote URL against `projects.<name>.github` in `~/.xgh/ingest.yaml`:
-
-```bash
-python3 -c "
-import sys, os
-try:
-    import yaml
-except ImportError:
-    import subprocess, importlib
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pyyaml', '-q'])
-    import yaml
-
-remote = sys.argv[1].strip()
-path = os.path.expanduser('~/.xgh/ingest.yaml')
-try:
-    data = yaml.safe_load(open(path))
-except FileNotFoundError:
-    print('NO_INGEST_YAML')
-    sys.exit(0)
-
-projects = data.get('projects', {})
-for name, cfg in projects.items():
-    github = cfg.get('github', '')
-    if github and (github in remote or remote in github):
-        print(name)
-        sys.exit(0)
-
-print('NO_MATCH')
-" "<remote-url>"
-```
-
-- If output is `NO_INGEST_YAML` or `NO_MATCH` → stop and tell the user:
-  > "No project config found for this repo. Run `/xgh:config add-project` to register it."
-
-Save the matched project name as `<repo-name>`.
+Follow the shared project resolution protocol in `skills/_shared/references/project-resolution.md`. Store the resolved project name for use in subsequent steps. If resolution fails, follow the error-specific guidance in the shared protocol.
 
 ## Step 2 — Read stack and surfaces
 

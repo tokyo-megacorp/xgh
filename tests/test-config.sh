@@ -123,7 +123,7 @@ assert_contains "AGENTS.md" "| Trigger | Condition | Skill | Workflow | Lead Age
 assert_contains "AGENTS.md" "## Iron Laws"
 assert_contains "AGENTS.md" "## Implementation Status"
 assert_contains "AGENTS.md" "### Branch strategy"
-assert_contains "AGENTS.md" "develop"
+assert_contains "AGENTS.md" 'Feature work: branch off `develop`'
 
 assert_contains ".xgh/specs/2026-03-21-xgh-agents-design.md" '| 1 | `code-reviewer` | sonnet |'
 assert_contains ".xgh/specs/2026-03-21-xgh-agents-design.md" "sonnet/haiku/opus"

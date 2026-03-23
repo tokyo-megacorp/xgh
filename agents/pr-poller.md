@@ -2,7 +2,18 @@
 name: xgh:pr-poller
 description: |
   Polls PRs for review status, handles reviewer comments, and merges when all criteria pass. Provider-aware: adapts review requests and comment handling to the detected host. Dispatched by xgh:babysit-prs on each cron tick — do not invoke directly.
+
+  <example>
+  Context: babysit-prs cron tick fires for a watched PR
+  user: "BABYSIT:owner/repo:71 — Dispatch the xgh:pr-poller agent with repo: owner/repo, prs: [71], reviewer: copilot-pull-request-reviewer[bot]"
+  assistant: "I'll run the poll cycle for PR #71 — check merge criteria, new review comments, and re-request review if stale."
+  <commentary>
+  Dispatched by babysit-prs on each cron tick. Reads state file, runs decision tree, updates state, returns WATCHING/ACTED/ALL_DONE.
+  </commentary>
+  </example>
 model: haiku
+capabilities: [pr-polling, review-management, merge-automation]
+color: blue
 tools: ["Bash", "Agent", "Read", "Write"]
 ---
 
@@ -74,7 +85,9 @@ If comment count > baseline AND a new review was submitted since baseline:
 
 ### 4. Re-request review if stale
 
-If no new review since baseline, no active agent, and cooldown has elapsed (at least one poll interval since `last_review_request_at`):
+If no new review since baseline, no active agent, and cooldown has elapsed: read `cron` from `.xgh/babysit-prs-state.json` to derive the poll interval, then skip if `last_review_request_at` is within that interval.
+
+To check if an active_agent is still running: examine its return status from previous dispatch or check `git log --oneline origin/<branch> --since="<started_at>"` for new commits indicating the agent is still working.
 
 **GitHub + Copilot reviewer — comment trigger (primary):**
 ```bash
@@ -82,10 +95,11 @@ gh api repos/<REPO>/issues/<PR>/comments \
   -X POST --raw-field "body=@copilot review"
 ```
 
-If the above fails, fall back to reviewer list cycle:
+If the above fails, fall back to reviewer list cycle (strip `[bot]` suffix for `gh pr edit`):
 ```bash
-gh pr edit <PR> --repo <REPO> --remove-reviewer copilot-pull-request-reviewer 2>/dev/null
-gh pr edit <PR> --repo <REPO> --add-reviewer copilot-pull-request-reviewer
+REVIEWER_SLUG="${reviewer%\[bot\]}"
+gh pr edit <PR> --repo <REPO> --remove-reviewer "$REVIEWER_SLUG" 2>/dev/null
+gh pr edit <PR> --repo <REPO> --add-reviewer "$REVIEWER_SLUG"
 ```
 
 **Other providers / custom reviewer:**
@@ -174,7 +188,7 @@ After any push, Copilot auto-re-reviews if `review_on_push` is enabled — manua
 After each poll cycle, update `.xgh/babysit-prs-state.json`:
 - Update `last_action` and `last_action_at` for each PR
 - Update `baseline_comment_count` and `baseline_review_at` when new comments/reviews are processed
-- Set `active_agent` when dispatching a fix agent; clear it when confirmed complete via `TaskGet` or new commits on branch
+- Set `active_agent` when dispatching a fix agent; clear it when the fix agent is confirmed complete (via its return status/logs) or when new commits are detected on the branch
 
 ---
 

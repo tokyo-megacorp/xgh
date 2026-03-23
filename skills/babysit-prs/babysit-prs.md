@@ -1,6 +1,6 @@
 ---
 name: xgh:babysit-prs
-description: "Use when one or more PRs are open and need to reach merge — waiting on CI, a reviewer hasn't responded, comments need fixes, or you want auto-merge without manually polling. Detects the host (GitHub, GitLab, Bitbucket, etc.) and adapts reviewer automation accordingly."
+description: "Use /xgh-babysit-prs when you want to babysit PRs / watch these PRs until they reach merge — waiting on CI, a reviewer hasn't responded, comments need fixes, or you want merge to happen automatically without manually polling GitHub. Detects the host (GitHub, GitLab, Bitbucket, etc.) and adapts reviewer automation accordingly."
 ---
 
 > **Output format:** Start with `## 🐴🤖 xgh babysit-prs`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. Keep per-poll output terse.
@@ -12,14 +12,14 @@ Watch a batch of PRs through review cycles until all are merged. Detects the hos
 ## Usage
 
 ```
-/xgh-babysit-prs start <PR> [<PR>...] [--repo owner/repo] [--interval 5m] [--merge-method merge|squash|rebase] [--reviewer <login>] [--accept-suggestion-commits] [--require-resolved-threads] [--post-merge-hook '<command>']
+/xgh-babysit-prs start <PR> [<PR>...] [--repo owner/repo] [--interval 3m] [--merge-method merge|squash|rebase] [--reviewer <login>] [--accept-suggestion-commits] [--require-resolved-threads] [--post-merge-hook '<command>']
 /xgh-babysit-prs poll-once <PR> [<PR>...]
 /xgh-babysit-prs status
 /xgh-babysit-prs stop
 ```
 
 **Defaults:**
-- `--interval 5m`
+- `--interval 3m`
 - `--merge-method merge`
 - `--reviewer` — auto-detected from provider profile (e.g., `copilot-pull-request-reviewer[bot]` on GitHub)
 - `--accept-suggestion-commits` — off (opt-in to auto-accept inline suggestion commits)
@@ -59,7 +59,11 @@ See **Provider Profiles** section for embedded profiles.
 
 **GitHub:** Probe Copilot availability:
 ```bash
-gh api repos/$REPO/copilot/policies 2>/dev/null | jq -r '.code_review_enabled // false'
+COPILOT_CODE_REVIEW_ENABLED="$(
+  gh api "repos/$REPO/copilot/policies" 2>/dev/null \
+    | jq -r '.code_review_enabled // false' \
+    || echo false
+)"
 ```
 - If enabled and `--reviewer` not set: default reviewer = `copilot-pull-request-reviewer[bot]`
 - If disabled or endpoint 404s: print `⚠️ Copilot code review is not enabled for $REPO. Reviews need manual assignment. Pass --reviewer <login> to specify one.`
@@ -110,6 +114,7 @@ Save to `.xgh/babysit-prs-state.json`:
   "post_merge_hook": null,
   "created_at": "ISO8601",
   "cron_job_id": null,
+  "cron": "*/3 * * * *",
   "prs": {
     "101": {
       "status": "watching",
@@ -126,7 +131,7 @@ Save to `.xgh/babysit-prs-state.json`:
 
 **Step 4 — Start poll loop:**
 
-Use `CronCreate` to schedule recurring polls. Convert `--interval` to a cron expression, avoiding :00/:30 marks (nudge by 1 min: `5m → "*/5 * * * *"`, `10m → "*/11 * * * *"`).
+Use `CronCreate` to schedule recurring polls. Convert `--interval` to a standard cron expression (`5m → "*/5 * * * *"`, `10m → "*/10 * * * *"`). To avoid :00/:30 load spikes, prefer an offset minute list (e.g. `1,11,21,31,41,51 * * * *` for a 10m cadence starting at :01) — optional.
 
 The sentinel string `BABYSIT:<REPO>:<PR_NUMBERS>` in the prompt makes it findable via `CronList` for stop/status.
 
@@ -144,7 +149,7 @@ Dispatch the xgh:pr-poller agent with:
 - merge_method: <MERGE_METHOD>
 - accept_suggestion_commits: <BOOL>
 - require_resolved_threads: <BOOL>
-If the agent returns status ALL_DONE, call CronList, find the job whose prompt contains "BABYSIT:<REPO>:<PR_NUMBERS>", and CronDelete it.`
+If the agent returns status ALL_DONE, read .xgh/babysit-prs-state.json, take cron_job_id from that file, and call CronDelete(cron_job_id) to stop this job.`
 })
 ```
 
@@ -184,6 +189,7 @@ COMMENTS=$(gh api repos/$REPO/pulls/$PR/comments --paginate \
 
 # Mergeability and CI
 PR_DATA=$(gh pr view $PR --repo $REPO --json mergeable,statusCheckRollup,reviewDecision)
+MERGEABLE=$(echo "$PR_DATA" | jq -r '.mergeable')
 
 # Unresolved review threads — GitHub only (skip for other providers)
 if [ "$PROVIDER" = "github" ]; then
@@ -216,6 +222,8 @@ This is the "pending first review" state.
 
 **Condition:** `review.submitted_at > baseline_review_at` AND `comment_count > baseline_comment_count`
 
+**Note:** Thread metadata (like `isOutdated`) comes from the GraphQL `reviewThreads` query in section B, not REST comments. When classifying comments in step 2, match each REST comment to its thread node ID from that earlier query to detect outdated threads.
+
 **Guard:** If `active_agent != null`, skip (agent still working).
 
 **Action:**
@@ -227,7 +235,7 @@ This is the "pending first review" state.
    ```
 
 2. For each comment, classify and act:
-   - **Outdated thread** (`position == null` — GitHub): resolve thread via GraphQL, no code change
+   - **Outdated thread** (detected via GraphQL `reviewThreads` query where `isOutdated == true`): resolve thread via GraphQL mutation, no code change
    - **Suggestion commit** (body contains ` ```suggestion `) AND `accept_suggestion_commits == true`: dispatch haiku Agent to accept via API
    - **Simple fix** (rename, string, style nit): dispatch haiku Agent to fix and push
    - **Logic/architecture concern**: dispatch sonnet Agent to fix and push
@@ -330,7 +338,7 @@ Load `.xgh/babysit-prs-state.json` and display:
 ## 🐴🤖 xgh babysit-prs — status
 
 Repo: ipedro/lossless-claude | Provider: github | Reviewer: copilot-pull-request-reviewer[bot]
-Merge: squash | Cron: <job-id> every 5m
+Merge: squash | Cron: <job-id> every 3m
 Active since: 2026-03-22T03:00:00Z
 
 | PR   | Status      | Last Action          | Review    | Comments | Agent |
@@ -350,9 +358,9 @@ If no state file: `ℹ️ No active babysit-prs session.`
 3. If `cron_job_id` is set: call `CronDelete(cron_job_id)`. If not set, scan `CronList` for any job whose prompt contains `BABYSIT:<REPO>:` and delete matches.
 4. Delete state file
 5. Print confirmation:
-   ```
-   ✅ babysit-prs stopped. Cron job <id> deleted.
-   ```
+   - If `cron_job_id` was set and deleted: `✅ babysit-prs stopped. Cron job <id> deleted.`
+   - If scan was used (0 found): `✅ babysit-prs stopped. (No active cron job found.)`
+   - If scan was used (1+ found): `✅ babysit-prs stopped. Deleted <N> cron job(s): <id1> <id2> ...`
 
 ---
 

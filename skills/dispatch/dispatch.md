@@ -8,7 +8,7 @@ mcp_dependencies:
     - memory: "memory backend (lcm or compatible) — search past work, store outcomes"
 ---
 
-> **Output format:** Follow the [xgh output style guide](../templates/output-style.md). Start with `## 🐴🤖 xgh dispatch`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. End with an italicized next step.
+> **Output format:** Follow the [xgh output style guide](../../templates/output-style.md). Start with `## 🐴🤖 xgh dispatch`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. End with an italicized next step.
 
 # xgh:dispatch — Dynamic Model Router
 

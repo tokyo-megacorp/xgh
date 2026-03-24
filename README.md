@@ -47,8 +47,9 @@ The hard problem — as always — is **drift**. Platform skill files go stale, 
 |---------------|-------------|
 | Persistent memory across sessions | [lossless-claude](https://github.com/extreme-go-horse/lossless-claude) — SQLite + FTS5 |
 | Context tree search | BM25/TF-IDF over `.xgh/context-tree/` |
-| Multi-platform dispatch | Codex CLI, Gemini CLI, OpenCode — all driven from one config |
+| Multi-platform dispatch | Codex CLI, Gemini CLI, OpenCode, GLM — all driven from one config |
 | Session-start injection | Top knowledge files injected automatically at session start |
+| Proactive alerts | Trigger engine — fires on urgency score, patterns, or schedule |
 | Dev methodology | [superpowers](https://github.com/obra/superpowers) — optional plugin |
 
 ## Commands
@@ -75,9 +76,13 @@ The hard problem — as always — is **drift**. Platform skill files go stale, 
 | `/xgh-help` | Contextual guide and command reference |
 | `/xgh-curate` | Store knowledge in memory and context tree |
 | `/xgh-collab` | Multi-agent collaboration |
+| `/xgh-dispatch` | Auto-route tasks to the best agent + model based on task type |
 | `/xgh-codex` | Dispatch to Codex CLI |
 | `/xgh-gemini` | Dispatch to Gemini CLI |
 | `/xgh-opencode` | Dispatch to OpenCode |
+| `/xgh-glm` | Dispatch to Z.AI GLM models via OpenCode |
+| `/xgh-watch-prs` | Passively monitor PRs — surfaces review changes and merge-readiness |
+| `/xgh-ship-prs` | Shepherd PRs through review cycles and auto-merge when ready |
 | `/xgh-design` | Figma to implementation |
 | `/xgh-index` | Index a codebase into memory |
 | `/xgh-profile` | Engineer throughput analysis |

@@ -79,6 +79,12 @@ assert_contains "config/agents.yaml" "approval-mode plan"
 # --- Help command references gemini ---
 assert_contains "commands/help.md" "/xgh-gemini"
 
+# --- Skill: curate observation write ---
+assert_contains "skills/gemini/gemini.md" "model-profiles.yaml"
+assert_contains "skills/gemini/gemini.md" "observation"
+assert_contains "skills/gemini/gemini.md" "archetype"
+assert_contains "skills/gemini/gemini.md" "accepted"
+
 echo ""
 echo "Gemini dispatch test: $PASS passed, $FAIL failed"
 [[ "$FAIL" -eq 0 ]] || exit 1

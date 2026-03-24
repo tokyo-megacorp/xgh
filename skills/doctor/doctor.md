@@ -55,9 +55,13 @@ Check `~/.xgh/logs/retriever.log` for last timestamp (last line matching ISO dat
 Check `~/.xgh/logs/analyzer.log` similarly:
 - < 45 min: ✓ | 45–90 min: ⚠ | > 90 min: ✗
 
-## Check 3b — Context Efficiency
+---
 
-### RTK — output compression
+## Reference
+
+### Check 3b — Context Efficiency
+
+#### RTK — output compression
 
 Run these checks via Bash:
 
@@ -116,7 +120,7 @@ Degraded states:
 - `rtk gain` returns no data → `✅ RTK active — no Bash calls compressed yet this session`
 
 
-## Check 4 — Scheduler
+### Check 4 — Scheduler
 
 Call CronList. Find jobs where prompt is `/xgh-retrieve` or `/xgh-analyze`.
 
@@ -133,14 +137,14 @@ Report each job found:
 
 **Fix (if jobs missing or paused):** Run `/xgh-schedule resume` to re-register jobs now.
 
-## Check 5 — Codebase index
+### Check 5 — Codebase index
 
 For each project with `github:` entries, check `index.last_full` against `index.schedule`:
 - Never indexed: ✗ (suggest `/xgh-index`)
 - Overdue per schedule: ⚠
 - Current: ✓
 
-## Check 6 — Providers
+### Check 6 — Providers
 
 List all directories in `~/.xgh/user_providers/`. For each:
 
@@ -174,14 +178,14 @@ Also check `~/.xgh/tokens.env`:
 - File exists → report which vars are set (without showing values)
 - File missing → `⚠ ~/.xgh/tokens.env not found — token-based providers will fail`
 
-### Project detection
+#### Project detection
 
 Run `bash ~/.xgh/scripts/detect-project.sh` and report:
 - If a project was detected: `✓ Project scope: <name> (+N dependencies)`
 - If no match: `ℹ No project detected — all-projects mode`
 - If script missing: `⚠ detect-project.sh not installed — run /xgh-init`
 
-## Check 7 — Trigger engine
+### Check 7 — Trigger engine
 
 Validate the trigger engine configuration and runtime state.
 
@@ -217,7 +221,7 @@ Validate the trigger engine configuration and runtime state.
    ⚠️ PostToolUse hook not registered — source:local triggers inactive
    ```
 
-## Check 8 — Agent version parity
+### Check 8 — Agent version parity
 
 For each secondary agent in `config/agents.yaml` with a `tested_version` field (non-null):
 
@@ -244,7 +248,7 @@ Rules:
 
 **Fix for mismatch:** Re-test the affected skill (`/xgh-codex`, `/xgh-gemini`) and update `tested_version` in `config/agents.yaml` if behaviors are confirmed working.
 
-## Output format
+### Output format
 
 ```
 xgh Ingest Health Check

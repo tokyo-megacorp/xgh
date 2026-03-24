@@ -99,6 +99,10 @@ projects:
     last_scan: null
 ```
 
+---
+
+## Reference
+
 ### Step 3b: Generate provider scripts (dynamic)
 
 > **Persistence guarantee:** Provider scripts are saved to `~/.xgh/user_providers/` which is NEVER

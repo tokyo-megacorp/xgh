@@ -342,11 +342,13 @@ Wait for approval before proceeding to Phase 5.
 
 ---
 
-## Phase 5: Implementation Plan (Superpowers writing-plans)
+## Reference
+
+### Phase 5: Implementation Plan (Superpowers writing-plans)
 
 Generate a detailed, executable plan following Superpowers writing-plans methodology.
 
-### Plan Generation Rules
+#### Plan Generation Rules
 
 - Each task: 2-5 minutes with exact file paths
 - TDD: write a failing test BEFORE each implementation step
@@ -355,7 +357,7 @@ Generate a detailed, executable plan following Superpowers writing-plans methodo
 - Follow ALL team conventions from context tree
 - Reference specific line numbers where code integrates
 
-### Plan Template
+#### Plan Template
 
 ```markdown
 ## Implementation Plan: [Ticket ID] — [Title]
@@ -416,9 +418,9 @@ If task manager MCP is available, link plan to ticket via `mcp__claude_ai_Atlass
 
 ---
 
-## Phase 6: Execute + Report
+### Phase 6: Execute + Report
 
-### Step 6.1: Execute Plan (Subagent-Driven)
+#### Step 6.1: Execute Plan (Subagent-Driven)
 
 Execute using Superpowers subagent-driven-development:
 - Fresh subagent per task
@@ -427,12 +429,12 @@ Execute using Superpowers subagent-driven-development:
 - Two-stage review per task: correctness + convention compliance
 - Verification before marking complete
 
-### Step 6.2: Update Ticket (if Atlassian MCP available)
+#### Step 6.2: Update Ticket (if Atlassian MCP available)
 
 Use `mcp__claude_ai_Atlassian__transitionJiraIssue` to move ticket to "In Review" or appropriate status.
 Use `mcp__claude_ai_Atlassian__addCommentToJiraIssue` to post implementation summary.
 
-### Step 6.3: Post to Slack (if Slack MCP available)
+#### Step 6.3: Post to Slack (if Slack MCP available)
 
 If the ticket was discussed in Slack, use `mcp__claude_ai_Slack__slack_send_message` to post a summary:
 
@@ -452,7 +454,7 @@ Key decisions:
 Ready for review.
 ```
 
-### Step 6.4: Curate Learnings (if lossless-claude MCP available)
+#### Step 6.4: Curate Learnings (if lossless-claude MCP available)
 
 Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]. Store:
 - Implementation patterns used (middleware pattern, config pattern)
@@ -462,7 +464,7 @@ Extract key learnings as a concise summary (3-7 bullets), then call lcm_store wi
 
 Save to context tree: `.xgh/context-tree/api-design/rate-limiting.md` (or appropriate domain)
 
-### Step 6.5: Generate PR Context
+#### Step 6.5: Generate PR Context
 
 Generate a PR with full context for reviewers:
 - Link to ticket
@@ -473,7 +475,7 @@ Generate a PR with full context for reviewers:
 
 ---
 
-## Skill Composition
+### Skill Composition
 
 `xgh:implement` composes with other xgh skills:
 
@@ -485,7 +487,7 @@ Generate a PR with full context for reviewers:
 
 ---
 
-## Rationalization Table
+### Rationalization Table
 
 | Decision | Rationale |
 |----------|-----------|

@@ -233,7 +233,9 @@ Report: "Manifest generation failed: <reason>. No partial manifest written."
 
 ---
 
-#### Executor Kinds Reference
+## Reference
+
+### Executor Kinds Reference
 
 | Executor | What it does | Prerequisites |
 |----------|-------------|---------------|
@@ -244,7 +246,7 @@ Report: "Manifest generation failed: <reason>. No partial manifest written."
 | library | Imports and calls exported functions | Native test runner |
 | custom | Runs user script, exit code 0 = pass | Script exists |
 
-#### Assertion Types Reference
+### Assertion Types Reference
 
 | Assertion | Applies to | Example |
 |-----------|-----------|---------|
@@ -260,7 +262,7 @@ Report: "Manifest generation failed: <reason>. No partial manifest written."
 
 ---
 
-### Step 6 — Optional native scaffold
+#### Step 6 — Optional native scaffold
 
 For known ecosystems, generate test files that implement the manifest flows. The manifest remains the source of truth — native files are a convenience layer.
 
@@ -277,7 +279,7 @@ If ecosystem is not recognized or scaffold generation is not feasible → skip s
 
 ---
 
-### Step 7 — Generate strategy.md
+#### Step 7 — Generate strategy.md
 
 Write `.xgh/test-builder/strategy.md` using the Write tool. This is a human-readable companion to the manifest documenting what is being tested and why.
 
@@ -312,7 +314,7 @@ For each flow in the manifest:
 
 ---
 
-### Init Completion
+#### Init Completion
 
 Print a summary:
 
@@ -329,16 +331,16 @@ Test suite manifest generated for <repo-name>
 
 ---
 
-## Phase 2: Run
+### Phase 2: Run
 
-### Argument Parsing
+#### Argument Parsing
 
 Read `$ARGUMENTS`:
 
 - No argument or just `run` → execute all flows from manifest
 - `run <flow-name>` → execute only that flow
 
-### Manifest Loading & Validation
+#### Manifest Loading & Validation
 
 Check if `.xgh/test-builder/manifest.yaml` exists:
 
@@ -420,7 +422,7 @@ print("OK")
 
 If validation fails → refuse to execute and list all errors.
 
-### Execute Flows
+#### Execute Flows
 
 For each flow (all flows or selected flow only):
 
@@ -490,7 +492,7 @@ Failures in cleanup do NOT affect overall flow result.
 
 Track per step: name, executor, result (pass/fail/skip), duration (ms), notes.
 
-### Output Format
+#### Output Format
 
 Generate a markdown summary table:
 
@@ -512,7 +514,7 @@ Generate a markdown summary table:
 - ❌ One or more steps failed (show first failure reason)
 - ⏭️ All steps skipped (executor unavailable)
 
-### Run Completion
+#### Run Completion
 
 Print summary:
 

@@ -3,23 +3,6 @@ name: xgh:retrieve
 description: "This skill should be used when the user runs /xgh-retrieve or when invoked by the CronCreate scheduler (every 5 minutes). Headless retrieval loop — scans configured Slack channels, follows links 1-hop to Jira/Confluence/GitHub/Figma, stashes raw content to ~/.xgh/inbox/, and detects urgency."
 ---
 
-## Architecture Note
-
-Retrieval operates in three lanes:
-
-1. **CLI/API providers (automated)** — `retrieve-all.sh` runs `mode: cli/api` provider `fetch.sh`
-   scripts via CronCreate. Pure bash, no Claude needed. 1 CronCreate turn.
-
-2. **MCP providers (automated)** — A lightweight CronCreate prompt calls MCP tools for
-   `mode: mcp` providers (OAuth-gated services). 2-3 CronCreate turns.
-
-3. **Interactive** — `/xgh-retrieve` invoked manually triggers the full Claude-powered skill
-   for one-off deep scans or when providers aren't configured yet.
-
-The automated paths (1 + 2) handle 95% of retrieval. The interactive path is a fallback
-providing richer analysis (urgency scoring, thread following, link enrichment).
-
-
 # xgh:retrieve — Retrieval Loop
 
 Invoked by CronCreate:
@@ -327,3 +310,23 @@ If no active CronCreate jobs found, append:
 ⚠️ Running manually — scheduler is paused or not started.
    /xgh-schedule resume    (enable for this session and future sessions)
 ```
+
+---
+
+## Reference
+
+### Architecture Note
+
+Retrieval operates in three lanes:
+
+1. **CLI/API providers (automated)** — `retrieve-all.sh` runs `mode: cli/api` provider `fetch.sh`
+   scripts via CronCreate. Pure bash, no Claude needed. 1 CronCreate turn.
+
+2. **MCP providers (automated)** — A lightweight CronCreate prompt calls MCP tools for
+   `mode: mcp` providers (OAuth-gated services). 2-3 CronCreate turns.
+
+3. **Interactive** — `/xgh-retrieve` invoked manually triggers the full Claude-powered skill
+   for one-off deep scans or when providers aren't configured yet.
+
+The automated paths (1 + 2) handle 95% of retrieval. The interactive path is a fallback
+providing richer analysis (urgency scoring, thread following, link enrichment).

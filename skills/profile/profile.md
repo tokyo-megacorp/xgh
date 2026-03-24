@@ -110,6 +110,10 @@ Count tickets completed in rolling windows:
 
 Express as: `N tickets / 30d` for each window.
 
+---
+
+## Reference
+
 ### Output Format
 
 ```

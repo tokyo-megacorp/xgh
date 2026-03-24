@@ -198,7 +198,9 @@ claude mcp list 2>/dev/null | grep -i lossless-claude
 
 ---
 
-## Step 0b: Stale Install Cleanup
+## Reference
+
+### Step 0b: Stale Install Cleanup
 
 Check for old-style per-project skill copies from pre-plugin installs:
 
@@ -223,7 +225,7 @@ If none found → continue silently.
 
 ---
 
-## Step 0c: Legacy Provider Migration
+### Step 0c: Legacy Provider Migration
 
 Check for old-style provider directories:
 
@@ -246,15 +248,15 @@ If no: continue. Doctor will remind them later.
 
 ---
 
-## Step 1 — Verify MCP Connections
+### Step 1 — Verify MCP Connections
 
 Run the MCP detection protocol from the `xgh:mcp-setup` skill before proceeding.
 
 ---
 
-## Step 2 — Profile Setup
+### Step 2 — Profile Setup
 
-### Check if profile is already configured
+#### Check if profile is already configured
 
 Read `~/.xgh/ingest.yaml` and check if `profile.name` exists and is not the template default (`"Your Name"`). If the profile is already filled in, show what's there and ask:
 
@@ -269,7 +271,7 @@ Keep this? [Y/n]
 
 If they say yes, skip to Step 3. If no, re-ask the questions below.
 
-### Collect profile info
+#### Collect profile info
 
 Ask each question one at a time:
 
@@ -287,7 +289,7 @@ Ask each question one at a time:
 
 5. **Platforms** — "What platforms do you work on? (comma-separated: ios, android, web, backend)"
 
-### Write profile
+#### Write profile
 
 Use python3 to safely read, modify, and write `~/.xgh/ingest.yaml`:
 
@@ -319,7 +321,7 @@ Profile saved:
 
 ---
 
-## Step 3 — Add First Project
+### Step 3 — Add First Project
 
 **Auto-detect current repo:** Run `git remote get-url origin 2>/dev/null` and parse `org/repo` from the URL. If found and not already in `~/.xgh/ingest.yaml`, pre-populate it as the first project to track — no need to ask.
 
@@ -342,7 +344,7 @@ If no existing projects, or auto-detected repo is not yet tracked, invoke the `/
 
 Wait for the `/xgh-track` flow to complete before proceeding.
 
-### Configure dependencies for existing projects
+#### Configure dependencies for existing projects
 
 If projects already exist and the user kept them, check if any are missing `dependencies:`. For each project without dependencies, ask:
 
@@ -357,7 +359,7 @@ This scopes retrieval and briefing — when working in a project's repo, only th
 
 ---
 
-## Step 4 — Initial Retrieval
+### Step 4 — Initial Retrieval
 
 Run a single retrieval cycle to backfill recent messages from the configured channels.
 
@@ -382,7 +384,7 @@ Initial retrieval complete.
 
 ---
 
-## Step 5 — Team Profiling (Optional)
+### Step 5 — Team Profiling (Optional)
 
 Ask:
 
@@ -409,7 +411,7 @@ If **no** (or user skips): Continue to Step 6.
 
 ---
 
-## Step 6 — Index Codebase (Optional)
+### Step 6 — Index Codebase (Optional)
 
 Ask:
 
@@ -430,7 +432,7 @@ If **no** (or user skips): Continue to Step 7.
 
 ---
 
-## Step 7 — Initial Curation (Optional)
+### Step 7 — Initial Curation (Optional)
 
 Ask:
 
@@ -452,11 +454,11 @@ If **no** (or user skips): Continue to Step 7a.
 
 ---
 
-## Step 7a — Generate AGENTS.md
+### Step 7a — Generate AGENTS.md
 
 Always runs (not optional). Regenerates `AGENTS.md` from config files and writes platform wrapper files.
 
-### 1. Check for the generator script
+#### 1. Check for the generator script
 
 ```
 if scripts/gen-agents-md.sh does not exist:
@@ -464,7 +466,7 @@ if scripts/gen-agents-md.sh does not exist:
     skip to Step 7b
 ```
 
-### 2. Handle existing AGENTS.md
+#### 2. Handle existing AGENTS.md
 
 ```
 if AGENTS.md exists:
@@ -478,13 +480,13 @@ else:
     # file doesn't exist — run script normally
 ```
 
-### 3. Run the generator
+#### 3. Run the generator
 
 ```bash
 bash scripts/gen-agents-md.sh
 ```
 
-### 4. Write platform wrapper files
+#### 4. Write platform wrapper files
 
 After `AGENTS.md` is generated, write the following files:
 
@@ -511,7 +513,7 @@ GEMINI.md
 ```
 (These are generated files and shouldn't be committed.)
 
-### 5. Confirm
+#### 5. Confirm
 
 Show a brief summary of what was written:
 ```
@@ -524,7 +526,7 @@ AGENTS.md generated ✅
 
 ---
 
-## Step 7b — Scheduler
+### Step 7b — Scheduler
 
 The SessionStart hook (`hooks/session-start.sh`) automatically registers CronCreate jobs when
 providers are configured. No manual setup needed.
@@ -540,7 +542,7 @@ If no jobs appear, check:
 
 ---
 
-## Step 8 — Summary
+### Step 8 — Summary
 
 Print a final recap of everything that was configured:
 
@@ -569,7 +571,7 @@ xgh setup complete!
     - Run /xgh-setup to add any missing MCP integrations
 ```
 
-### Store in lossless-claude
+#### Store in lossless-claude
 
 If lossless-claude is available, store the onboarding completion:
 
@@ -582,7 +584,7 @@ Content: "xgh init completed for <name> (<role>, <squad>). Project: <project>. T
 
 ---
 
-## Error Handling
+### Error Handling
 
 - **Missing ingest.yaml:** Step 0b creates it from template. If template not found, warn the user.
 - **MCP not responding:** If a tool call times out or errors, retry once. If it fails again, mark that integration as unavailable and continue.
@@ -591,7 +593,7 @@ Content: "xgh init completed for <name> (<role>, <squad>). Project: <project>. T
 
 ---
 
-## Composability
+### Composability
 
 This skill chains together existing skills rather than duplicating their logic:
 

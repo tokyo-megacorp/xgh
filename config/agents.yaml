@@ -102,28 +102,6 @@ agents:
       exec_approval: null  # non-interactive mode auto-approves all permissions
       review_mode: "prompt-only"  # no dedicated read-only flag; enforced via prompt
 
-  cursor:
-    type: secondary
-    description: "Cursor IDE agent — IDE-integrated editing and refactoring"
-    capabilities:
-      - ide-editing
-      - refactoring
-      - inline-completion
-    integration: MCP
-    invocation:
-      method: mcp
-      notes: "Requires Cursor IDE with MCP support enabled"
-
-  custom:
-    type: extensible
-    description: "User-defined agent — extend xgh with any MCP-compatible agent"
-    capabilities:
-      - user-defined
-    integration: MCP
-    invocation:
-      method: mcp
-      notes: "Configure via environment variables or .xgh/config.yaml"
-
 local_agents:
   code-reviewer:
     type: agent
@@ -187,6 +165,20 @@ local_agents:
     color: cyan
     tools: ["Bash", "Read", "Glob", "Write"]
     capabilities: [codex-dispatch, flag-detection, retry-logic, result-parsing]
+
+  opencode-driver:
+    type: agent
+    model: sonnet
+    color: cyan
+    tools: ["Bash", "Read", "Glob", "Write"]
+    capabilities: [opencode-dispatch, model-selection, output-parsing, retry-logic]
+
+  pr-poller:
+    type: agent
+    model: haiku
+    color: green
+    tools: ["Bash", "Agent", "Read", "Write"]
+    capabilities: [pr-polling, review-status, merge-criteria, comment-handling]
 
 # Message protocol metadata fields (used by all agents):
 #   type: plan | review | feedback | result | decision | question

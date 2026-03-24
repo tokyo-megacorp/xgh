@@ -118,6 +118,52 @@ Follow `skills/_shared/references/dispatch-template.md` Step 4.
 
 Follow `skills/_shared/references/dispatch-template.md` Step 5. Use `<CLI_LABEL>` = `OpenCode`, `<cli>` = `opencode`.
 
+**Write observation to model profiles** (always, regardless of lossless-claude):
+
+After the dispatch completes, append one observation to `.xgh/model-profiles.yaml`. Create the file if it doesn't exist.
+
+```yaml
+# Append to .xgh/model-profiles.yaml
+- agent: opencode
+  model: <the --model flag value, or "default" if none was passed>
+  effort: default
+  archetype: <set by router if dispatched via /xgh-dispatch, otherwise "unknown">
+  accepted: <true if worktree merged or user continued; false if re-dispatched or discarded>
+  ts: <ISO 8601 timestamp>
+```
+
+Note: OpenCode has no effort flag. Always record `effort: default`.
+
+Write using the same python one-liner pattern (stdlib only), with `'agent': 'opencode'` and `'effort': 'default'`:
+
+```bash
+python3 -c "
+import json, os, datetime
+path = '.xgh/model-profiles.yaml'
+os.makedirs(os.path.dirname(path), exist_ok=True)
+try:
+    data = json.load(open(path))
+except (FileNotFoundError, json.JSONDecodeError):
+    data = {'observations': []}
+data.setdefault('observations', [])
+data['observations'].append({
+    'agent': 'opencode',
+    'model': '<MODEL>',
+    'effort': 'default',
+    'archetype': '<ARCHETYPE>',
+    'accepted': True,  # or False based on outcome
+    'ts': datetime.datetime.now(datetime.timezone.utc).isoformat()
+})
+json.dump(data, open(path, 'w'), indent=2)
+"
+```
+
+Replace `<MODEL>`, `<ARCHETYPE>` with the actual values from the dispatch. Determine `accepted` from:
+- Worktree merged → `true`
+- User continued to next task → `true`
+- User re-dispatched same task → `false`
+- User discarded worktree → `false`
+
 ---
 
 ## Model Selection

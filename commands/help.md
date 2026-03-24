@@ -56,6 +56,7 @@ Output using this exact format:
 | `/xgh-codex` | Dispatch tasks to Codex CLI (exec or review) |
 | `/xgh-gemini` | Dispatch tasks to Gemini CLI (exec or review) |
 | `/xgh-opencode` | Dispatch tasks to OpenCode CLI (exec or review) |
+| `/xgh-dispatch` | Auto-route tasks to the best agent + model + effort |
 | `/xgh-seed` | Inject xgh project context into other CLI agents' skill directories |
 | `/xgh-copilot-pr-review` | Manage GitHub Copilot PR code reviews — request, re-review, status, comments, reply, delegate |
 | `/xgh-collab` | Coordinate with other AI agents |

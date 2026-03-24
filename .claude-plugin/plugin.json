@@ -1,7 +1,7 @@
 {
   "name": "xgh",
   "description": "The developer's cockpit — memory, compression, context efficiency, and dev methodology",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "author": {
     "name": "Pedro Almeida",
     "email": "pedro.almeida@users.noreply.github.com"

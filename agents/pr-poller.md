@@ -153,10 +153,11 @@ To check if an active_agent is still running: examine its return status from pre
 ```bash
 REVIEWER_SLUG="${reviewer%\[bot\]}"
 pending=$(gh api repos/<REPO>/pulls/<PR>/requested_reviewers \
-  --jq '[.users[].login, .teams[].slug] | any(. == "'"$REVIEWER_SLUG"'")')
+  --arg reviewer_slug "$REVIEWER_SLUG" \
+  --jq '([.users[].login, .teams[].slug] | map(gsub("\\[bot\\]"; "")) | any(. == $reviewer_slug))')
 if [ "$pending" = "true" ]; then
   echo "Reviewer already pending — skipping re-request"
-  # skip to next PR; do NOT update last_review_request_at
+  continue  # skip to next PR; do NOT update last_review_request_at
 fi
 ```
 

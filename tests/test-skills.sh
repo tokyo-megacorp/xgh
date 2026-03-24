@@ -37,6 +37,17 @@ assert_contains "skills/opencode/opencode.md" "opencode run"
 assert_contains "skills/seed/seed.md" "xgh:seed"
 assert_contains "skills/seed/seed.md" "detect-agents"
 
+# --- Dispatch router skill ---
+assert_file_exists "skills/dispatch/dispatch.md"
+assert_contains "skills/dispatch/dispatch.md" "xgh:dispatch"
+assert_contains "skills/dispatch/dispatch.md" "model-profiles"
+assert_contains "skills/dispatch/dispatch.md" "archetype"
+
+# --- All dispatch skills have observation write ---
+assert_contains "skills/codex/codex.md" "model-profiles.yaml"
+assert_contains "skills/gemini/gemini.md" "model-profiles.yaml"
+assert_contains "skills/opencode/opencode.md" "model-profiles.yaml"
+
 echo ""
 echo "Skills test: $PASS passed, $FAIL failed"
 [[ "$FAIL" -eq 0 ]] || exit 1

@@ -64,7 +64,7 @@ For each active project, run `xgh:briefing` logic in parallel using background A
 
 Gather from every project:
 - GitHub: `gh pr list --state open`, `gh issue list --assignee @me --state open`, `gh pr list --review-requested @me --state open`
-- lossless-claude: `lcm_search("in progress OR blocked OR needs review", { limit: 3 })`
+- lossless-claude: [SEARCH] → call `lcm_search("in progress OR blocked OR needs review", { limit: 3 })`
 
 Output format adds a **project label** to every item:
 
@@ -211,4 +211,4 @@ Display:
 | `command_center:` section missing from ingest.yaml | Use defaults silently |
 | Agent returns no result | Mark as ❌ failed, surface to user |
 | quiet_hours active | Skip triage, show briefing only |
-| lossless-claude unavailable | Skip memory sections, note "Run /xgh-setup to enable memory" |
+| memory backend unavailable | Skip memory sections, note "Run /xgh-setup to enable memory" |

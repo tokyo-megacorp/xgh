@@ -28,7 +28,7 @@ The briefing respects `XGH_TEAM` from the environment for workspace memory queri
 Follow the shared detection protocol in `skills/_shared/references/mcp-auto-detection.md`. Run `/xgh-setup` for any missing MCP the user wants to configure. Proceed with whatever is available — the briefing works with any combination.
 
 **Briefing-specific tool aliases used in this skill:**
-- **lossless-claude**: `lcm_search(query)`, `lcm_store`
+- **lossless-claude**: [SEARCH] → call `lcm_search(query)`, `lcm_store`
 - **Slack**: `slack_search_public_and_private`, `slack_list_channels`
 - **Atlassian/Jira**: `searchJiraIssuesUsingJQL`, `getJiraIssue`
 - **GitHub**: `gh pr list`, `gh issue list`, `gh run list`
@@ -179,7 +179,7 @@ If the user says `/xgh-briefing meeting [name]`, filter output to items relevant
 Once the briefing is delivered:
 1. Ask: "Ready to start on [SUGGESTED FOCUS]? Or pick a different item."
 2. If user confirms: load context for that ticket/PR and invoke `xgh:implement-ticket` or `xgh:investigate` as appropriate.
-3. Store the session start state: Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]
+3. Store the session start state: Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]
 
 ## Scheduler nudge
 
@@ -198,7 +198,7 @@ If no active CronCreate jobs are found or the pause file exists, append to the b
 
 | If you see | Do this |
 |------------|---------|
-| lossless-claude unavailable | Skip memory sections, note "Run /xgh-setup to enable memory" |
+| memory backend unavailable | Skip memory sections, note "Run /xgh-setup to enable memory" |
 | No Slack/Jira | Skip those sections silently |
 | No items in any section | Output "🐴🤖 All clear — no urgent items. Pick something from your backlog." |
 | >5 items in a section | Show top 5, add "…and N more" |

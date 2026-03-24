@@ -199,9 +199,9 @@ The retrieved handoff context is injected into the developer's session automatic
 
 | Tool | Usage |
 |---|---|
-| Extract 3-7 bullet summary → `lcm_store(text, ["workspace"])` | Extract session learnings for handoff summary generation. Do not pass raw conversation content to lcm_store. |
-| `lcm_store(text, ["workspace"])` | Store the compiled handoff summary to workspace |
-| `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })` | Query PR thread context; auto-query handoffs for next developer |
+| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, ["workspace"])` | Extract session learnings for handoff summary generation. Do not pass raw conversation content to lcm_store. |
+| [STORE] → call `lcm_store(text, ["workspace"])` | Store the compiled handoff summary to workspace |
+| [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })` | Query PR thread context; auto-query handoffs for next developer |
 
 ## Composability
 

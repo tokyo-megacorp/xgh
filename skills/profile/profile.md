@@ -28,7 +28,7 @@ Follow the shared detection protocol in `skills/_shared/references/mcp-auto-dete
 | Integration | Detection signal | Capability |
 |-------------|-----------------|------------|
 | Atlassian | `searchJiraIssuesUsingJql` tool available | Ticket history, open backlog |
-| lossless-claude | `mcp__lossless-claude__lcm_search` tool available | Cache profiles, recall past analyses |
+| lossless-claude | `lcm_search` tool available (lossless-claude) | Cache profiles, recall past analyses |
 
 If Atlassian MCP is not available, abort with:
 
@@ -37,7 +37,7 @@ Atlassian MCP is required for this skill. Run /xgh-setup to configure it.
 ```
 
 If lossless-claude is available, search for a cached profile before fetching:
-- Query: `lcm_search("team-profile <engineer name>")`
+- Query: [SEARCH] → call `lcm_search("team-profile <engineer name>")`
 - If a profile exists from the last 7 days, offer to use cached data or refresh
 
 ---
@@ -343,7 +343,7 @@ Print a concise summary to the conversation with key highlights:
 
 ### lossless-claude Storage (if available)
 
-After generating the report, use `lcm_store(text, ["reasoning"])` to store:
+After generating the report, use [STORE] → call `lcm_store(text, ["reasoning"])` to store:
 - Engineer throughput baseline (for future comparison)
 - Sweet spot identification (for future assignment queries)
 - Estimation basis (so future sessions can reference without re-fetching)

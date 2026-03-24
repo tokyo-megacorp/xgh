@@ -13,7 +13,7 @@ Follow the shared project resolution protocol in `skills/_shared/references/proj
 
 ### 2a — Search lossless-claude for index entries
 
-Call `mcp__lossless-claude__lcm_search` with query `xgh:index` and tag filter `["xgh:index", "<repo-name>"]`.
+[SEARCH] tags `["xgh:index", "<repo-name>"]` → call `lcm_search("xgh:index", { tags: ["xgh:index", "<repo-name>"] })`.
 
 - If no results returned → stop:
   > "No codebase index found for `<repo-name>`. Run `/xgh:index` first."
@@ -97,7 +97,7 @@ Identify all modules/packages in the codebase. For each module:
 - What it exposes to other modules (public API/interface)
 - Which other modules it depends on (seams)
 
-Use the lossless-claude index memories (from `lcm_search` with tag `xgh:index`) as primary source. Supplement with Glob/Grep if needed.
+Use indexed memories (from [SEARCH] with tag `xgh:index`) as primary source. Supplement with Glob/Grep if needed.
 
 Format as a table:
 ```
@@ -202,9 +202,9 @@ Run additional analysis based on `<stack>`:
 | critical-paths | — | ✓ |
 | test-landscape | — | ✓ |
 
-## Step 8 — Store artifacts to lossless-claude
+## Step 8 — Store artifacts to memory backend (see `_shared/references/memory-backend.md`)
 
-For each artifact produced, call `mcp__lossless-claude__lcm_store`:
+For each artifact produced, [STORE] → call `lcm_store`:
 
 ```
 [ARCHITECTURE][<artifact-name>] <repo-name>

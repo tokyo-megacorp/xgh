@@ -313,9 +313,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| `lcm_store(text, ["reasoning"])` | Store test specs (RED), implementations (GREEN), edge case requests, and session results |
-| `lcm_search(query)` | Read test specs (implementer), query conventions (both), discover edge case requests |
-| Extract 3-7 bullet summary → `lcm_store(text, context-tag)` | Extract session learnings for context tree curation |
+| [STORE] → call `lcm_store(text, ["reasoning"])` | Store test specs (RED), implementations (GREEN), edge case requests, and session results |
+| [SEARCH] → call `lcm_search(query)` | Read test specs (implementer), query conventions (both), discover edge case requests |
+| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, context-tag)` | Extract session learnings for context tree curation |
 
 ## Composability
 

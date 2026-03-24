@@ -40,8 +40,8 @@ Read from these sources (in order, skip each if missing):
 3. **Architecture**: all `.md` files in `.xgh/context-tree/architecture/` — first 100 lines each
 4. **Conventions**: all `.md` files in `.xgh/context-tree/conventions/` — first 30 lines each
 5. **lossless-claude memories** (if available):
-   - `lcm_search("project briefing digest", { tags: ["session"], limit: 3 })`
-   - `lcm_search("architecture decisions patterns", { limit: 3 })`
+   - [SEARCH] → call `lcm_search("project briefing digest", { tags: ["session"], limit: 3 })`
+   - [SEARCH] → call `lcm_search("architecture decisions patterns", { limit: 3 })`
 
 Compose a `context.md` with this structure (target: under 200 lines):
 
@@ -131,7 +131,7 @@ Display a summary table:
 | gemini   | .gemini/skills/xgh/ | context.md, SKILL.md |
 ```
 
-Store a brief memory if lossless-claude is available:
+Store a brief memory if memory backend available (see `_shared/references/memory-backend.md`):
 
 ```
 lcm_store("xgh-seed: seeded context into [platforms] on [date]. Context sources: [which sources were available]", ["session"])

@@ -61,7 +61,7 @@ pending → in_progress → completed
 
 ## How to Send a Message
 
-Use `lcm_store(text, ["workspace"])` to store a message in lossless-claude workspace:
+Use [STORE] → call `lcm_store(text, ["workspace"])` to store a message in lossless-claude workspace:
 
 ```
 Content: <your message content — plan, review, feedback, etc.>
@@ -78,7 +78,7 @@ Metadata:
 
 ## How to Receive Messages
 
-Use `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })` to check for messages addressed to you:
+Use [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })` to check for messages addressed to you:
 
 ```
 Query: "collaboration message for <your-agent-id> status:pending thread:<thread_id>"
@@ -92,16 +92,16 @@ When you find a pending message:
 ## Workflow Participation
 
 ### As a Planner (plan-review workflow)
-1. Search memory for relevant context: `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })`
+1. Search memory for relevant context: [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })`
 2. Create your plan and store with `type: plan`
 3. Wait for review feedback
 4. Incorporate feedback, store `type: decision`
 5. Implement the approved plan, store `type: result`
 
 ### As a Reviewer (plan-review workflow)
-1. Search for pending plans addressed to you: `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })`
+1. Search for pending plans addressed to you: [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })`
 2. Read the plan thoroughly
-3. Search memory for related patterns: `lcm_search(query, { layers: ["semantic"], tags: ["reasoning"] })`
+3. Search memory for related patterns: [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["reasoning"] })`
 4. Store your review with `type: review`, including:
    - What looks good
    - Concerns or gaps
@@ -115,13 +115,13 @@ When you find a pending message:
 4. Once all results are in, merge and store final `type: result`
 
 ### As an Implementer (parallel-impl or validation workflow)
-1. Search for tasks assigned to you: `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })`
+1. Search for tasks assigned to you: [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })`
 2. Pick up the task (update status to `in_progress`)
 3. Implement the solution
 4. Store your result with `type: result`
 
 ### As a Security Reviewer (security-review workflow)
-1. Search for pending results to review: `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })`
+1. Search for pending results to review: [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })`
 2. Review for: injection, auth gaps, data exposure, insecure defaults, missing validation, secrets in code, CSRF, path traversal
 3. Store findings with `type: feedback`, including severity per finding (critical / high / medium / low / info)
 4. If fixes are submitted, re-review and either approve or request further fixes
@@ -190,7 +190,7 @@ In `parallel-impl`, the Coordinator sends one `type: plan` per implementer with 
 
 When a collaboration workflow reaches its completion state (all steps done, final result stored):
 
-Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the
+Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the
 summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store.
 Use tags: ["workspace"]
 

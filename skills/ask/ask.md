@@ -16,7 +16,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 **When:** Starting a new task, exploring a domain, or unsure what exists.
 
 **Strategy:**
-1. `lcm_search(query)` with a natural-language description of the task
+1. [SEARCH] → call `lcm_search(query)` with a natural-language description of the task
 2. Read context tree `_index.md` files for the relevant domain
 3. Merge results mentally — lossless-claude catches semantic matches, context tree catches keyword matches
 
@@ -34,7 +34,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 **Strategy:**
 1. Check context tree `_manifest.json` for the specific domain/topic path
 2. Read the knowledge file directly
-3. Fall back to `lcm_search(query)` only if the context tree does not have it
+3. Fall back to [SEARCH] → call `lcm_search(query)` only if the context tree does not have it
 
 **Example queries:**
 - "JWT refresh token rotation interval"
@@ -48,7 +48,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 **When:** Making a decision and wanting to learn from past decisions.
 
 **Strategy:**
-1. `lcm_search(query, { layers: ["semantic"], tags: ["reasoning"] })` with the decision context
+1. [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["reasoning"] })` with the decision context
 2. `lcm_search` to retrieve patterns → Claude evaluates inline
 3. Check context tree for files with category: decision in the relevant domain
 
@@ -64,7 +64,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 **When:** Encountering an error or unexpected behavior.
 
 **Strategy:**
-1. `lcm_search(query)` with the error message or symptom description
+1. [SEARCH] → call `lcm_search(query)` with the error message or symptom description
 2. Search context tree for files with category: bug-fix
 3. If nothing found, broaden the search to the general area (e.g., "authentication errors" instead of "401 on /api/refresh")
 

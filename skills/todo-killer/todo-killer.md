@@ -89,7 +89,7 @@ TODO: migrate to async/await — callback hell
 Context: 30 lines around the comment
 ```
 
-Before fixing, also run `lcm_search('TODO context: <todo text>')` — check if this has been attempted before or if there's a known pattern for the migration.
+Before fixing, also run [SEARCH] → call `lcm_search('TODO context: <todo text>')` — check if this has been attempted before or if there's a known pattern for the migration.
 
 ### 2b. Classify fixability
 

@@ -70,7 +70,7 @@ Parameters:
 
 ### How org-scope memories are included
 
-Every `lcm_search(query)` call in an xgh-enabled project includes BOTH scopes:
+Every [SEARCH] → call `lcm_search(query)` call in an xgh-enabled project includes BOTH scopes:
 
 **Step 1: Team-scope query**
 
@@ -158,9 +158,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| `lcm_search(query)` | Query both team-scope and org-scope memories |
-| `lcm_store(text, ["reasoning"])` | Store org-promoted knowledge to workspace |
-| Extract 3-7 bullet summary → `lcm_store(text, context-tag)` | Extract cross-team relevant learnings |
+| [SEARCH] → call `lcm_search(query)` | Query both team-scope and org-scope memories |
+| [STORE] → call `lcm_store(text, ["reasoning"])` | Store org-promoted knowledge to workspace |
+| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, context-tag)` | Extract cross-team relevant learnings |
 
 ## Composability
 

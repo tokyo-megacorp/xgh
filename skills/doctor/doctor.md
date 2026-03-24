@@ -39,11 +39,13 @@ curl -sf --max-time 5 "${XGH_REMOTE_URL}/v1/models"
     Fix: ensure the server is running and port is accessible from this machine
   ```
 
-lossless-claude MCP availability: check if `mcp__lossless-claude__lcm_search` is present in the available tool list:
+Memory backend availability (see `_shared/references/memory-backend.md` for detection priority):
+
+For lossless-claude (current reference backend): check if `lcm_search` is present in the available tool list:
 - Tool absent → lossless-claude MCP not registered. Fix: add lossless-claude entry to `.claude/.mcp.json`
 - Tool present but call returns error → daemon not running. Fix: `lossless-claude daemon start`
 
-**Important:** lossless-claude MCP availability is determined by whether `mcp__lossless-claude__lcm_search` appears in the tool list, NOT by file presence on disk.
+**Important:** lossless-claude availability is determined by whether `lcm_search` appears in the tool list, NOT by file presence on disk.
 
 ## Check 3 — Pipeline freshness
 

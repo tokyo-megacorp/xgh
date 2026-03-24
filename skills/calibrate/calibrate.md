@@ -9,7 +9,7 @@ Modes: interactive (default), headless (`--auto`), comparison (`--compare`).
 
 ## Interactive mode (default)
 
-1. **Sample pairs**: Use `lcm_search(query)` with diverse queries to gather N memories (configurable via `calibration.sample_size`, default 50). Form random pairs from the results.
+1. **Sample pairs**: Use [SEARCH] → call `lcm_search(query)` with diverse queries to gather N memories (configurable via `calibration.sample_size`, default 50). Form random pairs from the results.
 
 2. **For each pair**, show side by side:
    ```

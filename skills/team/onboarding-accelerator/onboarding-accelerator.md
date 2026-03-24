@@ -234,9 +234,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| `lcm_search(query)` | Query all 5 knowledge categories for onboarding briefing |
-| `lcm_store(text, ["reasoning"])` | Store onboarding session metadata and identified gaps |
-| Extract 3-7 bullet summary → `lcm_store(text, context-tag)` | Extract session learnings if developer shares new context |
+| [SEARCH] → call `lcm_search(query)` | Query all 5 knowledge categories for onboarding briefing |
+| [STORE] → call `lcm_store(text, ["reasoning"])` | Store onboarding session metadata and identified gaps |
+| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, context-tag)` | Extract session learnings if developer shares new context |
 
 ## Composability
 

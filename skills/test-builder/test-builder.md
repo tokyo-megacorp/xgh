@@ -30,9 +30,9 @@ Usage:
 
 ### Step 1 — Hard prerequisite: architecture freshness
 
-#### 1a — Search lossless-claude for architecture entries
+#### 1a — Search memory for architecture entries (see `_shared/references/memory-backend.md`)
 
-Call `mcp__lossless-claude__lcm_search` with query `xgh:architecture` and tag filter `["xgh:architecture", "<repo-name>"]`.
+[SEARCH] tags `["xgh:architecture", "<repo-name>"]` → call `lcm_search("xgh:architecture", { tags: ["xgh:architecture", "<repo-name>"] })`.
 
 - If no results returned → stop:
   > "No architecture analysis found for `<repo-name>`. Run `/xgh:architecture` first."
@@ -77,14 +77,14 @@ Parse the output as `<days>|<arch-mode>`:
 #### 1c — Check mode adequacy
 
 If `<arch-mode>` is `quick`:
-- Read public-surfaces artifact from lossless-claude (tags `["xgh:architecture", "public-surfaces", "<repo-name>"]`).
+- [SEARCH] public-surfaces artifact (tags `["xgh:architecture", "public-surfaces", "<repo-name>"]`) → call `lcm_search(...)`.
 - If multiple surface types detected (e.g. cli + api, or api + web) → recommend: "Consider running `/xgh:architecture full` for deeper analysis — critical-paths and test-landscape will improve test generation."
 
 ---
 
 ### Step 2 — Read architectural definitions
 
-Pull from lossless-claude memory using `mcp__lossless-claude__lcm_search`:
+[SEARCH] from memory backend → call `lcm_search`:
 
 | Artifact | Tags | Required |
 |----------|------|----------|

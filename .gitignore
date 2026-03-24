@@ -21,3 +21,5 @@ node-compile-cache/
 playwright-transform-cache-*/
 playwright_chromiumdev_profile-*/
 .claude/worktrees/
+.DS_Store
+**/.DS_Store

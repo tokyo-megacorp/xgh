@@ -229,9 +229,9 @@ When the author returns to address review comments, their Claude queries the thr
 
 | Tool | Usage |
 |---|---|
-| `lcm_store(text, ["reasoning"])` | Store decisions, tricky parts, summaries, and review feedback to PR thread |
+| [STORE] → call `lcm_store(text, ["reasoning"])` | Store decisions, tricky parts, summaries, and review feedback to PR thread |
 | `lcm_search` | Query PR thread for reasoning context (reviewer side) |
-| Extract 3-7 bullet summary → `lcm_store(text, ["workspace"])` | Extract reasoning from session for auto-curation |
+| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, ["workspace"])` | Extract reasoning from session for auto-curation |
 
 ## Composability
 

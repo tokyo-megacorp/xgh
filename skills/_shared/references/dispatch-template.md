@@ -93,7 +93,7 @@ git branch -D "$BRANCH"
 
 ---
 
-## Step 5: Curate (if lossless-claude available)
+## Step 5: Curate (if memory backend available (see `_shared/references/memory-backend.md`))
 
 Store the dispatch outcome for future reference. Replace all placeholders: `<CLI_LABEL>` (display name, e.g. "OpenCode"), `<cli>` (tag slug, e.g. `"opencode"`):
 

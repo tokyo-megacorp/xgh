@@ -114,7 +114,7 @@ Follow `skills/_shared/references/dispatch-template.md` Step 4.
 
 ---
 
-## Step 5: Curate (if lossless-claude available)
+## Step 5: Curate (if memory backend available — see `_shared/references/memory-backend.md`)
 
 Follow `skills/_shared/references/dispatch-template.md` Step 5. Use `<CLI_LABEL>` = `OpenCode`, `<cli>` = `opencode`.
 

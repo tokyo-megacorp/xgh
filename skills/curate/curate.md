@@ -113,7 +113,7 @@ the concept without reading the Raw Concept section.]
 
 After writing the knowledge file to the context tree, also store it in lossless-claude for semantic search:
 
-1. Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]
+1. Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]
 2. This enables vector-similarity search alongside the context tree's BM25 search
 
 ## Step 5: Update Manifest
@@ -132,7 +132,7 @@ Storing memory is worthless if it cannot be retrieved. After every store operati
 
 After every `lcm_store` call:
 
-1. **Immediate Verify:** Run `lcm_search(query)` with 2-3 different queries:
+1. **Immediate Verify:** Run [SEARCH] → call `lcm_search(query)` with 2-3 different queries:
    - Query A: Use the exact title/topic of what you stored
    - Query B: Use a natural-language question that the stored knowledge should answer
    - Query C: Use a keyword from the stored content
@@ -238,4 +238,4 @@ Before considering curation complete:
 - [ ] File is in the correct domain/topic path
 - [ ] Manifest is updated
 - [ ] lossless-claude memory is updated (via lcm_store)
-- [ ] Verification: `lcm_search(query)` finds the new entry
+- [ ] Verification: [SEARCH] → call `lcm_search(query)` finds the new entry

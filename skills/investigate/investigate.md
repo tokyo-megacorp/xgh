@@ -34,7 +34,7 @@ Follow the shared detection protocol in `skills/_shared/references/mcp-auto-dete
 **Graceful degradation rules (investigate-specific):**
 - No Slack MCP → Skip Slack thread reading. Ask user to paste the bug report content directly.
 - No task manager MCP → Skip ticket search/creation. Note in report that no ticket was created.
-- No lossless-claude MCP → Skip memory search. Proceed with codebase-only investigation. Save report to context tree only.
+- No memory backend → Skip memory search. Proceed with codebase-only investigation. Save report to context tree only.
 - No MCPs at all → Still works. User provides context manually. Full Superpowers debug methodology applies.
 
 ---
@@ -71,9 +71,9 @@ Search queries to try:
 - "broken" or "bug" + feature name
 - Recent deploy notifications in engineering channels
 
-### Step 1.3: Query xgh Memory (if lossless-claude MCP available)
+### Step 1.3: Query xgh Memory (if memory backend available (see `_shared/references/memory-backend.md`))
 
-Use `lcm_search(query)` to search for:
+Use [SEARCH] → call `lcm_search(query)` to search for:
 - Similar bugs that were investigated before
 - Past fixes in the affected code area
 - Architecture decisions that may be relevant
@@ -344,7 +344,7 @@ Generate a structured investigation report.
 1. **Context tree:** Save to `.xgh/context-tree/investigations/[YYYY-MM-DD]-[slug].md`
    - YAML frontmatter: `importance: 70`, `maturity: validated`, `tags: [bug, investigation, <component>]`
 
-2. **lossless-claude memory** (if available): Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]. Store:
+2. **lossless-claude memory** (if available): Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]. Store:
    - Root cause pattern (for future similar bug detection)
    - Fix pattern (for future similar fix suggestions)
    - Prevention learnings

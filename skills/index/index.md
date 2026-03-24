@@ -66,7 +66,7 @@ Sample 5–10 files across the repo. Extract:
 
 ## Step 7 — Store to memory
 
-For each module found, call `lcm_store` with a summary in this exact format:
+For each module found, [STORE] → call `lcm_store` with a summary in this exact format:
 
 ```
 [REPO][MODULE] <module-name>: <one-sentence purpose>
@@ -78,7 +78,7 @@ Indexed: <ISO date>
 
 Tags: `["xgh:index", "<repo-name>"]`
 
-Do not pass raw file content to `lcm_store`. Synthesize a concise summary for each module.
+Do not pass raw file content to `lcm_store` (or equivalent — see `_shared/references/memory-backend.md`). Synthesize a concise summary for each module.
 
 ## Step 8 — Update index timestamp
 

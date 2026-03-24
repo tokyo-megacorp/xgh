@@ -96,7 +96,7 @@ For each classified item, build this payload:
 ## Step 5 — Deduplicate
 
 Before writing each payload:
-1. Call `lcm_search(query)` with the summary text as query
+1. Call [SEARCH] → call `lcm_search(query)` with the summary text as query
 2. If any result has similarity score ≥ `analyzer.dedup_threshold` (default 0.85):
    - Skip writing a new entry (the existing memory covers this content)
 3. If no near-duplicate, proceed to Step 6
@@ -116,13 +116,13 @@ When count mod 5 == 0:
 
 Route based on `content_types.<type>.promote_to` from `ingest.yaml`:
 
-**workspace** → Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and tags: ["workspace"]. Do not pass raw conversation content to lcm_store.
+**workspace** → Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the summary text and tags: ["workspace"]. Do not pass raw conversation content to lcm_store.
 
 ```
 lcm_store("<summary>", ["workspace"])
 ```
 
-**personal** → Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"].
+**personal** → Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"].
 
 ```
 lcm_store("<summary>", ["session"])

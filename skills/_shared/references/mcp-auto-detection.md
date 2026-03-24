@@ -13,9 +13,12 @@ Available integrations are discovered automatically on first invocation. Run `/x
 
 MCP tool names follow the pattern `mcp__<server-slug>__<tool-name>`. The exact prefix varies by how the MCP server is registered — use the tool name suffix as a fallback if the full prefixed name isn't found.
 
+See [`memory-backend.md`](memory-backend.md) for canonical memory ops — use `[SEARCH]`/`[STORE]`/`[FORGET]` intent labels regardless of which backend is detected here.
+
 | Integration | Detection signal | Capability |
 |-------------|-----------------|------------|
 | lossless-claude | `mcp__lossless-claude__lcm_search` tool available | xgh memory, session state, conventions |
+| cipher (legacy) | `cipher_memory_search` tool available | xgh memory (legacy backend) |
 | Slack MCP | `mcp__claude_ai_Slack__slack_read_thread` tool available | Thread reading, message search |
 | Atlassian/Jira | `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJQL` tool available | Ticket history, task management |
 | GitHub | `gh pr list` / `gh issue list` available (CLI detection; no standard MCP server for GitHub) | PRs, issues, Actions |
@@ -31,6 +34,13 @@ After detection, surface which integrations are available so the user understand
 ✓ Slack — thread reading and search available
 ✓ Atlassian — Jira ticket access available
 ✗ Figma — not configured (will ask for manual input if needed)
+```
+
+Or with legacy backend:
+
+```
+✓ cipher (legacy) — memory available
+✗ lossless-claude — not configured
 ```
 
 ## Graceful Degradation Principle

@@ -207,11 +207,32 @@ Validate the trigger engine configuration and runtime state.
    - Report triggers that fired in the last 24h
    - ⚠️ if any trigger has `fire_count > 10` with backoff — may be stuck in backoff loop
 
-4. **Hook registration** — check if PostToolUse hook is active:
-   - Run `claude config list` and check for post-tool-use hook
-   - ✅ PostToolUse hook registered (local command triggers will work)
+4. **Hook registration** — check if xgh hooks are active in settings.json:
+
+```python
+import json, os
+results = {}
+for f in [os.path.expanduser('~/.claude/settings.json'),
+          '.claude/settings.local.json']:
+    if not os.path.isfile(f): continue
+    d = json.load(open(f))
+    hooks = d.get('hooks', {})
+    for event, entries in hooks.items():
+        for entry in entries:
+            for h in entry.get('hooks', []):
+                cmd = h.get('command', '')
+                if 'xgh' in cmd and 'session-start' in cmd:
+                    results['SessionStart'] = True
+                if 'xgh' in cmd and 'post-tool-use' in cmd:
+                    results['PostToolUse'] = True
+print('xgh_session_start=' + str(results.get('SessionStart', False)).lower())
+print('xgh_post_tool_use=' + str(results.get('PostToolUse', False)).lower())
+```
+
+   - ✅ Both hooks registered — context injection and local triggers active
+   - ⚠️ SessionStart hook not found — context tree won't inject at session start.
    - ⚠️ PostToolUse hook not found — `source: local` triggers won't fire automatically.
-     Run `/xgh-setup` to configure.
+   - **Fix (either hook missing):** Reinstall the xgh plugin: `claude plugin install xgh@extreme-go-horse`
 
 5. **Example output:**
    ```
@@ -220,7 +241,8 @@ Validate the trigger engine configuration and runtime state.
    ✅ 4 triggers (3 enabled, 1 disabled)
    ⚠️ pr-stale-reminder: silenced until 2026-03-22T09:00:00Z
    ✅ Fired last 24h: p0-alert (2 times)
-   ⚠️ PostToolUse hook not registered — source:local triggers inactive
+   ✅ xgh SessionStart hook registered
+   ✅ xgh PostToolUse hook registered
    ```
 
 ### Check 8 — Agent version parity

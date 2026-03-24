@@ -1,17 +1,22 @@
+---
+name: agent-collaboration
+description: Multi-agent collaboration protocol for coordinating work across Planner, Reviewer, Coordinator, Implementer, and Security Reviewer roles using lossless-claude message threads
+---
+
 # xgh:agent-collaboration
 
-> Skill for multi-agent collaboration workflows. Teaches agents how to participate in structured collaboration via the xgh message protocol and Cipher workspace.
+> Skill for multi-agent collaboration workflows. Teaches agents how to participate in structured collaboration via the xgh message protocol and lossless-claude memory.
 
 ## When to Activate
 
 This skill activates when:
 - A user requests `/xgh-collaborate` or mentions multi-agent collaboration
-- A collaboration workflow message is found in Cipher workspace addressed to this agent
+- A collaboration workflow message is found in lossless-claude memory addressed to this agent
 - The dispatcher agent delegates a task as part of a workflow
 
 ## Message Protocol
 
-All inter-agent messages use structured metadata stored in Cipher workspace. Every message MUST include these fields:
+All inter-agent messages use structured metadata stored in lossless-claude memory. Every message MUST include these fields:
 
 ```yaml
 type: plan | review | feedback | result | decision | question
@@ -46,47 +51,41 @@ pending → in_progress → completed
 
 ## How to Send a Message
 
-Use `cipher_extract_and_operate_memory` to store a message in Cipher workspace:
+Use `lcm_store` to persist a message in lossless-claude memory:
 
 ```
-Operation: store
-Content: <your message content — plan, review, feedback, etc.>
-Metadata:
-  type: plan
-  status: pending
-  from_agent: claude-code
-  for_agent: codex
-  thread_id: feat-123
-  priority: normal
-  created_at: 2026-03-13T10:00:00Z
+lcm_store(
+  "type: plan | status: pending | from: claude-code | for: codex | thread: feat-123 | priority: normal | created: 2026-03-13T10:00:00Z\n\n<your message content — plan, review, feedback, etc.>",
+  ["workspace", "collaboration"]
+)
 ```
 
 ## How to Receive Messages
 
-Use `cipher_memory_search` to check for messages addressed to you:
+Use `lcm_search` to check for messages addressed to you:
 
 ```
-Query: "collaboration message for <your-agent-id> status:pending thread:<thread_id>"
+lcm_search("collaboration message for <your-agent-id> status:pending thread:<thread_id>")
 ```
 
 When you find a pending message:
-1. Update its status to `in_progress` (store an updated copy)
+1. Update its status to `in_progress` (store an updated copy via `lcm_store`)
 2. Process the message according to its type
 3. Send your response as a new message with the same `thread_id`
 
 ## Workflow Participation
 
 ### As a Planner (plan-review workflow)
-1. Search memory for relevant context: `cipher_memory_search`
+1. Search memory for relevant context: `lcm_search`
 2. Create your plan and store with `type: plan`
 3. Wait for review feedback
 4. Incorporate feedback, store `type: decision`
 5. Implement the approved plan, store `type: result`
 
 ### As a Reviewer (plan-review workflow)
-1. Search for pending plans addressed to you: `cipher_memory_search`
+1. Search for pending plans addressed to you: `lcm_search`
 2. Read the plan thoroughly
-3. Search memory for related patterns: `cipher_search_reasoning_patterns`
+3. Search memory for related patterns: `lcm_search` with tags `["reasoning"]`
 4. Store your review with `type: review`, including:
    - What looks good
    - Concerns or gaps
@@ -100,13 +99,13 @@ When you find a pending message:
 4. Once all results are in, merge and store final `type: result`
 
 ### As an Implementer (parallel-impl or validation workflow)
-1. Search for tasks assigned to you: `cipher_memory_search`
+1. Search for tasks assigned to you: `lcm_search`
 2. Pick up the task (update status to `in_progress`)
 3. Implement the solution
 4. Store your result with `type: result`
 
 ### As a Security Reviewer (security-review workflow)
-1. Search for pending results to review: `cipher_memory_search`
+1. Search for pending results to review: `lcm_search`
 2. Review for: injection, auth gaps, data exposure, insecure defaults, missing validation, secrets in code, CSRF, path traversal
 3. Store findings with `type: feedback`, including severity per finding (critical / high / medium / low / info)
 4. If fixes are submitted, re-review and either approve or request further fixes
@@ -136,7 +135,7 @@ Available workflows:
 1. **Always include all protocol fields** — missing fields break routing
 2. **Never skip the thread_id** — it groups messages into a coherent workflow
 3. **Update status honestly** — do not mark `completed` until actually done
-4. **Store before moving on** — always persist your message to Cipher before proceeding to the next step
+4. **Store before moving on** — always persist your message to lossless-claude memory before proceeding to the next step
 5. **Search before acting** — check for existing messages in the thread before creating new ones
 6. **Respect for_agent routing** — only pick up messages addressed to you or to `"*"`
 7. **Honor max_iterations** — if a feedback loop exceeds the template's max_iterations, escalate to the coordinator or user

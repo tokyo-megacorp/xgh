@@ -89,7 +89,11 @@ TODO: migrate to async/await — callback hell
 Context: 30 lines around the comment
 ```
 
+Before fixing, also run `lcm_search('TODO context: <todo text>')` — check if this has been attempted before or if there's a known pattern for the migration.
+
 ### 2b. Classify fixability
+
+Use this decision tree:
 
 | Type | Action |
 |------|--------|
@@ -98,21 +102,45 @@ Context: 30 lines around the comment
 | Part of larger migration | Fix if `status: active` in patterns.yaml, skip if `planned` |
 | Already fixed (stale TODO) | Remove comment only |
 | Needs external context (ticket, PR) | Skip — note in output |
+| Blocked by another TODO in same cluster | Fix the blocker first |
+| Requires touching >3 unrelated files | Mark `complex` — flag for separate PR |
 
-### 2c. Fix
+### 2c. Fix — HOW to fix by TODO type
 
-- Make the change described by the TODO
-- Remove the TODO comment after fixing
-- If it touches a deprecated pattern from `patterns.yaml`, do a full migration for that usage (not just the TODO line)
-- Run relevant tests after each fix: `swift test`, `npm test`, `pytest`, etc.
+**Missing implementation:** Write the implementation inline. If non-trivial, write a minimal version that passes tests, then note what remains.
+
+**Temporary workaround:** Find the root cause. If fixable in <30 min: fix it. If not: add a comment explaining why it's not trivially fixable and what the proper fix would require.
+
+**Deprecated API usage:** Check if a newer API exists. If yes: migrate the callsite. If no replacement exists: mark as `needs-decision` and skip.
+
+**Missing error handling:** Add the error case. Pattern: check → log → return safe default or raise.
+
+```
+// BEFORE
+// TODO: handle empty response
+const data = response.json()
+
+// AFTER
+const data = response.json()
+if (!data || Object.keys(data).length === 0) {
+  console.warn('Empty response from', url)
+  return null
+}
+```
+
+**Multi-file fix:** If fixing one TODO requires changes across multiple files, fix them all atomically in the same commit. Do not leave a partial fix in place.
+
+After each fix: remove the TODO comment, run relevant tests (`swift test`, `npm test`, `pytest`, etc.), verify tests pass before moving to the next item.
 
 ### 2d. Commit per logical group
 
-Don't batch unrelated fixes into one commit. Group by theme:
+Don't batch unrelated fixes into one commit. Group by theme (cluster from 1c):
 
 ```bash
 git commit -m "refactor: migrate LoginService + UserService to async/await (resolves 3 TODOs)"
 ```
+
+If a TODO was classified as not fixable, document why in the commit message or skip it and include in the report's Skipped section.
 
 ## Phase 3: Report
 

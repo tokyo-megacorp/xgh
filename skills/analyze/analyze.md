@@ -217,6 +217,25 @@ source ~/.xgh/lib/usage-tracker.sh
 xgh_usage_log "analyzer" "<actual turns>" 0
 ```
 
+## Common Mistakes
+
+### Misclassifying multi-type items
+Items that carry signals for multiple categories (e.g., both a spec and a design decision) often get classified as one or the other. When signals conflict, prefer the higher-specificity type: `decision` > `pattern` > `convention` > `discovery`. If genuinely ambiguous, use the type that matches the item's actionability.
+
+### Dedup false positives
+Two items with similar wording but different scopes (e.g., "auth token rotation" for iOS vs. web) may incorrectly match above the similarity threshold. If the same concept appears twice with divergent context tags or project assignments, keep both — tag divergence signals an intentional distinction.
+
+### Skipping TTL refresh on updated items
+If a source item's timestamp is newer than the memory's `created_at`, recalculate TTL from the new source date — not the original curation date. Forgetting this causes stale memories to survive past their correct expiry.
+
+### Creating duplicates instead of updating
+When an inbox item supersedes an existing memory, update the lossless-claude entry in place using `lcm_store` with the same title. Do not append a new entry — duplicates degrade retrieval quality and inflate dedup false-positive rates.
+
+### Filing items with no project match
+If an inbox item cannot be mapped to an active project in `ingest.yaml`, log `WARN: no project match for <item>` and skip it. Do not file it under a random or fallback project — misattributed memories are worse than no memory.
+
+---
+
 ## Output discipline
 
 1. Never dump raw inbox content into session context.

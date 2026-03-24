@@ -135,16 +135,56 @@ The agent registry at `config/agents.yaml` lists all available agents and their 
 
 ## Workflow Templates
 
-Workflow definitions live in `config/workflows/*.yaml`. Each template defines:
-- **roles** — what each participant does
-- **steps** — ordered sequence with dependencies
-- **completion** — when the workflow is done
+Workflow definitions live in `config/workflows/*.yaml`. Each template defines the full coordination contract.
 
-Available workflows:
-- `plan-review` — 2 agents: plan → review → implement
-- `parallel-impl` — N agents: split → parallel implement → merge
-- `validation` — 2 agents: implement → validate → feedback loop
-- `security-review` — 2 agents: implement → security review → fix → re-review
+### Template Structure
+
+```yaml
+name: plan-review
+roles:
+  planner:
+    sends: [plan, decision]
+    receives: [review]
+  reviewer:
+    sends: [review]
+    receives: [plan]
+steps:
+  - id: draft-plan
+    role: planner
+    action: send
+    type: plan
+    next: review-plan
+  - id: review-plan
+    role: reviewer
+    action: send
+    type: review
+    next: finalize
+  - id: finalize
+    role: planner
+    action: send
+    type: decision
+completion:
+  condition: type == decision AND status == completed
+max_iterations: 3
+```
+
+### Available Workflows
+
+**plan-review** — Planner drafts, Reviewer critiques, Planner decides.
+Best for: architecture decisions, breaking down epics, risk assessment.
+
+**parallel-impl** — Coordinator splits work, N Implementers execute in parallel, Coordinator merges.
+Best for: implementing independent subtasks across multiple agents simultaneously.
+
+**validation** — Implementer builds, Validator tests and feeds back, repeat until approved.
+Best for: QA-gated features, security-sensitive changes.
+
+**security-review** — Implementer ships, Security Reviewer audits, Implementer fixes, repeat.
+Best for: auth changes, data exposure, any code touching secrets.
+
+### Parallel Execution Semantics
+
+In `parallel-impl`, the Coordinator sends one `type: plan` per implementer with unique `for_agent` values. All implementers work concurrently. The Coordinator polls with `lcm_search` until all expected `type: result` messages arrive before merging.
 
 ## Workflow Completion
 

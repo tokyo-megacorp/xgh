@@ -288,6 +288,25 @@ source ~/.xgh/lib/usage-tracker.sh
 xgh_usage_log "retriever" "$(actual turns used)" 0
 ```
 
+## Error Handling
+
+### Provider timeouts
+If a bash provider (`fetch.sh`) runs longer than 60s, kill it and mark as timed-out. Log: `WARN: provider <name> timed out after 60s — skipping`. Continue with remaining providers; do not abort the full retrieval cycle.
+
+### Rate limiting (HTTP 429)
+Back off 30s and retry once. If the second attempt also returns 429, skip the provider and log a warning. Do not retry more than once per retrieval cycle.
+
+### Malformed provider output
+`fetch.sh` must output valid YAML frontmatter. If output fails YAML parse: log `ERROR: provider <name> returned invalid YAML — skipping item`. Continue processing remaining items from other providers.
+
+### Partial failure
+If 1 of N providers fails, continue and log a summary at the end: `Retrieved: X items (Y providers failed: <names>)`. Partial success is still success — do not abort or roll back the run.
+
+### Cursor corruption
+If `CURSOR_FILE` contains non-timestamp content, reset it to epoch (`1970-01-01T00:00:00Z`) and log: `WARN: cursor corrupted for <provider> — resetting to epoch`. This causes a full backfill on next run, which is preferable to skipping items silently.
+
+---
+
 ## Output discipline
 
 This skill runs in the main session turn (triggered by CronCreate or manually). To preserve context:

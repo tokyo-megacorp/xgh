@@ -65,3 +65,15 @@ Same as interactive, but use a Claude reasoning step to judge each pair ("Are th
 ## Comparison mode (--compare)
 
 Run headless calibration first, then run interactive on the same pairs. Show agreement rate between AI and human judgments at the end. This validates whether headless mode is reliable for future auto-runs.
+
+## Threshold Algorithm
+
+The dedup threshold is cosine similarity (0.0-1.0): pairs above threshold are considered duplicates. F1 score balances precision (avoid false duplicates) vs recall (catch true duplicates). Typical well-tuned threshold: 0.72-0.82 (project-dependent). Default (0.75) is a safe starting point; real data almost always improves it.
+
+## Error Handling
+
+Fewer than 10 sample pairs → print warning, abort calibration (not enough signal). F1 scores flat across all thresholds → already well-tuned, no change needed. Proposed threshold differs from current by >0.15 → confirm with user before writing to ingest.yaml. ingest.yaml unreadable → print path, suggest running /xgh-init to reinitialize.
+
+## Validation
+
+After updating analyzer.dedup_threshold in ingest.yaml, run /xgh-retrieve to fetch fresh items, then run /xgh-analyze and check the dedup report line: 'X duplicates suppressed'. If 0 duplicates suppressed on a project with history, threshold may be too low.

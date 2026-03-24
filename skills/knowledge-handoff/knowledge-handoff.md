@@ -119,6 +119,35 @@ Identify which domain areas were touched by the merge. Use git diff to find:
 - Directories affected
 - Modules/domains impacted
 
+**Categorize files by type and risk:**
+
+| File pattern | Category | Risk level |
+|---|---|---|
+| `**/auth/**`, `**/security/**` | Security | High |
+| `**/api/**`, `**/routes/**` | API surface | High |
+| `**/migration/**`, `**/*.sql` | Data | High |
+| `**/config/**`, `*.yaml`, `*.json` | Config | Medium |
+| `src/**/*.ts`, `lib/**/*.py` | Core logic | Medium |
+| `**/*.test.*`, `**/*.spec.*` | Tests | Low |
+| `**/docs/**`, `*.md` | Docs | Low |
+
+**Assess impact breadth:**
+- 1-3 files changed: narrow, low coordination overhead
+- 4-10 files changed: moderate, check for cross-module coupling
+- 10+ files changed: broad refactor — explicitly call out in handoff summary
+
+**Identify coupling risks:**
+Run `git diff --name-only HEAD~1` and look for files in different modules that changed together — this often signals hidden coupling the next developer should know about.
+
+**Example output format:**
+```
+Affected: 7 files
+High risk: src/auth/token-refresh.ts (auth), migrations/004_add_session_index.sql (data)
+Medium risk: src/api/users.ts, config/rate-limits.yaml
+Low risk: tests/auth.test.ts, docs/auth.md
+Coupling signal: token-refresh.ts + rate-limits.yaml changed together — rate limit is tied to token lifetime
+```
+
 ### Step 3: Extract learnings from session
 
 ```

@@ -7,11 +7,11 @@ description: "This skill should be used when the user wants to store knowledge, 
 
 ## Purpose
 
-This skill guides you through structuring knowledge so it can be found later. Poor curation is worse than no curation — it creates false confidence that knowledge exists when it cannot actually be retrieved.
+This skill guides structuring knowledge so it can be found later. Poor curation is worse than no curation — it creates false confidence that knowledge exists when it cannot actually be retrieved.
 
 ## Step 1: Classify the Knowledge
 
-Determine what kind of knowledge you are curating:
+Determine the knowledge type:
 
 | Category | Description | Example |
 |---|---|---|

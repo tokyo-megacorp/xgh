@@ -211,7 +211,7 @@ Only when the task is **inherently iterative** and Codex genuinely needs to carr
 | **Stale state** | Hours-old session describes a repo state that no longer exists. Codex acts on outdated context. |
 | **Opaque history** | Claude cannot see what Codex "remembers". Unexpected behavior is hard to diagnose. |
 
-**The rule:** if you can write a self-contained prompt Codex can execute from scratch, use stateless. Session mode is for the rare case where accumulated context is the feature, not a liability.
+**The rule:** if the prompt is self-contained enough for Codex to execute from scratch, use stateless. Session mode is for the rare case where accumulated context is the feature, not a liability.
 
 ## Prompt Crafting
 

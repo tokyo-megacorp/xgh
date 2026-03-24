@@ -1,6 +1,6 @@
 ---
 name: xgh:calibrate
-description: "This skill should be used when the user runs /xgh-calibrate or asks to 'calibrate dedup', 'tune threshold', 'calibrate memory'. Calibrates the dedup similarity threshold against real data — pulls sample pairs from lossless-claude workspace memory, evaluates for semantic duplication, computes F1 scores at multiple thresholds, and offers to update analyzer.dedup_threshold in ingest.yaml."
+description: "Use when running /xgh-calibrate or asking to tune the dedup threshold. Calibrates similarity threshold against real lossless-claude memory pairs, computes F1 scores at multiple thresholds, and offers to update analyzer.dedup_threshold in ingest.yaml."
 ---
 
 # xgh:calibrate — Dedup Threshold Calibration

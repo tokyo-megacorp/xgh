@@ -1,6 +1,6 @@
 ---
 name: xgh:test-builder
-description: "This skill should be used when the user runs /xgh-test-builder or asks to 'generate tests', 'build test suite', 'create test manifest', 'what should I test', 'test my app'. Generates and executes tailored test suites from architectural analysis — reads module boundaries, public surfaces, and integration points from memory to produce a structured manifest of test flows."
+description: "Use when running /xgh-test-builder or asking to generate tests or build a test suite. Generates tailored test suites from architectural analysis — module boundaries, public surfaces, and integration points — producing a structured manifest of test flows."
 ---
 
 # xgh:test-builder — Test Suite Generator

@@ -156,9 +156,53 @@ Follow `skills/_shared/references/dispatch-template.md` Step 4.
 
 ---
 
-## Step 5: Curate (if lossless-claude available)
+## Step 5: Curate (if memory backend available — see `_shared/references/memory-backend.md`)
 
 Follow `skills/_shared/references/dispatch-template.md` Step 5. Use `<CLI_LABEL>` = `Codex`, `<cli>` = `codex`.
+
+**Write observation to model profiles** (always, regardless of lossless-claude):
+
+After the dispatch completes, append one observation to `.xgh/model-profiles.yaml`. Create the file if it doesn't exist.
+
+```yaml
+# Append to .xgh/model-profiles.yaml
+- agent: codex
+  model: <the -m flag value, or "default" if none was passed>
+  effort: <the --effort value, or "default" if none was passed>
+  archetype: <set by router if dispatched via /xgh-dispatch, otherwise "unknown">
+  accepted: <true if worktree merged or user continued; false if re-dispatched or discarded>
+  ts: <ISO 8601 timestamp>
+```
+
+Write this observation using a python one-liner (stdlib only — no external dependencies):
+
+```bash
+python3 -c "
+import json, os, datetime
+path = '.xgh/model-profiles.yaml'
+os.makedirs(os.path.dirname(path), exist_ok=True)
+try:
+    data = json.load(open(path))
+except (FileNotFoundError, json.JSONDecodeError):
+    data = {'observations': []}
+data.setdefault('observations', [])
+data['observations'].append({
+    'agent': 'codex',
+    'model': '<MODEL>',
+    'effort': '<EFFORT>',
+    'archetype': '<ARCHETYPE>',
+    'accepted': True,  # or False based on outcome
+    'ts': datetime.datetime.now(datetime.timezone.utc).isoformat()
+})
+json.dump(data, open(path, 'w'), indent=2)
+"
+```
+
+Replace `<MODEL>`, `<EFFORT>`, `<ARCHETYPE>` with the actual values from the dispatch. Determine `accepted` from:
+- Worktree merged → `true`
+- User continued to next task → `true`
+- User re-dispatched same task → `false`
+- User discarded worktree → `false`
 
 ---
 
@@ -211,7 +255,7 @@ Only when the task is **inherently iterative** and Codex genuinely needs to carr
 | **Stale state** | Hours-old session describes a repo state that no longer exists. Codex acts on outdated context. |
 | **Opaque history** | Claude cannot see what Codex "remembers". Unexpected behavior is hard to diagnose. |
 
-**The rule:** if you can write a self-contained prompt Codex can execute from scratch, use stateless. Session mode is for the rare case where accumulated context is the feature, not a liability.
+**The rule:** if the prompt is self-contained enough for Codex to execute from scratch, use stateless. Session mode is for the rare case where accumulated context is the feature, not a liability.
 
 ## Prompt Crafting
 

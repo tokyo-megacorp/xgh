@@ -1,6 +1,6 @@
 ---
 name: xgh:knowledge-handoff
-description: "This skill should be used when the user runs /xgh-knowledge-handoff, merges a branch, or asks to 'create handoff', 'document this merge', 'leave context for the next dev'. Generates a structured handoff summary on branch merge so the next developer gets full context — patterns, gotchas, key files, warnings — without meetings."
+description: "Use when merging a branch or asking to document context for the next developer. Generates a structured handoff summary — patterns, gotchas, key files, and warnings — so the next developer gets full context without meetings."
 ---
 
 # xgh:knowledge-handoff — Knowledge Handoff
@@ -119,6 +119,35 @@ Identify which domain areas were touched by the merge. Use git diff to find:
 - Directories affected
 - Modules/domains impacted
 
+**Categorize files by type and risk:**
+
+| File pattern | Category | Risk level |
+|---|---|---|
+| `**/auth/**`, `**/security/**` | Security | High |
+| `**/api/**`, `**/routes/**` | API surface | High |
+| `**/migration/**`, `**/*.sql` | Data | High |
+| `**/config/**`, `*.yaml`, `*.json` | Config | Medium |
+| `src/**/*.ts`, `lib/**/*.py` | Core logic | Medium |
+| `**/*.test.*`, `**/*.spec.*` | Tests | Low |
+| `**/docs/**`, `*.md` | Docs | Low |
+
+**Assess impact breadth:**
+- 1-3 files changed: narrow, low coordination overhead
+- 4-10 files changed: moderate, check for cross-module coupling
+- 10+ files changed: broad refactor — explicitly call out in handoff summary
+
+**Identify coupling risks:**
+Run `git diff --name-only HEAD~1` and look for files in different modules that changed together — this often signals hidden coupling the next developer should know about.
+
+**Example output format:**
+```
+Affected: 7 files
+High risk: src/auth/token-refresh.ts (auth), migrations/004_add_session_index.sql (data)
+Medium risk: src/api/users.ts, config/rate-limits.yaml
+Low risk: tests/auth.test.ts, docs/auth.md
+Coupling signal: token-refresh.ts + rate-limits.yaml changed together — rate limit is tied to token lifetime
+```
+
 ### Step 3: Extract learnings from session
 
 ```
@@ -170,9 +199,9 @@ The retrieved handoff context is injected into the developer's session automatic
 
 | Tool | Usage |
 |---|---|
-| Extract 3-7 bullet summary → `lcm_store(text, ["workspace"])` | Extract session learnings for handoff summary generation. Do not pass raw conversation content to lcm_store. |
-| `lcm_store(text, ["workspace"])` | Store the compiled handoff summary to workspace |
-| `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })` | Query PR thread context; auto-query handoffs for next developer |
+| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, ["workspace"])` | Extract session learnings for handoff summary generation. Do not pass raw conversation content to lcm_store. |
+| [STORE] → call `lcm_store(text, ["workspace"])` | Store the compiled handoff summary to workspace |
+| [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })` | Query PR thread context; auto-query handoffs for next developer |
 
 ## Composability
 

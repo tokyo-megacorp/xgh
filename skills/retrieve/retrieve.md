@@ -3,23 +3,6 @@ name: xgh:retrieve
 description: "This skill should be used when the user runs /xgh-retrieve or when invoked by the CronCreate scheduler (every 5 minutes). Headless retrieval loop — scans configured Slack channels, follows links 1-hop to Jira/Confluence/GitHub/Figma, stashes raw content to ~/.xgh/inbox/, and detects urgency."
 ---
 
-## Architecture Note
-
-Retrieval operates in three lanes:
-
-1. **CLI/API providers (automated)** — `retrieve-all.sh` runs `mode: cli/api` provider `fetch.sh`
-   scripts via CronCreate. Pure bash, no Claude needed. 1 CronCreate turn.
-
-2. **MCP providers (automated)** — A lightweight CronCreate prompt calls MCP tools for
-   `mode: mcp` providers (OAuth-gated services). 2-3 CronCreate turns.
-
-3. **Interactive** — `/xgh-retrieve` invoked manually triggers the full Claude-powered skill
-   for one-off deep scans or when providers aren't configured yet.
-
-The automated paths (1 + 2) handle 95% of retrieval. The interactive path is a fallback
-providing richer analysis (urgency scoring, thread following, link enrichment).
-
-
 # xgh:retrieve — Retrieval Loop
 
 Invoked by CronCreate:
@@ -305,6 +288,25 @@ source ~/.xgh/lib/usage-tracker.sh
 xgh_usage_log "retriever" "$(actual turns used)" 0
 ```
 
+## Error Handling
+
+### Provider timeouts
+If a bash provider (`fetch.sh`) runs longer than 60s, kill it and mark as timed-out. Log: `WARN: provider <name> timed out after 60s — skipping`. Continue with remaining providers; do not abort the full retrieval cycle.
+
+### Rate limiting (HTTP 429)
+Back off 30s and retry once. If the second attempt also returns 429, skip the provider and log a warning. Do not retry more than once per retrieval cycle.
+
+### Malformed provider output
+`fetch.sh` must output valid YAML frontmatter. If output fails YAML parse: log `ERROR: provider <name> returned invalid YAML — skipping item`. Continue processing remaining items from other providers.
+
+### Partial failure
+If 1 of N providers fails, continue and log a summary at the end: `Retrieved: X items (Y providers failed: <names>)`. Partial success is still success — do not abort or roll back the run.
+
+### Cursor corruption
+If `CURSOR_FILE` contains non-timestamp content, reset it to epoch (`1970-01-01T00:00:00Z`) and log: `WARN: cursor corrupted for <provider> — resetting to epoch`. This causes a full backfill on next run, which is preferable to skipping items silently.
+
+---
+
 ## Output discipline
 
 This skill runs in the main session turn (triggered by CronCreate or manually). To preserve context:
@@ -327,3 +329,23 @@ If no active CronCreate jobs found, append:
 ⚠️ Running manually — scheduler is paused or not started.
    /xgh-schedule resume    (enable for this session and future sessions)
 ```
+
+---
+
+## Reference
+
+### Architecture Note
+
+Retrieval operates in three lanes:
+
+1. **CLI/API providers (automated)** — `retrieve-all.sh` runs `mode: cli/api` provider `fetch.sh`
+   scripts via CronCreate. Pure bash, no Claude needed. 1 CronCreate turn.
+
+2. **MCP providers (automated)** — A lightweight CronCreate prompt calls MCP tools for
+   `mode: mcp` providers (OAuth-gated services). 2-3 CronCreate turns.
+
+3. **Interactive** — `/xgh-retrieve` invoked manually triggers the full Claude-powered skill
+   for one-off deep scans or when providers aren't configured yet.
+
+The automated paths (1 + 2) handle 95% of retrieval. The interactive path is a fallback
+providing richer analysis (urgency scoring, thread following, link enrichment).

@@ -1,7 +1,7 @@
 {
   "name": "xgh",
   "description": "The developer's cockpit — memory, compression, context efficiency, and dev methodology",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "author": {
     "name": "Pedro Almeida",
     "email": "pedro.almeida@users.noreply.github.com"
@@ -9,5 +9,35 @@
   "homepage": "https://github.com/extreme-go-horse/xgh",
   "repository": "https://github.com/extreme-go-horse/xgh",
   "license": "MIT",
-  "keywords": ["memory", "context", "workflow", "cockpit", "devtools"]
+  "keywords": [
+    "memory",
+    "context",
+    "workflow",
+    "cockpit",
+    "devtools"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use.sh\""
+          }
+        ]
+      }
+    ]
+  }
 }

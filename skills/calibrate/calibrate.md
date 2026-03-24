@@ -1,6 +1,6 @@
 ---
 name: xgh:calibrate
-description: "This skill should be used when the user runs /xgh-calibrate or asks to 'calibrate dedup', 'tune threshold', 'calibrate memory'. Calibrates the dedup similarity threshold against real data — pulls sample pairs from lossless-claude workspace memory, evaluates for semantic duplication, computes F1 scores at multiple thresholds, and offers to update analyzer.dedup_threshold in ingest.yaml."
+description: "Use when running /xgh-calibrate or asking to tune the dedup threshold. Calibrates similarity threshold against real lossless-claude memory pairs, computes F1 scores at multiple thresholds, and offers to update analyzer.dedup_threshold in ingest.yaml."
 ---
 
 # xgh:calibrate — Dedup Threshold Calibration
@@ -9,7 +9,7 @@ Modes: interactive (default), headless (`--auto`), comparison (`--compare`).
 
 ## Interactive mode (default)
 
-1. **Sample pairs**: Use `lcm_search(query)` with diverse queries to gather N memories (configurable via `calibration.sample_size`, default 50). Form random pairs from the results.
+1. **Sample pairs**: Use [SEARCH] → call `lcm_search(query)` with diverse queries to gather N memories (configurable via `calibration.sample_size`, default 50). Form random pairs from the results.
 
 2. **For each pair**, show side by side:
    ```
@@ -65,3 +65,15 @@ Same as interactive, but use a Claude reasoning step to judge each pair ("Are th
 ## Comparison mode (--compare)
 
 Run headless calibration first, then run interactive on the same pairs. Show agreement rate between AI and human judgments at the end. This validates whether headless mode is reliable for future auto-runs.
+
+## Threshold Algorithm
+
+The dedup threshold is cosine similarity (0.0-1.0): pairs above threshold are considered duplicates. F1 score balances precision (avoid false duplicates) vs recall (catch true duplicates). Typical well-tuned threshold: 0.72-0.82 (project-dependent). Default (0.75) is a safe starting point; real data almost always improves it.
+
+## Error Handling
+
+Fewer than 10 sample pairs → print warning, abort calibration (not enough signal). F1 scores flat across all thresholds → already well-tuned, no change needed. Proposed threshold differs from current by >0.15 → confirm with user before writing to ingest.yaml. ingest.yaml unreadable → print path, suggest running /xgh-init to reinitialize.
+
+## Validation
+
+After updating analyzer.dedup_threshold in ingest.yaml, run /xgh-retrieve to fetch fresh items, then run /xgh-analyze and check the dedup report line: 'X duplicates suppressed'. If 0 duplicates suppressed on a project with history, threshold may be too low.

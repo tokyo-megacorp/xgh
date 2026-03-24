@@ -13,7 +13,6 @@ CLAUDE.md
 .mcp.json
 .xgh/local/
 .xgh/model-profiles.yaml
-.worktrees/
 .lossless-claude/
 .serena/
 CLAUDE.md
@@ -22,3 +21,10 @@ node-compile-cache/
 playwright-transform-cache-*/
 playwright_chromiumdev_profile-*/
 .claude/worktrees/
+.DS_Store
+**/.DS_Store
+.superpowers/
+.xgh/docs/research/
+.xgh/babysit-prs-state.json
+lcm-cli-*/
+.orphaned_at

@@ -38,7 +38,7 @@ Follow the shared detection protocol in `skills/_shared/references/mcp-auto-dete
 - No task manager MCP → Ask user to paste ticket details (title, description, acceptance criteria). Skip ticket updates.
 - No Slack MCP → Skip discussion search. Ask user about team decisions verbally.
 - No Figma MCP → Skip design extraction. Ask user to describe UI requirements or confirm no UI changes.
-- No lossless-claude MCP → Skip memory search. Rely on codebase scanning only. Save plan to docs/ only.
+- No memory backend → Skip memory search. Rely on codebase scanning only. Save plan to docs/ only.
 - No MCPs at all → Still works. User provides all context manually. Full Superpowers methodology applies.
 
 ---
@@ -147,22 +147,19 @@ If designs found, use `mcp__claude_ai_Figma__get_design_context` and `mcp__claud
 
 Consider delegating to `xgh:design` if the ticket is UI-heavy.
 
-### Step 2.3: xgh Memory (if lossless-claude MCP available)
+### Step 2.3: xgh Memory (if memory backend available — see `_shared/references/memory-backend.md`)
 
-Use `lcm_search(query)` to search for:
-- Related past work (e.g., "rate limiting", "middleware", "API")
-- Team conventions for the affected area
-- Architecture decisions that constrain the implementation
-- Past investigations or bugs in related code
-- Similar features implemented before
-
-Search queries:
+[SEARCH] related past work — call `lcm_search(query)` for each:
 - Ticket title and key terms
-- Affected module/component names
-- Technical domain (e.g., "rate limiting", "authentication", "caching")
+- Affected module/component names (e.g., "rate limiting", "middleware", "API")
+- Technical domain (e.g., "authentication", "caching")
 - File paths mentioned in ticket
 
-After implementing, extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store.
+Surfaces: related past work, team conventions, architecture decisions, similar features, past bugs.
+
+After implementing, extract key learnings as a concise summary (3–7 bullets):
+
+[STORE] learnings, tags: `["session"]` — call `lcm_store(summary, ["session"])`. Do not pass raw conversation content.
 
 ### Step 2.4: Codebase Analysis (always)
 
@@ -342,11 +339,13 @@ Wait for approval before proceeding to Phase 5.
 
 ---
 
-## Phase 5: Implementation Plan (Superpowers writing-plans)
+## Reference
+
+### Phase 5: Implementation Plan (Superpowers writing-plans)
 
 Generate a detailed, executable plan following Superpowers writing-plans methodology.
 
-### Plan Generation Rules
+#### Plan Generation Rules
 
 - Each task: 2-5 minutes with exact file paths
 - TDD: write a failing test BEFORE each implementation step
@@ -355,7 +354,7 @@ Generate a detailed, executable plan following Superpowers writing-plans methodo
 - Follow ALL team conventions from context tree
 - Reference specific line numbers where code integrates
 
-### Plan Template
+#### Plan Template
 
 ```markdown
 ## Implementation Plan: [Ticket ID] — [Title]
@@ -416,9 +415,9 @@ If task manager MCP is available, link plan to ticket via `mcp__claude_ai_Atlass
 
 ---
 
-## Phase 6: Execute + Report
+### Phase 6: Execute + Report
 
-### Step 6.1: Execute Plan (Subagent-Driven)
+#### Step 6.1: Execute Plan (Subagent-Driven)
 
 Execute using Superpowers subagent-driven-development:
 - Fresh subagent per task
@@ -427,12 +426,12 @@ Execute using Superpowers subagent-driven-development:
 - Two-stage review per task: correctness + convention compliance
 - Verification before marking complete
 
-### Step 6.2: Update Ticket (if Atlassian MCP available)
+#### Step 6.2: Update Ticket (if Atlassian MCP available)
 
 Use `mcp__claude_ai_Atlassian__transitionJiraIssue` to move ticket to "In Review" or appropriate status.
 Use `mcp__claude_ai_Atlassian__addCommentToJiraIssue` to post implementation summary.
 
-### Step 6.3: Post to Slack (if Slack MCP available)
+#### Step 6.3: Post to Slack (if Slack MCP available)
 
 If the ticket was discussed in Slack, use `mcp__claude_ai_Slack__slack_send_message` to post a summary:
 
@@ -452,9 +451,9 @@ Key decisions:
 Ready for review.
 ```
 
-### Step 6.4: Curate Learnings (if lossless-claude MCP available)
+#### Step 6.4: Curate Learnings (if memory backend available — see `_shared/references/memory-backend.md`)
 
-Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]. Store:
+Extract key learnings as a concise summary (3–7 bullets). [STORE] tags: `["session"]` — call `lcm_store(summary, ["session"])`. Do not pass raw conversation content. Store:
 - Implementation patterns used (middleware pattern, config pattern)
 - Decisions made and rationale (token-bucket vs sliding-window)
 - New conventions established (rate limit config format)
@@ -462,7 +461,7 @@ Extract key learnings as a concise summary (3-7 bullets), then call lcm_store wi
 
 Save to context tree: `.xgh/context-tree/api-design/rate-limiting.md` (or appropriate domain)
 
-### Step 6.5: Generate PR Context
+#### Step 6.5: Generate PR Context
 
 Generate a PR with full context for reviewers:
 - Link to ticket
@@ -473,7 +472,7 @@ Generate a PR with full context for reviewers:
 
 ---
 
-## Skill Composition
+### Skill Composition
 
 `xgh:implement` composes with other xgh skills:
 
@@ -485,7 +484,7 @@ Generate a PR with full context for reviewers:
 
 ---
 
-## Rationalization Table
+### Rationalization Table
 
 | Decision | Rationale |
 |----------|-----------|

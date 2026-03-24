@@ -1,6 +1,6 @@
 ---
 name: xgh:ask
-description: "This skill should be used when the user wants to query project memory, ask about architecture or decisions, or needs help routing a question to the right memory engine. Teaches tiered query routing — when to use lossless-claude semantic search vs context tree BM25 vs both — with query refinement patterns for maximum recall."
+description: "Use when querying project memory, asking about architecture or decisions, or routing a question to the right memory engine. Covers tiered query routing: lossless-claude semantic search vs context tree BM25 vs both."
 ---
 
 # xgh:ask
@@ -16,7 +16,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 **When:** Starting a new task, exploring a domain, or unsure what exists.
 
 **Strategy:**
-1. `lcm_search(query)` with a natural-language description of the task
+1. [SEARCH] → call `lcm_search(query)` with a natural-language description of the task
 2. Read context tree `_index.md` files for the relevant domain
 3. Merge results mentally — lossless-claude catches semantic matches, context tree catches keyword matches
 
@@ -29,12 +29,12 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 
 ### Tier 2: Specific Lookup (prefer context tree BM25)
 
-**When:** You know what you are looking for and need exact details.
+**When:** The specific detail to look up is known.
 
 **Strategy:**
 1. Check context tree `_manifest.json` for the specific domain/topic path
 2. Read the knowledge file directly
-3. Fall back to `lcm_search(query)` only if the context tree does not have it
+3. Fall back to [SEARCH] → call `lcm_search(query)` only if the context tree does not have it
 
 **Example queries:**
 - "JWT refresh token rotation interval"
@@ -48,7 +48,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 **When:** Making a decision and wanting to learn from past decisions.
 
 **Strategy:**
-1. `lcm_search(query, { layers: ["semantic"], tags: ["reasoning"] })` with the decision context
+1. [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["reasoning"] })` with the decision context
 2. `lcm_search` to retrieve patterns → Claude evaluates inline
 3. Check context tree for files with category: decision in the relevant domain
 
@@ -64,7 +64,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 **When:** Encountering an error or unexpected behavior.
 
 **Strategy:**
-1. `lcm_search(query)` with the error message or symptom description
+1. [SEARCH] → call `lcm_search(query)` with the error message or symptom description
 2. Search context tree for files with category: bug-fix
 3. If nothing found, broaden the search to the general area (e.g., "authentication errors" instead of "401 on /api/refresh")
 
@@ -145,9 +145,9 @@ score = (0.6 * bm25_score + 0.2 * importance + 0.2 * recency) * maturityBoost
 When to stop searching:
 
 Search is complete when ANY of these are true:
-1. You found a core/validated file that directly answers your question
-2. You ran 3+ different query formulations and found nothing (document this!)
-3. You found related knowledge that gives enough context to proceed
+1. A core/validated file was found that directly answers the question
+2. Three or more query formulations returned nothing (document this!)
+3. Related knowledge was found that gives enough context to proceed
 4. The context tree has no entries in the relevant domain (it is truly new territory)
 
-**Never skip the search.** Even "nothing found" is valuable information — it means you are about to create new team knowledge.
+**Never skip the search.** Even "nothing found" is valuable information — it means new team knowledge is about to be captured.

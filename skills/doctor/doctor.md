@@ -39,11 +39,13 @@ curl -sf --max-time 5 "${XGH_REMOTE_URL}/v1/models"
     Fix: ensure the server is running and port is accessible from this machine
   ```
 
-lossless-claude MCP availability: check if `mcp__lossless-claude__lcm_search` is present in the available tool list:
+Memory backend availability (see `_shared/references/memory-backend.md` for detection priority):
+
+For lossless-claude (current reference backend): check if `lcm_search` is present in the available tool list:
 - Tool absent → lossless-claude MCP not registered. Fix: add lossless-claude entry to `.claude/.mcp.json`
 - Tool present but call returns error → daemon not running. Fix: `lossless-claude daemon start`
 
-**Important:** lossless-claude MCP availability is determined by whether `mcp__lossless-claude__lcm_search` appears in the tool list, NOT by file presence on disk.
+**Important:** lossless-claude availability is determined by whether `lcm_search` appears in the tool list, NOT by file presence on disk.
 
 ## Check 3 — Pipeline freshness
 
@@ -55,9 +57,13 @@ Check `~/.xgh/logs/retriever.log` for last timestamp (last line matching ISO dat
 Check `~/.xgh/logs/analyzer.log` similarly:
 - < 45 min: ✓ | 45–90 min: ⚠ | > 90 min: ✗
 
-## Check 3b — Context Efficiency
+---
 
-### RTK — output compression
+## Reference
+
+### Check 3b — Context Efficiency
+
+#### RTK — output compression
 
 Run these checks via Bash:
 
@@ -116,7 +122,7 @@ Degraded states:
 - `rtk gain` returns no data → `✅ RTK active — no Bash calls compressed yet this session`
 
 
-## Check 4 — Scheduler
+### Check 4 — Scheduler
 
 Call CronList. Find jobs where prompt is `/xgh-retrieve` or `/xgh-analyze`.
 
@@ -133,14 +139,14 @@ Report each job found:
 
 **Fix (if jobs missing or paused):** Run `/xgh-schedule resume` to re-register jobs now.
 
-## Check 5 — Codebase index
+### Check 5 — Codebase index
 
 For each project with `github:` entries, check `index.last_full` against `index.schedule`:
 - Never indexed: ✗ (suggest `/xgh-index`)
 - Overdue per schedule: ⚠
 - Current: ✓
 
-## Check 6 — Providers
+### Check 6 — Providers
 
 List all directories in `~/.xgh/user_providers/`. For each:
 
@@ -174,14 +180,14 @@ Also check `~/.xgh/tokens.env`:
 - File exists → report which vars are set (without showing values)
 - File missing → `⚠ ~/.xgh/tokens.env not found — token-based providers will fail`
 
-### Project detection
+#### Project detection
 
 Run `bash ~/.xgh/scripts/detect-project.sh` and report:
 - If a project was detected: `✓ Project scope: <name> (+N dependencies)`
 - If no match: `ℹ No project detected — all-projects mode`
 - If script missing: `⚠ detect-project.sh not installed — run /xgh-init`
 
-## Check 7 — Trigger engine
+### Check 7 — Trigger engine
 
 Validate the trigger engine configuration and runtime state.
 
@@ -201,11 +207,32 @@ Validate the trigger engine configuration and runtime state.
    - Report triggers that fired in the last 24h
    - ⚠️ if any trigger has `fire_count > 10` with backoff — may be stuck in backoff loop
 
-4. **Hook registration** — check if PostToolUse hook is active:
-   - Run `claude config list` and check for post-tool-use hook
-   - ✅ PostToolUse hook registered (local command triggers will work)
+4. **Hook registration** — check if xgh hooks are active in settings.json:
+
+```python
+import json, os
+results = {}
+for f in [os.path.expanduser('~/.claude/settings.json'),
+          '.claude/settings.local.json']:
+    if not os.path.isfile(f): continue
+    d = json.load(open(f))
+    hooks = d.get('hooks', {})
+    for event, entries in hooks.items():
+        for entry in entries:
+            for h in entry.get('hooks', []):
+                cmd = h.get('command', '')
+                if 'xgh' in cmd and 'session-start' in cmd:
+                    results['SessionStart'] = True
+                if 'xgh' in cmd and 'post-tool-use' in cmd:
+                    results['PostToolUse'] = True
+print('xgh_session_start=' + str(results.get('SessionStart', False)).lower())
+print('xgh_post_tool_use=' + str(results.get('PostToolUse', False)).lower())
+```
+
+   - ✅ Both hooks registered — context injection and local triggers active
+   - ⚠️ SessionStart hook not found — context tree won't inject at session start.
    - ⚠️ PostToolUse hook not found — `source: local` triggers won't fire automatically.
-     Run `/xgh-setup` to configure.
+   - **Fix (either hook missing):** Reinstall the xgh plugin: `claude plugin install xgh@extreme-go-horse`
 
 5. **Example output:**
    ```
@@ -214,10 +241,11 @@ Validate the trigger engine configuration and runtime state.
    ✅ 4 triggers (3 enabled, 1 disabled)
    ⚠️ pr-stale-reminder: silenced until 2026-03-22T09:00:00Z
    ✅ Fired last 24h: p0-alert (2 times)
-   ⚠️ PostToolUse hook not registered — source:local triggers inactive
+   ✅ xgh SessionStart hook registered
+   ✅ xgh PostToolUse hook registered
    ```
 
-## Check 8 — Agent version parity
+### Check 8 — Agent version parity
 
 For each secondary agent in `config/agents.yaml` with a `tested_version` field (non-null):
 
@@ -244,7 +272,7 @@ Rules:
 
 **Fix for mismatch:** Re-test the affected skill (`/xgh-codex`, `/xgh-gemini`) and update `tested_version` in `config/agents.yaml` if behaviors are confirmed working.
 
-## Output format
+### Output format
 
 ```
 xgh Ingest Health Check

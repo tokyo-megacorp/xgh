@@ -1,6 +1,6 @@
 ---
 name: xgh:test-builder
-description: "This skill should be used when the user runs /xgh-test-builder or asks to 'generate tests', 'build test suite', 'create test manifest', 'what should I test', 'test my app'. Generates and executes tailored test suites from architectural analysis — reads module boundaries, public surfaces, and integration points from memory to produce a structured manifest of test flows."
+description: "Use when running /xgh-test-builder or asking to generate tests or build a test suite. Generates tailored test suites from architectural analysis — module boundaries, public surfaces, and integration points — producing a structured manifest of test flows."
 ---
 
 # xgh:test-builder — Test Suite Generator
@@ -30,9 +30,9 @@ Usage:
 
 ### Step 1 — Hard prerequisite: architecture freshness
 
-#### 1a — Search lossless-claude for architecture entries
+#### 1a — Search memory for architecture entries (see `_shared/references/memory-backend.md`)
 
-Call `mcp__lossless-claude__lcm_search` with query `xgh:architecture` and tag filter `["xgh:architecture", "<repo-name>"]`.
+[SEARCH] tags `["xgh:architecture", "<repo-name>"]` → call `lcm_search("xgh:architecture", { tags: ["xgh:architecture", "<repo-name>"] })`.
 
 - If no results returned → stop:
   > "No architecture analysis found for `<repo-name>`. Run `/xgh:architecture` first."
@@ -77,14 +77,14 @@ Parse the output as `<days>|<arch-mode>`:
 #### 1c — Check mode adequacy
 
 If `<arch-mode>` is `quick`:
-- Read public-surfaces artifact from lossless-claude (tags `["xgh:architecture", "public-surfaces", "<repo-name>"]`).
+- [SEARCH] public-surfaces artifact (tags `["xgh:architecture", "public-surfaces", "<repo-name>"]`) → call `lcm_search(...)`.
 - If multiple surface types detected (e.g. cli + api, or api + web) → recommend: "Consider running `/xgh:architecture full` for deeper analysis — critical-paths and test-landscape will improve test generation."
 
 ---
 
 ### Step 2 — Read architectural definitions
 
-Pull from lossless-claude memory using `mcp__lossless-claude__lcm_search`:
+[SEARCH] from memory backend → call `lcm_search`:
 
 | Artifact | Tags | Required |
 |----------|------|----------|
@@ -233,7 +233,9 @@ Report: "Manifest generation failed: <reason>. No partial manifest written."
 
 ---
 
-#### Executor Kinds Reference
+## Reference
+
+### Executor Kinds Reference
 
 | Executor | What it does | Prerequisites |
 |----------|-------------|---------------|
@@ -244,7 +246,7 @@ Report: "Manifest generation failed: <reason>. No partial manifest written."
 | library | Imports and calls exported functions | Native test runner |
 | custom | Runs user script, exit code 0 = pass | Script exists |
 
-#### Assertion Types Reference
+### Assertion Types Reference
 
 | Assertion | Applies to | Example |
 |-----------|-----------|---------|
@@ -260,7 +262,7 @@ Report: "Manifest generation failed: <reason>. No partial manifest written."
 
 ---
 
-### Step 6 — Optional native scaffold
+#### Step 6 — Optional native scaffold
 
 For known ecosystems, generate test files that implement the manifest flows. The manifest remains the source of truth — native files are a convenience layer.
 
@@ -277,7 +279,7 @@ If ecosystem is not recognized or scaffold generation is not feasible → skip s
 
 ---
 
-### Step 7 — Generate strategy.md
+#### Step 7 — Generate strategy.md
 
 Write `.xgh/test-builder/strategy.md` using the Write tool. This is a human-readable companion to the manifest documenting what is being tested and why.
 
@@ -312,7 +314,7 @@ For each flow in the manifest:
 
 ---
 
-### Init Completion
+#### Init Completion
 
 Print a summary:
 
@@ -329,16 +331,16 @@ Test suite manifest generated for <repo-name>
 
 ---
 
-## Phase 2: Run
+### Phase 2: Run
 
-### Argument Parsing
+#### Argument Parsing
 
 Read `$ARGUMENTS`:
 
 - No argument or just `run` → execute all flows from manifest
 - `run <flow-name>` → execute only that flow
 
-### Manifest Loading & Validation
+#### Manifest Loading & Validation
 
 Check if `.xgh/test-builder/manifest.yaml` exists:
 
@@ -420,7 +422,7 @@ print("OK")
 
 If validation fails → refuse to execute and list all errors.
 
-### Execute Flows
+#### Execute Flows
 
 For each flow (all flows or selected flow only):
 
@@ -490,7 +492,7 @@ Failures in cleanup do NOT affect overall flow result.
 
 Track per step: name, executor, result (pass/fail/skip), duration (ms), notes.
 
-### Output Format
+#### Output Format
 
 Generate a markdown summary table:
 
@@ -512,7 +514,7 @@ Generate a markdown summary table:
 - ❌ One or more steps failed (show first failure reason)
 - ⏭️ All steps skipped (executor unavailable)
 
-### Run Completion
+#### Run Completion
 
 Print summary:
 

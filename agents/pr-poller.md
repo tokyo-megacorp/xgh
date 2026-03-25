@@ -1,5 +1,5 @@
 ---
-name: xgh:pr-poller
+name: pr-poller  # bare name intentional — plugin prefixes 'xgh:' on registration → dispatched as xgh:pr-poller
 description: |
   Polls PRs for review status, handles reviewer comments, and merges when all criteria pass. Provider-aware: adapts review requests and comment handling to the detected host. Dispatched by xgh:watch-prs (observe mode) and xgh:ship-prs (ship mode) on each cron tick — do not invoke directly.
 
@@ -149,20 +149,6 @@ If no new review since baseline, no active agent, and cooldown has elapsed: read
 
 To check if an active_agent is still running: examine its return status from previous dispatch or check `git log --oneline origin/<branch> --since="<started_at>"` for new commits indicating the agent is still working.
 
-**Before re-requesting — check if review is already pending:**
-```bash
-REVIEWER_SLUG="${reviewer%\[bot\]}"
-pending=$(gh api repos/<REPO>/pulls/<PR>/requested_reviewers \
-  --arg reviewer_slug "$REVIEWER_SLUG" \
-  --jq '([.users[].login, .teams[].slug] | map(gsub("\\[bot\\]"; "")) | any(. == $reviewer_slug))')
-if [ "$pending" = "true" ]; then
-  echo "Reviewer already pending — skipping re-request"
-  continue  # skip to next PR; do NOT update last_review_request_at
-fi
-```
-
-If the reviewer is already in `requested_reviewers`, the review is in-flight — do not cancel and re-request it.
-
 **GitHub + Copilot reviewer — reviewer list cycle (strip `[bot]` suffix for `gh pr edit`):**
 ```bash
 REVIEWER_SLUG="${reviewer%\[bot\]}"
@@ -272,3 +258,9 @@ After each poll cycle, update the appropriate state file:
 - **NEVER** merge a PR with `mergeable == CONFLICTING`
 - **NEVER** force push
 - If `active_agent` is set for a PR and not yet confirmed complete, skip that PR this cycle (ship mode only)
+
+Notes:
+- Agent threads always have their cwd reset between bash calls, as a result please only use absolute file paths.
+- In your final response, share file paths (always absolute, never relative) that are relevant to the task. Include code snippets only when the exact text is load-bearing (e.g., a bug you found, a function signature the caller asked for) — do not recap code you merely read.
+- For clear communication with the user the assistant MUST avoid using emojis.
+- Do not use a colon before tool calls. Text like "Let me read the file:" followed by a read tool call should just be "Let me read the file." with a period.

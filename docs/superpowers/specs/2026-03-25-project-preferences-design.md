@@ -49,7 +49,7 @@ preferences:
 
 For any field: **CLI flag > `branches.<base_ref>.<field>` > `preferences.pr.<field>` > auto-detect probe**
 
-> **Note:** This cascade is specific to `preferences.pr` fields. Each preference domain defines its own priority order — `_shared/references/project-preferences.md` should include a per-domain cascade table. The `model-profiles.yaml` layer from the existing dispatch cascade is not applicable to PR workflow fields, and PR fields add the auto-detect probe layer that dispatch lacks.
+> **Note:** This cascade is specific to `preferences.pr` fields. Each preference domain defines its own priority order — `skills/_shared/references/project-preferences.md` should include a per-domain cascade table. The `model-profiles.yaml` layer from the existing dispatch cascade is not applicable to PR workflow fields, and PR fields add the auto-detect probe layer that dispatch lacks.
 
 ---
 
@@ -68,7 +68,7 @@ load_pr_pref() {
   # 1. CLI flag wins
   [[ -n "$cli_override" ]] && echo "$cli_override" && return
 
-  # 2. Branch-specific override (use bracket notation for branch names with slashes)
+  # 2. Branch-specific override (branch names with '/' are fine as plain string keys in YAML/Python)
   if [[ -n "$branch" ]]; then
     val=$(python3 -c "
 import yaml, sys
@@ -137,14 +137,14 @@ cache_pr_pref() {
   python3 -c "
 import yaml, sys
 field, value = sys.argv[1], sys.argv[2]
-with open('config/project.yaml') as f: d = yaml.safe_load(f)
+with open('config/project.yaml') as f: d = yaml.safe_load(f) or {}
 d.setdefault('preferences',{}).setdefault('pr',{})[field] = value
 with open('config/project.yaml','w') as f: yaml.dump(d, f, default_flow_style=False, sort_keys=False)
 " "$field" "$value" 2>/dev/null
 }
 ```
 
-**No new dependency.** Python 3 + PyYAML are already required by the project (BM25 search, `gen-agents-md.sh`).
+**Dependency expectations.** Python 3 is already required by the project (BM25 search, `gen-agents-md.sh`). PyYAML is a soft dependency: when installed, it enables automatic preference caching; when missing, preference caching MUST be skipped or fail fast with a clear "PyYAML is not installed; preference write disabled" message rather than silently writing empty defaults.
 
 **Comment preservation:** `yaml.dump()` does not preserve YAML comments. Since probe-and-cache fires at most once per field (never overwrites), comment loss is limited to the first auto-detection. The user sees the result in `git diff` before committing. Future improvement: switch to `ruamel.yaml` for round-trip comment preservation if this becomes a pain point.
 
@@ -196,10 +196,10 @@ When `preferences.pr` is empty or missing fields, the first skill invocation aut
 
 | File | Content |
 |------|---------|
-| `_shared/references/providers/github.md` | Copilot two-system distinction, Copilot never-approves behavior, reviewer list cycle, [bot] suffix rules, reviewer vs reviewer_comment_author mapping, review_on_push behavior, common errors |
-| `_shared/references/providers/gitlab.md` | MR reviewers, approval rules, merge request API patterns |
-| `_shared/references/providers/bitbucket.md` | PR reviewers, default reviewers, API patterns |
-| `_shared/references/providers/azure-devops.md` | Required reviewers, policies, API patterns |
+| `skills/_shared/references/providers/github.md` | Copilot two-system distinction, Copilot never-approves behavior, reviewer list cycle, [bot] suffix rules, reviewer vs reviewer_comment_author mapping, review_on_push behavior, common errors |
+| `skills/_shared/references/providers/gitlab.md` | MR reviewers, approval rules, merge request API patterns |
+| `skills/_shared/references/providers/bitbucket.md` | PR reviewers, default reviewers, API patterns |
+| `skills/_shared/references/providers/azure-devops.md` | Required reviewers, policies, API patterns |
 
 ### Deleted files
 
@@ -281,9 +281,9 @@ Project-scoped skill at `skills/validate-project-prefs/validate-project-prefs.md
 
 | Check | Pattern | Location |
 |-------|---------|----------|
-| Hardcoded reviewer logins | `copilot-pull-request-reviewer` outside `_shared/references/providers/` | Fail |
+| Hardcoded reviewer logins | `copilot-pull-request-reviewer` outside `skills/_shared/references/providers/` | Fail |
 | Hardcoded repo detection | `gh repo view --json nameWithOwner` outside `lib/config-reader.sh` | Fail |
-| Inline provider profiles | `reviewer_bot:` / `reviewer_comment_author:` blocks outside `_shared/references/providers/` and `project.yaml` | Fail |
+| Inline provider profiles | `reviewer_bot:` / `reviewer_comment_author:` blocks outside `skills/_shared/references/providers/` and `project.yaml` | Fail |
 | Missing project.yaml read | Skill mentions `--repo`, `--reviewer`, or `--merge-method` but doesn't reference `load_pr_pref` or `project.yaml` | Warn |
 
 ### Output

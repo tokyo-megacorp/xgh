@@ -71,6 +71,31 @@ preferences:
     effort: high                # low | medium | high
     phases: [design, per_task]  # when to pair: design phase, before each impl task, or both
 
+  vcs:
+    commit_format: "<type>: <description>"
+    branch_naming: "<type>/<description>"
+    pr_template: ""
+
+  scheduling:
+    retrieve_interval: "30m"
+    analyze_interval: "1h"
+    quiet_hours: ""
+
+  notifications:
+    delivery: "inline"
+    batching: false
+    suppress_below: ""
+
+  retrieval:
+    depth: "normal"
+    max_age: "7d"
+    context_tree_sync: true
+
+  testing:
+    timeout: "120"
+    required_suites: []
+    skip_rules: []
+
   superpowers:
     implementation_model: sonnet
     review_model: opus

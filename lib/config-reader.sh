@@ -3,6 +3,9 @@
 # Usage: source lib/config-reader.sh
 #        xgh_config_get "budget.daily_token_cap" [default_value]
 #        load_pr_pref "merge_method" "$CLI_OVERRIDE" "$BASE_BRANCH"
+#
+# Thin wrapper: delegates PR preferences to lib/preferences.sh when available,
+# falls back to inline implementation for standalone use.
 
 xgh_config_get() {
   local key="$1"
@@ -27,54 +30,74 @@ except Exception:
 PYEOF
 }
 
+# --- Preference read layer delegation ---
+# Source lib/preferences.sh if available; it provides load_pr_pref (and all
+# other domain loaders) via the new cascade resolver.
+_CONFIG_READER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "${_CONFIG_READER_DIR}/preferences.sh" ]]; then
+  # shellcheck source=lib/preferences.sh
+  source "${_CONFIG_READER_DIR}/preferences.sh"
+fi
+
 # --- Project-level PR preference helpers ---
 # Read order: CLI flag > branch override > project default > auto-detect probe
 # See spec: .xgh/specs/2026-03-25-project-preferences-design.md
 
-_project_yaml() {
-  echo "$(git rev-parse --show-toplevel 2>/dev/null || echo ".")/config/project.yaml"
-}
+# If preferences.sh provided load_pr_pref (check via _pref_resolve which is
+# internal to preferences.sh), skip the inline fallback implementation.
+if ! declare -F _pref_resolve >/dev/null 2>&1; then
+  # --- Inline fallback (used when lib/preferences.sh is not available) ---
 
-load_pr_pref() {
-  local field="$1" cli_override="${2:-}" branch="${3:-}"
+  _project_yaml() {
+    echo "$(git rev-parse --show-toplevel 2>/dev/null || echo ".")/config/project.yaml"
+  }
 
-  # 1. CLI flag wins
-  [[ -n "$cli_override" ]] && echo "$cli_override" && return
+  load_pr_pref() {
+    local field="$1" cli_override="${2:-}" branch="${3:-}"
 
-  local proj_yaml
-  proj_yaml=$(_project_yaml)
-  [ -f "$proj_yaml" ] || { probe_pr_field "$field"; return; }
-  if ! python3 -c "import yaml" 2>/dev/null; then probe_pr_field "$field"; return; fi
+    # 1. CLI flag wins
+    [[ -n "$cli_override" ]] && echo "$cli_override" && return
 
-  # 2. Branch-specific override
-  if [[ -n "$branch" ]]; then
-    local val
-    val=$(python3 -c "
+    local proj_yaml
+    proj_yaml=$(_project_yaml)
+    [ -f "$proj_yaml" ] || { probe_pr_field "$field"; return; }
+    if ! python3 -c "import yaml" 2>/dev/null; then probe_pr_field "$field"; return; fi
+
+    # 2. Branch-specific override
+    if [[ -n "$branch" ]]; then
+      local val
+      val=$(python3 -c "
 import yaml, sys
 field, branch = sys.argv[1], sys.argv[2]
 with open(sys.argv[3]) as f: d = yaml.safe_load(f) or {}
 v = (d.get('preferences',{}).get('pr',{}).get('branches',{}).get(branch,{}).get(field))
 if v is not None: print(str(v).lower() if isinstance(v, bool) else v)
 " "$field" "$branch" "$proj_yaml" 2>/dev/null)
-    [[ -n "$val" ]] && echo "$val" && return
-  fi
+      [[ -n "$val" ]] && echo "$val" && return
+    fi
 
-  # 3. Project default
-  local val
-  val=$(python3 -c "
+    # 3. Project default
+    local val
+    val=$(python3 -c "
 import yaml, sys
 field = sys.argv[1]
 with open(sys.argv[2]) as f: d = yaml.safe_load(f) or {}
 v = (d.get('preferences',{}).get('pr',{}).get(field))
 if v is not None: print(str(v).lower() if isinstance(v, bool) else v)
 " "$field" "$proj_yaml" 2>/dev/null)
-  [[ -n "$val" ]] && echo "$val" && return
+    [[ -n "$val" ]] && echo "$val" && return
 
-  # 4. Probe, cache, return
-  val=$(probe_pr_field "$field")
-  [[ -n "$val" ]] && cache_pr_pref "$field" "$val"
-  echo "$val"
-}
+    # 4. Probe, cache, return
+    val=$(probe_pr_field "$field")
+    [[ -n "$val" ]] && cache_pr_pref "$field" "$val"
+    echo "$val"
+  }
+fi
+
+# --- Deprecated: probe_pr_field / cache_pr_pref ---
+# Kept for backwards compatibility. New code should use lib/preferences.sh
+# domain loaders directly. These functions are still used by some callers
+# and by the fallback load_pr_pref above.
 
 probe_pr_field() {
   # Dependency chain: provider → repo → reviewer → reviewer_comment_author
@@ -133,10 +156,12 @@ except: print('false')
   esac
 }
 
+# DEPRECATED: cache_pr_pref — writes to project.yaml. New code should use
+# /xgh-save-preferences instead. Retained for backwards compatibility.
 cache_pr_pref() {
   local field="$1" value="$2"
   local proj_yaml
-  proj_yaml=$(_project_yaml)
+  proj_yaml=$(_project_yaml 2>/dev/null || _pref_project_yaml 2>/dev/null || echo "config/project.yaml")
   [ -f "$proj_yaml" ] || return
   python3 -c "import yaml" 2>/dev/null || { echo "PyYAML not installed; preference write disabled" >&2; return; }
   python3 -c "

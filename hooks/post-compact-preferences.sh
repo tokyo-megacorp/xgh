@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
-# hooks/session-start-preferences.sh — SessionStart preference injection
-# Builds a compact preference index from config/project.yaml
-# and injects it as additionalContext at session start.
+# hooks/post-compact-preferences.sh — PostCompact preference re-injection
+# Re-reads project.yaml and re-resolves preferences for the current branch.
+# The user may have switched branches mid-session, so we don't cache.
 #
-# Coexistence contract: LAST in the SessionStart hook array.
+# PostCompact stdin: {"session_id": "...", "manual_or_auto": "...", "compaction_summary": "..."}
+# We discard it — we only care about rebuilding the preference index.
+#
+# Coexistence contract: LAST in the PostCompact hook array.
 # Output: JSON with `additionalContext` key containing the preference index.
 set -euo pipefail
+
+# Consume stdin (PostCompact sends JSON on stdin, we discard it)
+cat >/dev/null 2>&1 || true
 
 # Locate project root (walk up from cwd)
 _find_project_root() {
@@ -30,7 +36,6 @@ fi
 PROJ_YAML="${PROJECT_ROOT}/config/project.yaml"
 
 # --- Validate YAML before loading ---
-# Check for malformed YAML and warn (preserves original Epic 0.1 behavior)
 # Returns 0=valid, 1=syntax error, 2=no validator available
 _yaml_is_valid() {
   local yaml_file="$1"
@@ -52,7 +57,7 @@ except:
 _yaml_is_valid "$PROJ_YAML"
 yaml_status=$?
 if [[ $yaml_status -eq 1 ]]; then
-  warning="[xgh] WARNING: config/project.yaml has syntax errors — preferences disabled this session. Run 'yq . config/project.yaml' to diagnose."
+  warning="[xgh] WARNING: config/project.yaml has syntax errors — preferences disabled after compaction. Run 'yq . config/project.yaml' to diagnose."
   python3 -c "import json,sys; print(json.dumps({'additionalContext': sys.argv[1]}))" "$warning"
   exit 0
 fi

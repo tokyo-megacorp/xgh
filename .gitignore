@@ -30,3 +30,6 @@ playwright_chromiumdev_profile-*/
 .DS_Store
 **/.DS_Store
 .orphaned_at
+
+# Preference staging area (session-scoped, never committed)
+.xgh/pending-preferences-*.yaml

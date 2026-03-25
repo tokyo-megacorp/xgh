@@ -73,7 +73,11 @@ _build_pref_index() {
 
   # Count pending preferences
   local pending_count
-  pending_count=$(find "$project_root/.xgh" -maxdepth 1 -name "pending-preferences-*.yaml" 2>/dev/null | wc -l | tr -d ' ')
+  if [[ -d "$project_root/.xgh" ]]; then
+    pending_count=$(find "$project_root/.xgh" -maxdepth 1 -name "pending-preferences-*.yaml" 2>/dev/null | wc -l | tr -d ' ')
+  else
+    pending_count=0
+  fi
 
   # Assemble output
   local header

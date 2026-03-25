@@ -56,7 +56,11 @@ fi
 
 # --- Build preference index via shared helper ---
 # shellcheck source=_pref-index-builder.sh
-source "${PROJECT_ROOT}/hooks/_pref-index-builder.sh"
+BUILDER="${PROJECT_ROOT}/hooks/_pref-index-builder.sh"
+if [[ ! -f "$BUILDER" ]]; then
+  exit 0
+fi
+source "$BUILDER"
 
 if _build_pref_index "$PROJECT_ROOT"; then
   python3 -c "import json,sys; print(json.dumps({'additionalContext': sys.argv[1]}))" "$PREF_INDEX_CONTEXT"

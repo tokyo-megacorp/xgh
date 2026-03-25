@@ -3,7 +3,7 @@
 Skills can read `config/project.yaml` at dispatch time to pick up project-level defaults
 without relying on AGENTS.md.
 
-## Reading preferences (Python, stdlib only)
+## Reading preferences (Python + PyYAML)
 
 ```python
 import yaml, os
@@ -67,30 +67,29 @@ VALUE=$(load_<domain>_pref <field> [cli_override] [branch])
 - `phases`: list of phases where pairing applies (`design` | `per_task` | both)
 
 **`vcs`** — VCS workflow defaults (branch-aware)
-- `default_branch`: target branch for PRs when not detected automatically
-- `merge_method`: default merge strategy (`squash` | `merge` | `rebase`)
-- `protected_branches`: list of branches that require PR flow
+- `commit_format`: conventional commit pattern or style hint (e.g. `<type>: <description>`)
+- `branch_naming`: branch naming convention (e.g. `<type>/<description>`)
+- `pr_template`: path to PR description template (e.g. `.github/pull_request_template.md`)
 
 **`testing`** — test runner defaults (branch-aware)
-- `runner`: test command or tool identifier
-- `coverage_threshold`: minimum coverage percentage (integer)
-- `auto_run`: whether to run tests automatically on commit/push
+- `timeout`: maximum time allowed for test runs in seconds (e.g. `120`)
+- `required_suites`: list of test suites that must be executed (e.g. `[unit, integration]`)
+- `skip_rules`: patterns or identifiers for tests/suites to skip
 
 **`scheduling`** — task scheduling preferences
-- `timezone`: IANA timezone string (e.g. `America/Sao_Paulo`)
-- `working_hours`: time window for scheduled tasks (e.g. `09:00-18:00`)
-- `defer_non_urgent`: defer non-urgent tasks outside working hours (`true` | `false`)
+- `retrieve_interval`: how often to retrieve context (e.g. `30m`, `1h`)
+- `analyze_interval`: how often to analyze inbox (e.g. `1h`)
+- `quiet_hours`: time window when tasks should not run (e.g. `22:00-08:00`)
 
 **`notifications`** — notification routing
-- `channel`: notification destination (`telegram` | `slack` | `none`)
-- `on_failure`: notify on failure (`true` | `false`)
-- `on_success`: notify on success (`true` | `false`)
-- `mention`: handle/identifier to mention in notifications
+- `delivery`: notification delivery channel (`inline` | `telegram` | `slack`)
+- `batching`: whether to batch notifications (`true` | `false`)
+- `suppress_below`: minimum severity level to send (e.g. `info` | `warn` | `error`)
 
 **`retrieval`** — context retrieval defaults
-- `backend`: retrieval backend (`context-mode` | `local` | `remote`)
-- `max_results`: maximum number of results to return (integer)
-- `min_score`: minimum relevance score threshold (float 0–1)
+- `depth`: how deep to retrieve context (`shallow` | `normal` | `deep`)
+- `max_age`: maximum age for retrieved entries (e.g. `7d`, `24h`)
+- `context_tree_sync`: keep local context tree in sync (`true` | `false`)
 
 **`pr`** — PR creation, review, and merge (`/xgh-ship-prs`, `/xgh-watch-prs`, `/xgh-review-pr`)
 - `provider`: VCS provider (`github`)
@@ -106,9 +105,9 @@ VALUE=$(load_<domain>_pref <field> [cli_override] [branch])
 
 Each preference domain defines its own priority order.
 
-**Default (CLI > default):** User override at call time → **project preferences** → built-in defaults
+**Default (CLI > default):** User override at call time → **project preferences** → empty (caller provides fallback)
 
-**Branch-aware (CLI > branch > default):** User override at call time → `branches.<ref>.<field>` override → **project preferences** → built-in defaults
+**Branch-aware (CLI > branch > default):** User override at call time → `branches.<ref>.<field>` override → **project preferences** → empty (caller provides fallback)
 
 **PR domain (CLI > branch > default > probe):** CLI flag → `branches.<base_ref>.<field>` → `preferences.pr.<field>` → auto-detect probe (provider only)
 

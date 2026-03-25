@@ -62,15 +62,20 @@ if [[ "$pre_count" -gt 0 ]]; then
     | .key
   ' "$SETTINGS" | head -1)
 
-  first_bash_cmd_at_index=$(jq -r \
-    --argjson idx "$first_bash_index" \
-    '.hooks.PreToolUse[$idx].hooks[0].command // ""' \
-    "$SETTINGS")
+  if [[ -z "$first_bash_index" ]]; then
+    echo "FAIL: PreToolUse has entries but none with a Bash matcher"
+    FAIL=$((FAIL + 1))
+  else
+    first_bash_cmd_at_index=$(jq -r \
+      --argjson idx "$first_bash_index" \
+      '.hooks.PreToolUse[$idx].hooks[0].command // ""' \
+      "$SETTINGS")
 
-  assert_contains_str \
-    "PreToolUse: Bash-matcher hook at index $first_bash_index is pre-tool-use-preferences (ordering)" \
-    "$first_bash_cmd_at_index" \
-    "pre-tool-use-preferences"
+    assert_contains_str \
+      "PreToolUse: Bash-matcher hook at index $first_bash_index is pre-tool-use-preferences (ordering)" \
+      "$first_bash_cmd_at_index" \
+      "pre-tool-use-preferences"
+  fi
 else
   echo "NOTE: No PreToolUse hooks registered — skipping PreToolUse ordering check"
 fi

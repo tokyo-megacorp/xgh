@@ -62,7 +62,9 @@ For each PR, fetch the following in read-only fashion:
 - **Review state:** `gh api repos/<REPO>/pulls/<PR>/reviews` — filter by `<reviewer>`, take the last entry's `state` (or `reviewDecision` from the PR json as a fallback)
 - **Inline comment count:** `gh api repos/<REPO>/pulls/<PR>/comments` — filter by `<reviewer_comment_author>`
 
-Compute `merge_ready` as: `mergeable == "MERGEABLE"` AND all `statusCheckRollup` conclusions are `SUCCESS` or `SKIPPED` AND (`reviewDecision == "APPROVED"` OR at least one review from `<reviewer>` with `state == "APPROVED"`).
+Compute `merge_ready` as: `mergeable == "MERGEABLE"` AND all `statusCheckRollup` conclusions are `SUCCESS` or `SKIPPED` AND no review with `state == "CHANGES_REQUESTED"` AND all inline comments from `<reviewer_comment_author>` have been replied to (every comment must be addressed — either accepted with a fix commit or rejected with a reply explaining reasoning; unaddressed comments block merge).
+
+> **Copilot never approves.** Do NOT wait for `reviewDecision == "APPROVED"` or `state == "APPROVED"` from Copilot. It always posts at least one comment. Merge-ready means: all comments addressed + no `CHANGES_REQUESTED`.
 
 Then run step 3 (check for new review comments) — compare against `last_seen_comment_count` and `last_seen_review_at` from `.xgh/watch-prs-state.json` — to populate `comment_count` and `changes`.
 
@@ -116,8 +118,9 @@ If `prs["<PR>"].held == true`: skip all active steps for that PR and reflect the
 1. `mergeable == "MERGEABLE"` — if CONFLICTING: dispatch conflict-resolution agent, skip merge
 2. All `statusCheckRollup` entries: `conclusion SUCCESS` or `SKIPPED` — if any FAILURE/CANCELLED: report, wait
 3. No review with `state == "CHANGES_REQUESTED"` from any author
-4. At least one review from `<reviewer>` with `state == "APPROVED"`
-5. If `require_resolved_threads == true`: fetch unresolved thread count (GitHub GraphQL); must be 0
+4. At least one review from `<reviewer>` exists (Copilot never approves — do NOT require `state == "APPROVED"`)
+5. All inline comments from `<reviewer_comment_author>` have been replied to — no unaddressed comments (each must be accepted with fix + commit URL, or rejected with reasoning)
+6. If `require_resolved_threads == true`: fetch unresolved thread count (GitHub GraphQL); must be 0
 
 If ALL criteria met:
 ```bash

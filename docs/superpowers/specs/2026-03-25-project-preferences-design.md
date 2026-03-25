@@ -73,9 +73,9 @@ load_pr_pref() {
     val=$(python3 -c "
 import yaml, sys
 field, branch = sys.argv[1], sys.argv[2]
-with open('config/project.yaml') as f: d = yaml.safe_load(f)
+with open('config/project.yaml') as f: d = yaml.safe_load(f) or {}
 v = (d.get('preferences',{}).get('pr',{}).get('branches',{}).get(branch,{}).get(field))
-if v is not None: print(v)
+if v is not None: print(str(v).lower() if isinstance(v, bool) else v)
 " "$field" "$branch" 2>/dev/null)
     [[ -n "$val" ]] && echo "$val" && return
   fi
@@ -84,9 +84,9 @@ if v is not None: print(v)
   val=$(python3 -c "
 import yaml, sys
 field = sys.argv[1]
-with open('config/project.yaml') as f: d = yaml.safe_load(f)
+with open('config/project.yaml') as f: d = yaml.safe_load(f) or {}
 v = (d.get('preferences',{}).get('pr',{}).get(field))
-if v is not None: print(v)
+if v is not None: print(str(v).lower() if isinstance(v, bool) else v)
 " "$field" 2>/dev/null)
   [[ -n "$val" ]] && echo "$val" && return
 
@@ -120,7 +120,7 @@ probe_pr_field() {
       repo=$(load_pr_pref repo "" "")
       case "$provider" in
         github)
-          enabled=$(gh api "repos/$repo/copilot/policies" 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('copilot_code_review',{}).get('enabled','false'))" 2>/dev/null)
+          enabled=$(gh api "repos/$repo/copilot/policies" 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('code_review_enabled', d.get('copilot_code_review',{}).get('enabled','false')))" 2>/dev/null)
           [[ "$enabled" == "true" ]] && echo "copilot-pull-request-reviewer[bot]" ;;
       esac ;;
     reviewer_comment_author)
@@ -146,7 +146,7 @@ with open('config/project.yaml','w') as f: yaml.dump(d, f, default_flow_style=Fa
 
 **Dependency expectations.** Python 3 is already required by the project (BM25 search, `gen-agents-md.sh`). PyYAML is a soft dependency: when installed, it enables automatic preference caching; when missing, preference caching MUST be skipped or fail fast with a clear "PyYAML is not installed; preference write disabled" message rather than silently writing empty defaults.
 
-**Comment preservation:** `yaml.dump()` does not preserve YAML comments. Since probe-and-cache fires at most once per field (never overwrites), comment loss is limited to the first auto-detection. The user sees the result in `git diff` before committing. Future improvement: switch to `ruamel.yaml` for round-trip comment preservation if this becomes a pain point.
+**Comment preservation:** `yaml.dump()` rewrites the entire file and strips all YAML comments — not just comments near the new `pr:` block. Since probe-and-cache fires at most once per field (never overwrites), this rewrite happens only on first auto-detection. The user sees the full diff in `git status` before committing and can restore comments. Future improvement: switch to `ruamel.yaml` for round-trip comment preservation, or use targeted append instead of full rewrite.
 
 **Relative paths:** All Python helpers use `config/project.yaml` relative to CWD. Skills must ensure CWD is the repo root (standard for Claude Code skill execution). Implementation should resolve via `$(git rev-parse --show-toplevel)/config/project.yaml` for robustness.
 
@@ -174,7 +174,7 @@ When `preferences.pr` is empty or missing fields, the first skill invocation aut
 |-------|-------------|
 | `provider` | `git remote get-url origin` → detect github.com / gitlab.com / bitbucket.org / dev.azure.com |
 | `repo` | GitHub: `gh repo view --json nameWithOwner`; GitLab: `glab project view`; Bitbucket/Azure DevOps: warn and require manual config |
-| `reviewer` | GitHub: `gh api repos/$REPO/copilot/policies` → if enabled, set copilot bot; GitLab: check project approval rules; Others: warn and leave empty |
+| `reviewer` | GitHub: `gh api repos/$REPO/copilot/policies` → if enabled, set copilot bot; GitLab/Bitbucket/Azure DevOps: not auto-detected, warn and leave empty for manual config |
 | `merge_method` | Not probed — preference-only (skill defaults to squash if unset) |
 | `review_on_push` | Not probed — preference-only |
 | `auto_merge` | Not probed — preference-only |
@@ -219,11 +219,15 @@ When `preferences.pr` is empty or missing fields, the first skill invocation aut
 
 ### GitHub Copilot review behavior (must be in `providers/github.md`)
 
-**Copilot's code review bot (`copilot-pull-request-reviewer[bot]`) never submits an `APPROVED` review.** It either leaves inline fix requests (review state: `COMMENTED` or `CHANGES_REQUESTED`) or submits a comment-only review with no fixes. There is no approval signal.
+**Copilot's code review bot (`copilot-pull-request-reviewer[bot]`) never submits an `APPROVED` review.** It always posts at least one comment. It either leaves inline fix requests (review state: `COMMENTED` or `CHANGES_REQUESTED`) or submits a comment-only review with observations. There is no approval signal — at best, it simply has no change requests.
 
-This means merge criteria cannot wait for `reviewDecision == "APPROVED"` from Copilot. Instead, skills must treat Copilot review as "passed" when:
+**Every Copilot comment must be addressed before merge.** For each comment:
+- **Accept:** Apply the fix, push, and reply with the commit URL (e.g., "Fixed in `<commit_url>`")
+- **Reject:** Reply explaining why it won't be addressed (e.g., "Not addressing: pre-existing pattern, out of scope for this PR")
+
+A PR is merge-ready when:
 1. A review exists from the Copilot bot, AND
-2. All inline comments have been addressed (resolved or fixed), AND
+2. Every inline comment has a reply (accept or reject — no unaddressed comments), AND
 3. No `CHANGES_REQUESTED` review state is pending
 
 **Two distinct Copilot systems — never confuse them:**

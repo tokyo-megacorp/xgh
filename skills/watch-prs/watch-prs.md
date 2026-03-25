@@ -26,47 +26,18 @@ Passively watch a batch of PRs and surface changes between polls: new comments, 
 
 ## Step 0 — Bootstrap
 
-### Step 0a — Detect repo
+### Step 0a — Load preferences from project.yaml
 
-If `--repo` is provided, use it. Otherwise auto-detect:
+Source `lib/config-reader.sh` for `load_pr_pref`. See `skills/_shared/references/project-preferences.md` for the full cascade.
+
 ```bash
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
+REPO=$(load_pr_pref repo "$CLI_REPO" "")
+PROVIDER=$(load_pr_pref provider "" "")
+REVIEWER=$(load_pr_pref reviewer "$CLI_REVIEWER" "")
+REVIEWER_COMMENT_AUTHOR=$(load_pr_pref reviewer_comment_author "" "")
 ```
 
-If auto-detect fails: `❌ Could not determine repo. Use --repo owner/repo`
-
-### Step 0b — Detect provider
-
-Parse the origin remote URL:
-```bash
-ORIGIN=$(git remote get-url origin 2>/dev/null)
-```
-
-| Pattern in URL | Provider |
-|----------------|----------|
-| `github.com` | `github` |
-| `gitlab.com` or `gitlab.` | `gitlab` |
-| `bitbucket.org` | `bitbucket` |
-| `dev.azure.com` or `visualstudio.com` | `azure-devops` |
-| anything else | `generic` |
-
-### Step 0c — Load provider profile and probe reviewer
-
-See **Provider Profiles** section for embedded profiles.
-
-**GitHub:** Probe Copilot availability:
-```bash
-COPILOT_CODE_REVIEW_ENABLED="$(
-  gh api "repos/$REPO/copilot/policies" 2>/dev/null \
-    | jq -r '.code_review_enabled // false' \
-    || echo false
-)"
-```
-- If enabled and `--reviewer` not set: default `reviewer` to `copilot-pull-request-reviewer[bot]` for tracking review state, and derive `reviewer_comment_author=Copilot` only when filtering inline review comments.
-- If disabled or endpoint 404s: print `⚠️ Copilot code review is not enabled for $REPO. Pass --reviewer <login> to specify one.`
-
-**Other providers:** If `--reviewer` not set and profile has no `reviewer_bot`:
-`⚠️ No AI reviewer configured for $PROVIDER. Pass --reviewer <login> or review changes will not be tracked.`
+See `@references/providers/github.md` for provider-specific quirks.
 
 ---
 
@@ -240,61 +211,7 @@ If no state file: `ℹ️ No active watch-prs session.`
 
 ## Provider Profiles
 
-Embedded profiles — the skill references these directly, no external lookup needed.
-
-### GitHub
-
-```yaml
-provider: github
-reviewer_bot: copilot-pull-request-reviewer[bot]
-reviewer_comment_author: Copilot
-threads_api: graphql
-```
-
-#### GitHub: Two Copilot Systems — Critical Distinction
-
-| System | Trigger | Effect |
-|--------|---------|--------|
-| **Code Review** | Add `copilot-pull-request-reviewer[bot]` to reviewer list | Leaves inline review comments |
-| **SWE Delegation Agent** | `@copilot <anything>` in a comment — including `@copilot review` | Opens a **NEW PR** with code changes |
-
-**NEVER use `@copilot` in comments.** This is a read-only observer — it should never comment on PRs.
-
-### GitLab
-
-```yaml
-provider: gitlab
-reviewer_bot: null
-reviewer_comment_author: null
-threads_api: rest
-```
-
-### Bitbucket
-
-```yaml
-provider: bitbucket
-reviewer_bot: null
-reviewer_comment_author: null
-threads_api: none
-```
-
-### Azure DevOps
-
-```yaml
-provider: azure-devops
-reviewer_bot: null
-reviewer_comment_author: null
-threads_api: rest
-```
-
-### Generic
-
-```yaml
-provider: generic
-reviewer_bot: null
-reviewer_comment_author: null
-threads_api: none
-```
+See `@references/providers/github.md` for provider-specific quirks.
 
 ---
 

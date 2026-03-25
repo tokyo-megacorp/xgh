@@ -24,10 +24,10 @@ Actively drive a batch of PRs through review cycles until all are merged. **GitH
 /xgh-ship-prs log [<PR>]
 ```
 
-**Defaults:**
+**Defaults** (read from `config/project.yaml` → `preferences.pr`, overridden by CLI flags):
 - `--interval 3m`
 - `--merge-method merge`
-- `--reviewer` — auto-detected from provider profile (e.g., `copilot-pull-request-reviewer[bot]` on GitHub)
+- `--reviewer` — loaded from project.yaml or auto-detected from provider profile
 - `--accept-suggestion-commits` — off (opt-in to auto-accept inline suggestion commits)
 - `--require-resolved-threads` — off (unresolved threads don't block merge by default)
 - `--max-fix-cycles 3`
@@ -36,47 +36,18 @@ Actively drive a batch of PRs through review cycles until all are merged. **GitH
 
 ## Step 0 — Bootstrap
 
-### Step 0a — Detect repo
+### Step 0a — Load preferences from project.yaml
 
-If `--repo` is provided, use it. Otherwise auto-detect:
+Source `lib/config-reader.sh` for `load_pr_pref`. See `skills/_shared/references/project-preferences.md` for the full cascade.
+
 ```bash
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
+REPO=$(load_pr_pref repo "$CLI_REPO" "")
+PROVIDER=$(load_pr_pref provider "" "")
+REVIEWER=$(load_pr_pref reviewer "$CLI_REVIEWER" "")
+REVIEWER_COMMENT_AUTHOR=$(load_pr_pref reviewer_comment_author "" "")
+MERGE_METHOD=$(load_pr_pref merge_method "$CLI_MERGE_METHOD" "$BASE_BRANCH")
+MERGE_METHOD="${MERGE_METHOD:-squash}"  # fallback — merge_method is not probed
 ```
-
-If auto-detect fails: `❌ Could not determine repo. Use --repo owner/repo`
-
-### Step 0b — Detect provider
-
-Parse the origin remote URL:
-```bash
-ORIGIN=$(git remote get-url origin 2>/dev/null)
-```
-
-| Pattern in URL | Provider |
-|----------------|----------|
-| `github.com` | `github` |
-| `gitlab.com` or `gitlab.` | `gitlab` |
-| `bitbucket.org` | `bitbucket` |
-| `dev.azure.com` or `visualstudio.com` | `azure-devops` |
-| anything else | `generic` |
-
-### Step 0c — Load provider profile and probe reviewer
-
-See **Provider Profiles** section for embedded profiles.
-
-**GitHub:** Probe Copilot availability:
-```bash
-COPILOT_CODE_REVIEW_ENABLED="$(
-  gh api "repos/$REPO/copilot/policies" 2>/dev/null \
-    | jq -r '.code_review_enabled // false' \
-    || echo false
-)"
-```
-- If enabled and `--reviewer` not set: default reviewer = `copilot-pull-request-reviewer[bot]`
-- If disabled or endpoint 404s: print `⚠️ Copilot code review is not enabled for $REPO. Reviews need manual assignment. Pass --reviewer <login> to specify one.`
-
-**Other providers:** If `--reviewer` not set and profile has no `reviewer_bot`:
-`⚠️ No AI reviewer configured for $PROVIDER. Pass --reviewer <login> or reviews will be skipped.`
 
 ---
 
@@ -314,8 +285,9 @@ Reviewer re-reviewed and found nothing new. Evaluate merge criteria in order:
 1. `mergeable == MERGEABLE` — if CONFLICTING: dispatch conflict-resolution agent, wait
 2. All `statusCheckRollup` entries: `conclusion SUCCESS` or `SKIPPED` — if any FAILURE/CANCELLED: report, wait
 3. No review with `state == CHANGES_REQUESTED` from any author — if any: treat as new feedback (back to C)
-4. At least one review from `<reviewer>` with `state == APPROVED`
-5. If `require_resolved_threads == true`: `UNRESOLVED == 0` — if any: resolve outdated threads, then wait
+4. At least one review from `<reviewer>` exists (Copilot never approves — see @references/providers/github.md)
+5. All inline comments from `<reviewer_comment_author>` have been replied to (accept with fix + commit URL, or reject with reasoning)
+6. If `require_resolved_threads == true`: `UNRESOLVED == 0` — if any: resolve outdated threads, then wait
 
 **Double-merge guard:** Before calling `gh pr merge`:
 1. Re-read `.xgh/ship-prs-state.json` — if `prs["<PR>"].merging == true`, skip merge (another tick is already merging)
@@ -508,98 +480,11 @@ All fix agents run in background. The `active_agent` field prevents double-dispa
 
 ## Provider Profiles
 
-Embedded profiles — the skill references these directly, no external lookup needed.
-
-### GitHub
-
-```yaml
-provider: github
-reviewer_bot: copilot-pull-request-reviewer[bot]
-reviewer_comment_author: Copilot
-review_request_strategy: reviewer-list  # gh pr edit --remove-reviewer / --add-reviewer (only safe method)
-threads_api: graphql   # resolveReviewThread mutation available
-suggestion_commits: true
-```
-
-#### GitHub: Two Copilot Systems — Critical Distinction
-
-| System | Trigger | Effect |
-|--------|---------|--------|
-| **Code Review** | Add `copilot-pull-request-reviewer[bot]` to reviewer list | Leaves inline review comments |
-| **SWE Delegation Agent** | `@copilot <anything>` in a comment — including `@copilot review` | Opens a **NEW PR** with code changes |
-
-**NEVER use `@copilot` in comments.** Even `@copilot review` triggers the SWE delegation agent. The reviewer list cycle is the only safe way to request a review.
-
-Copilot does NOT read replies on its review comments. It is a one-way reviewer. Re-requesting via reviewer list is the only way to get another pass.
-
-#### GitHub: Triggering Copilot Review
-
-One safe method — reviewer list cycle only:
-
-| Method | Command | Notes |
-|--------|---------|-------|
-| Reviewer list cycle | `gh pr edit --remove-reviewer copilot-pull-request-reviewer && --add-reviewer copilot-pull-request-reviewer` | Uses GraphQL, no `[bot]` suffix needed; only safe method |
-
-`review_on_push: true` (repo setting) makes Copilot auto-review on every push — when enabled, manual re-requests after pushing fixes are redundant. Check with `status` before re-requesting.
-
-### GitLab
-
-```yaml
-provider: gitlab
-reviewer_bot: null
-reviewer_comment_author: null
-review_request_strategy: reviewer-list  # GitLab MR reviewer assignment
-threads_api: rest   # PUT /discussions/:id/notes/:id with resolved:true
-suggestion_commits: true
-```
-
-Pass `--reviewer <login>` for human or bot reviewer on GitLab.
-
-### Bitbucket
-
-```yaml
-provider: bitbucket
-reviewer_bot: null
-reviewer_comment_author: null
-review_request_strategy: reviewer-list
-threads_api: none
-suggestion_commits: false
-```
-
-### Azure DevOps
-
-```yaml
-provider: azure-devops
-reviewer_bot: null
-reviewer_comment_author: null
-review_request_strategy: reviewer-list
-threads_api: rest
-suggestion_commits: false
-```
-
-### Generic
-
-```yaml
-provider: generic
-reviewer_bot: null
-reviewer_comment_author: null
-review_request_strategy: reviewer-list
-threads_api: none
-suggestion_commits: false
-```
-
----
-
-## Integration with xgh:copilot-pr-review
-
-This skill builds on `xgh:copilot-pr-review` for GitHub-specific API calls. Key mappings:
-
-| ship-prs action | copilot-pr-review equivalent |
-|--------------------|------------------------------|
-| Initialize baseline | `status <PR>` |
-| Re-request review | `re-review <PR>` |
-| Fetch comments | `comments <PR>` |
-| Reply to comment | `reply <PR> <id> "<msg>"` |
+Provider-specific quirks, reviewer behavior, and API patterns are documented in shared references:
+- `@references/providers/github.md` — Copilot review behavior, never-approves rule, reviewer list cycle, [bot] suffix rules
+- `@references/providers/gitlab.md` — MR reviewer assignment, thread resolution
+- `@references/providers/bitbucket.md` — PR reviewer assignment
+- `@references/providers/azure-devops.md` — Required reviewers, policies
 
 ---
 

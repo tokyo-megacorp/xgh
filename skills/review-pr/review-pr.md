@@ -17,9 +17,11 @@ xgh:review-pr                  # auto-detect open PRs by current user
 xgh:review-pr 114 --rounds 1   # single round only
 ```
 
+Repo is read from `config/project.yaml` via `load_pr_pref repo` (see `skills/_shared/references/project-preferences.md`).
+
 If no PR numbers given, fetch open PRs:
 ```bash
-gh pr list --author @me --state open --limit 30 --json number,title --jq '.[] | "#\(.number) \(.title)"'
+gh pr list --repo "$REPO" --author @me --state open --limit 30 --json number,title --jq '.[] | "#\(.number) \(.title)"'
 ```
 
 ## Personas
@@ -48,7 +50,7 @@ You are a [PERSONA] reviewing PR(s) [NUMBERS].
 [PERSONA FOCUS from above]
 
 For each PR:
-1. Run: gh pr diff [NUMBER]
+1. Run: gh pr diff [NUMBER] --repo [REPO]
 2. Read the changed files
 3. Report findings with severity (Critical / High / Medium / Low) and file:line references
 ```

@@ -48,6 +48,18 @@ assert_contains "skills/codex/codex.md" "model-profiles.yaml"
 assert_contains "skills/gemini/gemini.md" "model-profiles.yaml"
 assert_contains "skills/opencode/opencode.md" "model-profiles.yaml"
 
+# --- ship-prs reads project.yaml ---
+assert_contains "skills/ship-prs/ship-prs.md" "load_pr_pref"
+assert_contains "skills/ship-prs/ship-prs.md" "project.yaml"
+assert_contains "skills/ship-prs/ship-prs.md" "providers/github.md"
+
+# --- watch-prs reads project.yaml ---
+assert_contains "skills/watch-prs/watch-prs.md" "load_pr_pref"
+assert_contains "skills/watch-prs/watch-prs.md" "project.yaml"
+
+# --- review-pr reads project.yaml ---
+assert_contains "skills/review-pr/review-pr.md" "project.yaml"
+
 echo ""
 echo "Skills test: $PASS passed, $FAIL failed"
 [[ "$FAIL" -eq 0 ]] || exit 1

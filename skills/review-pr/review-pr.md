@@ -19,7 +19,7 @@ xgh:review-pr 114 --rounds 1   # single round only
 
 If no PR numbers given, fetch open PRs:
 ```bash
-gh pr list --author @me --state open --json number,title --jq '.[] | "#\(.number) \(.title)"'
+gh pr list --author @me --state open --limit 30 --json number,title --jq '.[] | "#\(.number) \(.title)"'
 ```
 
 ## Personas
@@ -40,7 +40,7 @@ Are new skills/agents/commands documented? Does `AGENTS.md` need updating? Are s
 
 ### Round 1 — Parallel review
 
-**You MUST dispatch all 4 personas as parallel background agents using the Agent tool.** Do NOT review sequentially and do NOT simulate personas internally — internal simulation produces the same single-perspective blind spots as a plain review.
+**You MUST dispatch all 4 personas as parallel background agents using the Agent tool (`run_in_background: true`).** Do NOT review sequentially and do NOT simulate personas internally — internal simulation produces the same single-perspective blind spots as a plain review.
 
 Each agent receives:
 ```

@@ -104,6 +104,16 @@ assert_contains "config/project.yaml" "review_on_push: true"
 assert_contains "config/project.yaml" "auto_merge: true"
 assert_contains "config/project.yaml" "branches:"
 
+# --- Provider references ---
+assert_file_exists "skills/_shared/references/providers/github.md"
+assert_file_exists "skills/_shared/references/providers/gitlab.md"
+assert_file_exists "skills/_shared/references/providers/bitbucket.md"
+assert_file_exists "skills/_shared/references/providers/azure-devops.md"
+assert_contains "skills/_shared/references/providers/github.md" "copilot-pull-request-reviewer"
+assert_contains "skills/_shared/references/providers/github.md" "never submits"
+assert_contains "skills/_shared/references/providers/github.md" "reviewer list cycle"
+assert_contains "skills/_shared/references/providers/github.md" "SWE Delegation"
+
 assert_file_exists "config/team.yaml"
 assert_contains "config/team.yaml" "conventions:"
 assert_contains "config/team.yaml" "iron_laws:"

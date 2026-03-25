@@ -196,7 +196,7 @@ When `preferences.pr` is empty or missing fields, the first skill invocation aut
 
 | File | Content |
 |------|---------|
-| `_shared/references/providers/github.md` | Copilot two-system distinction, reviewer list cycle, [bot] suffix rules, reviewer vs reviewer_comment_author mapping, review_on_push behavior, common errors |
+| `_shared/references/providers/github.md` | Copilot two-system distinction, Copilot never-approves behavior, reviewer list cycle, [bot] suffix rules, reviewer vs reviewer_comment_author mapping, review_on_push behavior, common errors |
 | `_shared/references/providers/gitlab.md` | MR reviewers, approval rules, merge request API patterns |
 | `_shared/references/providers/bitbucket.md` | PR reviewers, default reviewers, API patterns |
 | `_shared/references/providers/azure-devops.md` | Required reviewers, policies, API patterns |
@@ -216,6 +216,24 @@ When `preferences.pr` is empty or missing fields, the first skill invocation aut
 | Reviewer list cycle | Inline in ship-prs, watch-prs, copilot-pr-review, pr-poller | `providers/github.md` |
 | `[bot]` suffix rules | Inline in copilot-pr-review | `providers/github.md` |
 | Provider profile blocks (GitLab, Bitbucket, Azure DevOps) | Inline in ship-prs, watch-prs | Respective `providers/*.md` files |
+
+### GitHub Copilot review behavior (must be in `providers/github.md`)
+
+**Copilot's code review bot (`copilot-pull-request-reviewer[bot]`) never submits an `APPROVED` review.** It either leaves inline fix requests (review state: `COMMENTED` or `CHANGES_REQUESTED`) or submits a comment-only review with no fixes. There is no approval signal.
+
+This means merge criteria cannot wait for `reviewDecision == "APPROVED"` from Copilot. Instead, skills must treat Copilot review as "passed" when:
+1. A review exists from the Copilot bot, AND
+2. All inline comments have been addressed (resolved or fixed), AND
+3. No `CHANGES_REQUESTED` review state is pending
+
+**Two distinct Copilot systems — never confuse them:**
+
+| System | Trigger | What it does | Safe? |
+|--------|---------|-------------|-------|
+| Code Review bot | Reviewer list cycle (`gh pr edit --add-reviewer`) | Leaves inline comments on the PR | Yes — this is what we use |
+| SWE Delegation Agent | `@copilot` tag in a PR comment | Opens new sub-PRs with AI-generated fixes | **NEVER use** — creates unwanted PRs |
+
+`@copilot` in any comment triggers the delegation agent. Skills must never tag `@copilot`. The reviewer list cycle is the only safe method for requesting/re-requesting reviews.
 
 ---
 

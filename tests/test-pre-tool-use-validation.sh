@@ -17,7 +17,7 @@ run_hook() {
 
 make_input() {
   local tool="$1" cmd="$2"
-  jq -n --arg cmd "$cmd" '{"tool_name":"Bash","tool_input":{"command":$cmd}}'
+  jq -n --arg tool "$tool" --arg cmd "$cmd" '{"tool_name":$tool,"tool_input":{"command":$cmd}}'
 }
 
 echo "=== test-pre-tool-use-validation ==="

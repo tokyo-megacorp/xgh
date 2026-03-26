@@ -76,10 +76,10 @@ if echo "$COMMAND" | grep -q 'gh pr merge'; then
 
   # Determine target branch
   PR_NUMBER=$(echo "$COMMAND" | grep -oE 'gh pr merge[[:space:]]+([0-9]+)' | grep -oE '[0-9]+' || true)
-  TARGET_BRANCH=""
-  if [ -n "$PR_NUMBER" ]; then
-    TARGET_BRANCH=$(gh pr view "$PR_NUMBER" --json baseRefName -q .baseRefName 2>/dev/null || true)
-  fi
+  # Fail-open: PR number not parseable from command — skip validation
+  [ -n "$PR_NUMBER" ] || exit 0
+  TARGET_BRANCH=$(gh pr view "$PR_NUMBER" --json baseRefName -q .baseRefName 2>/dev/null || true)
+  # TARGET_BRANCH may be empty if gh fails; validate against global config in that case
 
   CONFIGURED_METHOD=$(load_pr_pref "merge_method" "" "$TARGET_BRANCH")
   [ -n "$CONFIGURED_METHOD" ] || exit 0
@@ -172,9 +172,16 @@ if echo "$COMMAND" | grep -qE 'git commit'; then
   # ── Check 5: Commit format (only if not on protected branch) ──────────
   COMMIT_MSG=""
   if echo "$COMMAND" | grep -qE -- '-m[[:space:]]'; then
+    # Try quoted first, then unquoted single-token fallback
     COMMIT_MSG=$(echo "$COMMAND" | sed -n "s/.*-m[[:space:]]*['\"]\\(.*\\)['\"].*/\\1/p")
+    if [ -z "$COMMIT_MSG" ]; then
+      COMMIT_MSG=$(echo "$COMMAND" | sed -n "s/.*-m[[:space:]]\+\([^[:space:]'\"]\+\).*/\1/p")
+    fi
   elif echo "$COMMAND" | grep -qE -- '--message[[:space:]]'; then
     COMMIT_MSG=$(echo "$COMMAND" | sed -n "s/.*--message[[:space:]]*['\"]\\(.*\\)['\"].*/\\1/p")
+    if [ -z "$COMMIT_MSG" ]; then
+      COMMIT_MSG=$(echo "$COMMAND" | sed -n "s/.*--message[[:space:]]\+\([^[:space:]'\"]\+\).*/\1/p")
+    fi
   fi
   [ -n "$COMMIT_MSG" ] || exit 0
 

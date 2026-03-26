@@ -57,6 +57,14 @@ if [[ $yaml_status -eq 1 ]]; then
   exit 0
 fi
 
+# ── Capture stdin for session_id (SessionStart sends JSON on stdin) ────
+HOOK_INPUT=$(cat 2>/dev/null) || HOOK_INPUT=""
+SESSION_ID=""
+if [[ -n "$HOOK_INPUT" ]]; then
+  SESSION_ID=$(printf '%s' "$HOOK_INPUT" | jq -r '.session_id // empty' 2>/dev/null || true)
+fi
+[[ -z "$SESSION_ID" ]] && SESSION_ID="$$-$(date +%s)"
+
 # --- Build preference index via shared helper ---
 # shellcheck source=_pref-index-builder.sh
 BUILDER="${PROJECT_ROOT}/hooks/_pref-index-builder.sh"
@@ -68,3 +76,8 @@ source "$BUILDER"
 if _build_pref_index "$PROJECT_ROOT"; then
   python3 -c "import json,sys; print(json.dumps({'additionalContext': sys.argv[1]}))" "$PREF_INDEX_CONTEXT"
 fi
+
+# ── Seed project.yaml snapshot for PostToolUse drift detection ──────────
+REPO_ROOT_SNAP=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
+mkdir -p "${REPO_ROOT_SNAP}/.xgh/run" 2>/dev/null || true
+cp "$PROJ_YAML" "${REPO_ROOT_SNAP}/.xgh/run/xgh-${SESSION_ID}-project-yaml.yaml" 2>/dev/null || true

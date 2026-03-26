@@ -153,6 +153,19 @@ else
 fi
 rm -rf "$tmpdir"
 
+# Test 11: Snapshot file created
+echo "--- 11. Snapshot seeding ---"
+test_session_id="test-snapshot-$(date +%s)"
+snapshot_input="{\"session_id\": \"${test_session_id}\"}"
+snapshot_output=$(cd "$REPO_ROOT" && echo "$snapshot_input" | bash "$HOOK" 2>/dev/null || true)
+snapshot_path="${REPO_ROOT}/.xgh/run/xgh-${test_session_id}-project-yaml.yaml"
+if [[ -f "$snapshot_path" ]]; then
+  pass "snapshot file created at $snapshot_path"
+  rm -f "$snapshot_path"
+else
+  fail "snapshot file not created at $snapshot_path"
+fi
+
 # --- Summary ---
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

@@ -74,7 +74,7 @@ if echo "$COMMAND" | grep -q '\-\-add-reviewer'; then
     fi
     HINT=""
     [[ -n "$REVIEWER" ]] && HINT=" Current config: ${REVIEWER}."
-    _emit_diagnosis "[xgh] Reviewer not found — verify preferences.pr.reviewers and bot installation.${HINT}"
+    _emit_diagnosis "[xgh] Reviewer not found — verify preferences.pr.reviewer and bot installation.${HINT}"
     exit 0
   fi
 fi

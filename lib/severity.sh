@@ -10,13 +10,15 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 fi
 
 # Hardcoded defaults (safety=block, convention=warn)
-declare -A _SEVERITY_DEFAULTS=(
-  [protected_branch]=block
-  [force_push]=block
-  [merge_method]=block
-  [branch_naming]=warn
-  [commit_format]=warn
-)
+# Uses a case statement for Bash 3.2 compatibility (macOS ships Bash 3.2).
+_severity_defaults() {
+  local check_name="$1"
+  case "$check_name" in
+    merge_method|protected_branch|force_push) echo "block" ;;
+    branch_naming|commit_format) echo "warn" ;;
+    *) echo "warn" ;;
+  esac
+}
 
 _severity_resolve() {
   local domain="$1" check_name="$2"
@@ -26,6 +28,6 @@ _severity_resolve() {
   if [[ "$configured" == "block" || "$configured" == "warn" ]]; then
     echo "$configured"
   else
-    echo "${_SEVERITY_DEFAULTS[$check_name]:-warn}"
+    _severity_defaults "$check_name"
   fi
 }

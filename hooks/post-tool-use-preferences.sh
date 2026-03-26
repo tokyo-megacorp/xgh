@@ -60,15 +60,15 @@ if command -v yq >/dev/null 2>&1; then
   CHANGES=$(python3 - "$OLD_JSON" "$NEW_JSON" << 'PYEOF'
 import sys, json
 
-def flatten(obj, prefix="", depth=0, max_depth=5):
+def flatten(obj, prefix=""):
     items = {}
-    if depth >= max_depth or not isinstance(obj, dict):
+    if not isinstance(obj, dict):
         items[prefix] = obj
         return items
     for k, v in obj.items():
         new_key = f"{prefix}.{k}" if prefix else k
-        if isinstance(v, dict) and depth < max_depth - 1:
-            items.update(flatten(v, new_key, depth + 1, max_depth))
+        if isinstance(v, dict):
+            items.update(flatten(v, new_key))
         else:
             items[new_key] = v
     return items
@@ -98,15 +98,15 @@ elif python3 -c "import yaml" 2>/dev/null; then
   CHANGES=$(python3 - "$SNAPSHOT" "$PROJ_YAML" << 'PYEOF'
 import sys, yaml, json
 
-def flatten(obj, prefix="", depth=0, max_depth=5):
+def flatten(obj, prefix=""):
     items = {}
-    if depth >= max_depth or not isinstance(obj, dict):
+    if not isinstance(obj, dict):
         items[prefix] = obj
         return items
     for k, v in obj.items():
         new_key = f"{prefix}.{k}" if prefix else k
-        if isinstance(v, dict) and depth < max_depth - 1:
-            items.update(flatten(v, new_key, depth + 1, max_depth))
+        if isinstance(v, dict):
+            items.update(flatten(v, new_key))
         else:
             items[new_key] = v
     return items

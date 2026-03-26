@@ -95,16 +95,36 @@ fi
 
 # ── Check 2: git push --force on protected branches ────────────────────
 if echo "$COMMAND" | grep -qE 'git push.*(--force|[ ]-f[ ]|[ ]-f$)'; then
-  PUSH_ARGS=$(echo "$COMMAND" | sed 's/git push//' | sed 's/--force-with-lease//g' | sed 's/--force//g' | sed 's/-f//g' | sed 's/--no-verify//g' | xargs)
+  # Tokenize git push args into an array for robust parsing
   PUSH_BRANCH=""
-  if [ -n "$PUSH_ARGS" ]; then
-    PUSH_BRANCH=$(echo "$PUSH_ARGS" | awk '{print $2}')
-    PUSH_BRANCH=$(echo "$PUSH_BRANCH" | sed 's/:.*//')
-  fi
+  read -ra _PUSH_TOKENS <<< "$COMMAND"
+  _IN_PUSH=0
+  _REMOTE_SEEN=0
+  for _tok in "${_PUSH_TOKENS[@]}"; do
+    if [[ "$_tok" == "push" && "$_IN_PUSH" -eq 0 ]]; then
+      _IN_PUSH=1
+      continue
+    fi
+    [[ "$_IN_PUSH" -eq 0 ]] && continue
+    # Skip flags
+    [[ "$_tok" == --force* || "$_tok" == --force-with-lease* || "$_tok" == --no-verify || "$_tok" == -f || "$_tok" == -u || "$_tok" == --set-upstream ]] && continue
+    if [[ "$_REMOTE_SEEN" -eq 0 ]]; then
+      # First non-flag token after "push" is the remote
+      _REMOTE_SEEN=1
+      continue
+    fi
+    # Second non-flag token is the refspec; handle src:dst form
+    if [[ "$_tok" == *:* ]]; then
+      PUSH_BRANCH="${_tok##*:}"
+    else
+      PUSH_BRANCH="$_tok"
+    fi
+    break
+  done
   [ -z "$PUSH_BRANCH" ] && PUSH_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
   [ -n "$PUSH_BRANCH" ] || exit 0
 
-  IS_PROTECTED=$(_pref_read_yaml "preferences.vcs.branches.${PUSH_BRANCH}.protected")
+  IS_PROTECTED=$(_pref_read_branch "vcs" "$PUSH_BRANCH" "protected")
   # Also check pr.branches for backward compat
   if [[ "$IS_PROTECTED" != "true" ]]; then
     IS_PROTECTED=$(_pref_read_branch "pr" "$PUSH_BRANCH" "protected")
@@ -138,7 +158,7 @@ if echo "$COMMAND" | grep -qE 'git commit'; then
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
   [ -n "$CURRENT_BRANCH" ] || exit 0
 
-  IS_PROTECTED=$(_pref_read_yaml "preferences.vcs.branches.${CURRENT_BRANCH}.protected")
+  IS_PROTECTED=$(_pref_read_branch "vcs" "$CURRENT_BRANCH" "protected")
   if [[ "$IS_PROTECTED" != "true" ]]; then
     IS_PROTECTED=$(_pref_read_branch "pr" "$CURRENT_BRANCH" "protected")
   fi

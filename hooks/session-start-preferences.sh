@@ -58,7 +58,11 @@ if [[ $yaml_status -eq 1 ]]; then
 fi
 
 # ── Capture stdin for session_id (SessionStart sends JSON on stdin) ────
-HOOK_INPUT=$(cat 2>/dev/null) || HOOK_INPUT=""
+# Guard with TTY check to avoid blocking when run from a terminal.
+HOOK_INPUT=""
+if [[ ! -t 0 ]]; then
+  HOOK_INPUT=$(cat 2>/dev/null) || HOOK_INPUT=""
+fi
 SESSION_ID=""
 if [[ -n "$HOOK_INPUT" ]]; then
   SESSION_ID=$(printf '%s' "$HOOK_INPUT" | jq -r '.session_id // empty' 2>/dev/null || true)

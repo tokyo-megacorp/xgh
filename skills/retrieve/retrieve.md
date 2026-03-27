@@ -38,7 +38,12 @@ and inbox stashing are limited to the in-scope projects only.
 
 Read `~/.xgh/ingest.yaml`. Collect projects where `status: active`. If `XGH_PROJECT_SCOPE` is set, filter to only projects in that scope.
 
-Read `~/.xgh/inbox/.cursors.json` (JSON: `{"#channel-name": "last_iso_timestamp"}`). If missing, initialize to `{}`.
+**Cursor loading (per-project partitioning):**
+For each in-scope project (slug = the `name` field from `ingest.yaml`):
+- Read `~/.xgh/inbox/.cursors-<slug>.json` (JSON: `{"#channel-name": "last_iso_timestamp"}`). If missing, initialize to `{}`.
+- Each project gets its own cursor map — parallel workers own separate files, no race condition.
+
+**Legacy migration:** If `~/.xgh/inbox/.cursors.json` exists and contains entries for channels belonging to this project, they will be migrated into the per-project file automatically by `update-cursor.sh` on first write. No manual migration needed.
 
 ## Step 2 — Scan Slack channels
 
@@ -75,8 +80,10 @@ After scanning new messages, perform a thread reply pass to catch replies on rec
 
 **Cursor update (per channel):** After each channel completes successfully (main scan + thread pass), update its cursor immediately:
 ```bash
-bash scripts/update-cursor.sh "<channel-id>" "<latest-message-timestamp>"
+bash scripts/update-cursor.sh "<channel-id>" "<latest-message-timestamp>" "<project-slug>"
 ```
+Pass the project slug (the `name` field of the current project from `ingest.yaml`) as the third argument. This writes to `~/.xgh/inbox/.cursors-<project-slug>.json`, so each parallel worker owns its own cursor file and cannot race with other workers.
+
 This runs inside the per-channel loop — not deferred to Step 9 — so a mid-run failure on channel 3 does not roll back cursors for channels 1 and 2.
 
 ## Step 2b — MCP Provider Dispatch (generic)
@@ -276,6 +283,8 @@ If the file exists, merge into the `pending` array. The analyzer reads and clear
 ## Step 9 — Verify cursors
 
 Cursors are updated per-channel inside Step 2. This step is a no-op for Slack channels.
+
+For Slack channels, each project's cursors live in `~/.xgh/inbox/.cursors-<project-slug>.json`. Parallel workers for different projects never share a cursor file, so no cross-worker verification is needed.
 
 For MCP providers (Step 2b), confirm each provider's cursor file was updated after its run. If a provider exited early due to an error, its cursor file should not have been advanced — this is the correct outcome and requires no remediation.
 

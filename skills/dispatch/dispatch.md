@@ -107,6 +107,35 @@ These values override the cold-start defaults but are superseded by profile data
 - `fallback_agent` → use as the cold-start agent when `detect-agents.sh` finds no installed agents
 - `exec_effort` / `review_effort` → apply as cold-start effort based on whether the task type is exec or review
 
+## Step 2.6: Read Agent Frontmatter
+
+If the task mentions a specific agent by name (e.g., "dispatch this to the code-reviewer agent"), or if an agent file is available in `agents/` directory:
+
+1. **Locate agent file:** Search `agents/<name>.md` where `<name>` is the mentioned agent or inferred from context
+2. **Extract YAML frontmatter** — parse the `---` block at the top of the file
+3. **Read metadata:**
+   - `model` — preferred Claude model (haiku, sonnet, opus, sonnet4)
+   - `capabilities` — semantic tags (code-review, investigation, orchestration, etc.)
+   - `effort` — effort level hint (quick, moderate, intensive)
+   - `tools` — list of available tools (affects what the agent can do)
+4. **Apply overrides** — if agent specifies a model, use it (unless user provided `--model` override)
+
+**Frontmatter reference:** See `skills/_shared/references/agent-frontmatter.md` for detailed schema.
+
+**Example:**
+```yaml
+# agents/code-reviewer.md
+---
+name: code-reviewer
+model: sonnet
+capabilities: [code-review, architecture, conventions]
+effort: moderate
+tools: [Read, Grep, Bash]
+---
+```
+
+When dispatching to this agent: prefer sonnet model, expect moderate effort, understand it can read code and run grep.
+
 ## Step 3: Select Agent + Model + Effort
 
 **If profile data exists:** Use the `{agent, model, effort}` tuple from Step 2.

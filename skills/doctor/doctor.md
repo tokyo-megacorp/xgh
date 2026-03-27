@@ -148,7 +148,32 @@ For each project with `github:` entries, check `index.last_full` against `index.
 
 ### Check 6 — Providers
 
-List all directories in `~/.xgh/user_providers/`. For each:
+**First: check for empty providers with tracked github repos (issue #145):**
+
+```python
+import yaml, os
+data = yaml.safe_load(open(os.path.expanduser('~/.xgh/ingest.yaml')))
+has_github = any(
+    p.get('providers', {}).get('github') and p.get('github', [])
+    for p in data.get('projects', {}).values()
+)
+providers_dir = os.path.expanduser('~/.xgh/user_providers')
+providers_empty = not any(
+    os.path.isdir(os.path.join(providers_dir, d))
+    for d in os.listdir(providers_dir)
+) if os.path.isdir(providers_dir) else True
+print(f'has_github={has_github}')
+print(f'providers_empty={providers_empty}')
+```
+
+If `has_github=True` and `providers_empty=True`:
+```
+✗ Providers: user_providers/ is empty but ingest.yaml has N projects with GitHub access
+  Fix: run /xgh-init-providers to generate provider scripts from ingest.yaml
+```
+This is the root cause of issue #145 — manual ingest.yaml edits bypass /xgh-track Step 3b.
+
+**Then: list all directories in `~/.xgh/user_providers/`. For each:**
 
 1. Check `provider.yaml` exists and read `mode`
 2. If `mode: cli`: check `fetch.sh` exists and is executable
@@ -173,7 +198,7 @@ ls ~/.xgh/providers/ 2>/dev/null
 If `~/.xgh/providers/` exists with non-empty subdirectories:
 ```
 ⚠ Legacy providers found in ~/.xgh/providers/
-  Run /xgh-track to migrate to ~/.xgh/user_providers/
+  Run /xgh-init-providers to migrate to ~/.xgh/user_providers/
 ```
 
 Also check `~/.xgh/tokens.env`:

@@ -180,6 +180,33 @@ while [ "$_attempt" -lt "$_max_attempts" ]; do
     if run_retrieve 2>"$_err_file"; then
         _elapsed=$(( $(date +%s) - _start_ts ))
         echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) [RETRIEVE_SUCCESS: ${_elapsed}s]" >> "$LOG_FILE"
+        # Update last_scan in ingest.yaml for all retrieved projects (issue #170)
+        _ingest_yaml="$HOME/.xgh/ingest.yaml"
+        if [ -f "$_ingest_yaml" ]; then
+            _now_ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            python3 - "$_ingest_yaml" "$SCOPE" "$_now_ts" << 'PYLASTSCAN'
+import yaml, sys
+ingest_path = sys.argv[1]
+scope = sys.argv[2]  # comma-separated project names, or empty = all
+now_ts = sys.argv[3]
+
+with open(ingest_path) as f:
+    cfg = yaml.safe_load(f)
+
+projects = cfg.get('projects', {})
+if scope:
+    targets = set(scope.split(','))
+else:
+    targets = set(projects.keys())
+
+for name in targets:
+    if name in projects:
+        projects[name]['last_scan'] = now_ts
+
+with open(ingest_path, 'w') as f:
+    yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+PYLASTSCAN
+        fi
         exit 0
     fi
 

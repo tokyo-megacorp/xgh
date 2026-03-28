@@ -30,5 +30,11 @@ assert_contains "scripts/retrieve-all.sh" "_max_attempts=3"
 assert_contains "scripts/retrieve-all.sh" "run_retrieve"
 assert_contains "scripts/retrieve-all.sh" "exit 0"
 
+# last_scan update assertions (issue #170)
+assert_contains "scripts/retrieve-all.sh" "last_scan"
+assert_contains "scripts/retrieve-all.sh" "ingest.yaml"
+assert_contains "scripts/retrieve-all.sh" "PYLASTSCAN"
+assert_contains "scripts/retrieve-all.sh" "last_scan.*now_ts"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

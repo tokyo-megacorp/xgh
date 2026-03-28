@@ -1,0 +1,166 @@
+# xgh Frontmatter Specification
+# Defines per-filetype schemas for required/optional frontmatter fields.
+# Used by /xgh-frontmatter (validate/fix) and /xgh-doctor (health check).
+#
+# Field definitions:
+#   required: list of fields that MUST be present
+#   optional: list of fields that MAY be present
+#   each field has: type (string|list|date|enum), description, allowed_values (for enum)
+
+version: 1
+
+filetypes:
+  agents:
+    description: "Agent prompt files (agents/*.md, .agents/*.md)"
+    glob_patterns:
+      - "agents/**/*.md"
+      - ".agents/**/*.md"
+      - "**/agents/*.md"
+    required:
+      - name:
+          type: string
+          description: "Unique agent identifier"
+          example: "my-agent"
+      - description:
+          type: string
+          description: "What this agent does and when to invoke it"
+          example: "Performs X when Y"
+      - model:
+          type: enum
+          description: "LLM model to use"
+          allowed_values:
+            - claude-opus-4-5
+            - claude-sonnet-4-5
+            - claude-haiku-4-5
+            - claude-opus-4
+            - claude-sonnet-4
+            - claude-haiku-3-5
+          example: "claude-sonnet-4-5"
+    optional:
+      - tools:
+          type: list
+          description: "MCP tools or built-in tools this agent uses"
+          example: "[Bash, Read, Write]"
+      - color:
+          type: enum
+          description: "Agent color theme for UI"
+          allowed_values: [red, orange, yellow, green, blue, purple, pink, gray]
+          example: "blue"
+      - temperature:
+          type: string
+          description: "Model temperature (0.0–1.0)"
+          example: "0.7"
+      - context:
+          type: string
+          description: "Additional context or system instructions"
+          example: "You are a specialist in..."
+
+  plans:
+    description: "Implementation plans and design documents (plans/**/*.md)"
+    glob_patterns:
+      - "plans/**/*.md"
+      - ".xgh/plans/**/*.md"
+      - ".claude/plans/**/*.md"
+    required:
+      - title:
+          type: string
+          description: "Human-readable plan title"
+          example: "SP4 Frontmatter Awareness"
+      - status:
+          type: enum
+          description: "Current lifecycle state of this plan"
+          allowed_values: [draft, active, completed, archived, blocked]
+          example: "active"
+      - date:
+          type: date
+          description: "Creation date (ISO 8601: YYYY-MM-DD)"
+          example: "2026-03-27"
+    optional:
+      - owner:
+          type: string
+          description: "Person or agent responsible for this plan"
+          example: "Pedro"
+      - sprint:
+          type: string
+          description: "Sprint or milestone this plan belongs to"
+          example: "Sprint 1"
+      - tags:
+          type: list
+          description: "Categorization tags"
+          example: "[sp4, frontmatter, xgh]"
+      - updated:
+          type: date
+          description: "Last update date (ISO 8601: YYYY-MM-DD)"
+          example: "2026-03-27"
+      - github_issue:
+          type: string
+          description: "Linked GitHub issue number or URL"
+          example: "#134"
+
+  memory:
+    description: "Persistent memory files (projects/*/memory/*.md)"
+    glob_patterns:
+      - "projects/*/memory/*.md"
+      - ".claude/projects/*/memory/*.md"
+      - "memory/**/*.md"
+    required:
+      - name:
+          type: string
+          description: "Short identifier for this memory entry"
+          example: "my-key-insight"
+      - type:
+          type: enum
+          description: "Memory category"
+          allowed_values: [feedback, project, user, session, workspace]
+          example: "feedback"
+      - description:
+          type: string
+          description: "One-line summary of what this memory captures"
+          example: "Captures the decision to use X over Y"
+    optional:
+      - created:
+          type: date
+          description: "Creation timestamp (ISO 8601)"
+          example: "2026-03-27"
+      - tags:
+          type: list
+          description: "Searchable tags"
+          example: "[architecture, decision]"
+      - ttl:
+          type: string
+          description: "Time-to-live (duration string, e.g. 30d, null=permanent)"
+          example: "30d"
+      - status:
+          type: enum
+          description: "Entry lifecycle state"
+          allowed_values: [active, decayed, archived, completed]
+          example: "active"
+
+  skills:
+    description: "Skill definition files (skills/**/SKILL.md or skills/**/*.md)"
+    glob_patterns:
+      - "skills/**/SKILL.md"
+      - "skills/**/*.md"
+      - ".claude/skills/**/*.md"
+    required:
+      - name:
+          type: string
+          description: "Skill identifier (used as trigger: e.g. xgh:frontmatter)"
+          example: "xgh:frontmatter"
+      - description:
+          type: string
+          description: "When to invoke this skill and what it does"
+          example: "Use when the user runs /xgh-frontmatter or asks to validate frontmatter"
+    optional:
+      - version:
+          type: string
+          description: "Skill version"
+          example: "1.0.0"
+      - tags:
+          type: list
+          description: "Categorization tags"
+          example: "[validation, frontmatter]"
+      - author:
+          type: string
+          description: "Skill author"
+          example: "xgh-team"

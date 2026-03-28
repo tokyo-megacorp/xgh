@@ -297,6 +297,72 @@ Rules:
 
 **Fix for mismatch:** Re-test the affected skill (`/xgh-codex`, `/xgh-gemini`) and update `tested_version` in `config/agents.yaml` if behaviors are confirmed working.
 
+### Check 9 — Frontmatter Health
+
+Run a targeted frontmatter validation across key file categories in the current repo. This is a lightweight version of `/xgh-frontmatter` — it checks critical files and surfaces the first 10 violations.
+
+**Spec file:** `config/frontmatter-spec.yaml` (relative to repo root or `~/.xgh/config/frontmatter-spec.yaml`).
+
+**Scope for doctor check:** Only validate files in these directories (do not recurse the whole repo — keep doctor fast):
+- `agents/` and `.agents/` — agent schemas
+- `plans/` — plan schemas
+- `skills/` — skill schemas (SKILL.md files only)
+- `projects/*/memory/` — memory schemas
+
+**Procedure:**
+
+1. Check `config/frontmatter-spec.yaml` exists and parses:
+   - ✅ Spec loaded (version N, M filetypes defined)
+   - ❌ Spec missing — run `/xgh-frontmatter` to diagnose
+
+2. For each scoped directory, count files and check required fields:
+
+   ```python
+   import re, yaml, os, glob
+
+   def extract_frontmatter(path):
+       with open(path) as f:
+           content = f.read()
+       m = re.match(r'^---\n(.*?)\n---', content, re.DOTALL)
+       if not m:
+           return None
+       try:
+           return yaml.safe_load(m.group(1)) or {}
+       except:
+           return "PARSE_ERROR"
+
+   def check_file(path, required_fields):
+       fm = extract_frontmatter(path)
+       if fm is None:
+           return ["no frontmatter block"]
+       if fm == "PARSE_ERROR":
+           return ["YAML parse error"]
+       return [f for f in required_fields if not fm.get(f)]
+   ```
+
+3. Tally results per filetype. Cap individual file details at 10 violations total (show file paths, not full diffs).
+
+4. Report as a table:
+
+   | Filetype | Files | ✅ Valid | ❌ Invalid | Top issues |
+   |----------|-------|---------|-----------|------------|
+   | agents | 3 | 2 | 1 | Missing: model (1) |
+   | plans | 8 | 7 | 1 | Missing: status (1) |
+   | skills | 12 | 12 | 0 | — |
+   | memory | 5 | 4 | 1 | No frontmatter (1) |
+
+5. For each invalid file (up to 10):
+   ```
+   ❌ agents/my-agent.md — missing: model
+   ❌ plans/old-plan.md — missing: status, date
+   ⚠️ projects/x/memory/note.md — YAML parse error
+   ```
+
+6. Summary line:
+   - All valid: `✅ Frontmatter: all N files valid`
+   - Issues found: `⚠️ Frontmatter: K of N files have issues`
+   - Fix suggestion: `Run /xgh-frontmatter --fix to auto-add missing required fields`
+
 ### Output format
 
 ```
@@ -354,6 +420,15 @@ Agent Versions
   ✓ codex: 0.116.0 (tested: 0.116.0)
   ⚠ gemini: tested_version not set — update config/agents.yaml after validating
   - opencode: not installed
+
+Frontmatter Health
+  ✅ Spec: config/frontmatter-spec.yaml loaded (v1, 4 filetypes)
+  ✅ agents: 3 files — all valid
+  ⚠️ plans: 8 files — 1 invalid (missing: status)
+    ❌ plans/old-plan.md — missing: status, date
+  ✅ skills: 12 files — all valid
+  ✅ memory: 5 files — all valid
+  → Run /xgh-frontmatter --fix to auto-add missing required fields
 
 Summary: 9 passed, 0 warnings, 2 failures
 Fix: Check #channel-missing name. Run: claude -p "/xgh-analyze" to clear overdue analyzer.

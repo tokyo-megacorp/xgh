@@ -173,6 +173,33 @@ If `has_github=True` and `providers_empty=True`:
 ```
 This is the root cause of issue #145 — manual ingest.yaml edits bypass /xgh-track Step 3b.
 
+**Second: check for config drift — active ingest.yaml projects missing from provider.yaml (issue #180):**
+
+Run `bash scripts/check-config-drift.sh` from within the xgh repo (or `bash ~/.claude/plugins/cache/extreme-go-horse/xgh/scripts/check-config-drift.sh` if running outside the repo), falling back to inline logic if the script is absent:
+
+```python
+import yaml, os
+ingest = yaml.safe_load(open(os.path.expanduser('~/.xgh/ingest.yaml'))) or {}
+provider_path = os.path.expanduser('~/.xgh/user_providers/github-cli/provider.yaml')
+if os.path.isfile(provider_path):
+    provider = yaml.safe_load(open(provider_path)) or {}
+    provider_repos = {s['repo'] for s in (provider.get('sources') or []) if isinstance(s, dict) and s.get('repo')}
+    for name, proj in (ingest.get('projects') or {}).items():
+        if not isinstance(proj, dict) or proj.get('status') != 'active':
+            continue
+        for repo in (proj.get('github') or []):
+            if repo not in provider_repos:
+                print(f'WARN: project {name} ({repo}) is active in ingest.yaml but missing from provider.yaml')
+```
+
+For each WARN line printed:
+```
+⚠ Config drift: project <name> (<repo>) is active in ingest.yaml but missing from provider.yaml
+  Fix: add the repo to ~/.xgh/user_providers/github-cli/provider.yaml sources, or run /xgh-track to re-register
+```
+
+If no WARNs: `✓ Config drift: all active ingest.yaml projects are reflected in provider.yaml`
+
 **Then: list all directories in `~/.xgh/user_providers/`. For each:**
 
 1. Check `provider.yaml` exists and read `mode`
@@ -411,6 +438,12 @@ Scheduler
   ✗ retrieve: not scheduled
   ✗ analyze: not scheduled
     Fix: /xgh-schedule resume
+
+Providers (config drift)
+  ✓ Config drift: all active ingest.yaml projects are reflected in provider.yaml
+  # OR if drift detected:
+  ⚠ Config drift: project autoimprove (ipedro/autoimprove) is active in ingest.yaml but missing from provider.yaml
+    Fix: add to ~/.xgh/user_providers/github-cli/provider.yaml sources, or run /xgh-track to re-register
 
 Codebase Index
   ✓ acme-ios: indexed 2 days ago (schedule: weekly — OK)

@@ -12,7 +12,7 @@ Actively drive a batch of PRs through review cycles until all are merged. **GitH
 ## Usage
 
 ```
-/xgh-ship-prs start <PR> [<PR>...] [--repo owner/repo] [--interval 3m] [--merge-method merge|squash|rebase] [--reviewer <login>] [--accept-suggestion-commits] [--require-resolved-threads] [--max-fix-cycles 3] [--post-merge-hook '<command>']
+/xgh-ship-prs start <PR> [<PR>...] [--repo owner/repo] [--interval 1m] [--merge-method merge|squash|rebase] [--reviewer <login>] [--accept-suggestion-commits] [--require-resolved-threads] [--max-fix-cycles 3] [--post-merge-hook '<command>']
 /xgh-ship-prs poll-once <PR> [<PR>...]
 /xgh-ship-prs status
 /xgh-ship-prs stop
@@ -25,7 +25,7 @@ Actively drive a batch of PRs through review cycles until all are merged. **GitH
 ```
 
 **Defaults** (read from `config/project.yaml` → `preferences.pr`, overridden by CLI flags):
-- `--interval 3m`
+- `--interval 1m`
 - `--merge-method` — from `preferences.pr.merge_method` (falls back to `squash` if unset)
 - `--reviewer` — loaded from project.yaml or auto-detected from provider profile
 - `--accept-suggestion-commits` — off (opt-in to auto-accept inline suggestion commits)
@@ -81,9 +81,15 @@ For each PR, gather initial state using the reviewer login from the provider pro
 # PR state
 gh pr view $PR --repo $REPO --json state,mergeable --jq '{state, mergeable}'
 
-# Last reviewer's review
-gh api repos/$REPO/pulls/$PR/reviews --paginate \
-  --jq '[.[] | select(.user.login == "<REVIEWER>")] | if length == 0 then null else last | {state: .state, submitted_at: .submitted_at} end'
+# Last reviewer's review — use --include to capture ETag header for future conditional polling
+REVIEWS_RESPONSE=$(gh api repos/$REPO/pulls/$PR/reviews --paginate --include 2>&1)
+REVIEW_ETAG=$(echo "$REVIEWS_RESPONSE" | grep -i '^etag:' | tail -1 | sed 's/^[Ee][Tt][Aa][Gg]: *//;s/\r//')
+REVIEW=$(echo "$REVIEWS_RESPONSE" | sed '/^HTTP\//,/^\s*$/{/^{/,$!d}' | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+items = [r for r in data if r.get('user', {}).get('login') == '<REVIEWER>']
+if not items: print('null')
+else: last = items[-1]; print(json.dumps({'state': last['state'], 'submitted_at': last['submitted_at']}))")
 
 # Comment count from reviewer bot (use reviewer_comment_author from provider profile)
 # Field values for Copilot:
@@ -112,7 +118,7 @@ Save to `.xgh/ship-prs-state.json`:
   "post_merge_hook": null,
   "paused": false,
   "cron_job_id": null,
-  "cron": "*/3 * * * *",
+  "cron": "*/1 * * * *",
   "created_at": "ISO8601",
   "action_log": [],
   "prs": {
@@ -123,6 +129,7 @@ Save to `.xgh/ship-prs-state.json`:
       "merging": false,
       "baseline_review_at": "ISO8601 or null",
       "baseline_comment_count": 12,
+      "review_etag": "W/\"<hash>\" or null",
       "last_action": "initialized",
       "last_action_at": "ISO8601",
       "last_review_request_at": null,
@@ -140,7 +147,9 @@ Save to `.xgh/ship-prs-state.json`:
 
 **Step 4 — Start poll loop:**
 
-Use `CronCreate` to schedule recurring polls. Convert `--interval` to a standard cron expression (`5m → "*/5 * * * *"`, `10m → "*/10 * * * *"`). To avoid :00/:30 load spikes, prefer an offset minute list (e.g. `1,11,21,31,41,51 * * * *` for a 10m cadence starting at :01) — optional.
+Use `CronCreate` to schedule recurring polls. Convert `--interval` to a standard cron expression (`1m → "* * * * *"`, `5m → "*/5 * * * *"`, `10m → "*/10 * * * *"`). To avoid :00/:30 load spikes, prefer an offset minute list (e.g. `1,11,21,31,41,51 * * * *` for a 10m cadence starting at :01) — optional.
+
+**Note on 1m default:** The default interval is 1m because ETag conditional requests (304 Not Modified) do NOT count toward GitHub's rate limit. Only 200 responses (new review data) consume quota. Polling at 1m is safe when the API is used correctly.
 
 The sentinel string `SHIP:<REPO>:<PR_NUMBERS>` in the prompt makes it findable via `CronList` for stop/status.
 
@@ -191,9 +200,59 @@ If `MERGED`: set `status = merged`, `last_action = merge-succeeded`. Skip remain
 #### B — Gather current review state
 
 ```bash
-# Last review from reviewer
-REVIEW=$(gh api repos/$REPO/pulls/$PR/reviews --paginate \
-  --jq '[.[] | select(.user.login == "<REVIEWER>")] | if length == 0 then null else last | {state: .state, submitted_at: .submitted_at} end')
+# Read stored ETag for this PR from state file
+STORED_ETAG=$(jq -r ".prs[\"$PR\"].review_etag // empty" .xgh/ship-prs-state.json)
+REVIEW_UNCHANGED=false  # reset at top of each PR loop iteration
+
+# Last review from reviewer — use ETag conditional request if available
+if [ -n "$STORED_ETAG" ]; then
+  # Conditional request: single request (no --paginate) so ETag contract is well-defined.
+  # 304 = no change (free, not rate-limited), 200 = new data
+  REVIEWS_RESPONSE=$(gh api repos/$REPO/pulls/$PR/reviews --include \
+    -H "If-None-Match: $STORED_ETAG" 2>&1)
+  REVIEWS_EXIT=$?
+  HTTP_STATUS=$(echo "$REVIEWS_RESPONSE" | grep -m1 '^HTTP' | awk '{print $2}')
+
+  if [ "$REVIEWS_EXIT" -eq 0 ] && [ "$HTTP_STATUS" = "304" ]; then
+    # No new review data — skip review processing this cycle
+    echo "ℹ️ PR #$PR: no new review (ETag cached, 304 Not Modified)"
+    # Jump to mergeability check only — skip C/D review-based branches
+    REVIEW_UNCHANGED=true
+  elif [ "$REVIEWS_EXIT" -eq 0 ]; then
+    # 200 OK — extract new ETag and process review data
+    NEW_ETAG=$(echo "$REVIEWS_RESPONSE" | grep -i '^etag:' | tail -1 | sed 's/^[Ee][Tt][Aa][Gg]: *//;s/\r//')
+    [ -n "$NEW_ETAG" ] && jq --arg pr "$PR" --arg etag "$NEW_ETAG" \
+      '.prs[$pr].review_etag = $etag' .xgh/ship-prs-state.json > "/tmp/ship-prs-state-${PR}.tmp" && \
+      mv "/tmp/ship-prs-state-${PR}.tmp" .xgh/ship-prs-state.json
+  else
+    # Non-zero exit (network error, auth failure, etc.) — log and proceed without ETag
+    echo "⚠️ PR #$PR: reviews API error (exit $REVIEWS_EXIT) — proceeding without ETag cache"
+    REVIEWS_RESPONSE=$(gh api repos/$REPO/pulls/$PR/reviews --paginate --include 2>&1) || true
+  fi
+else
+  # No stored ETag — first full fetch (with paginate); capture ETag from final page for future polls
+  REVIEWS_RESPONSE=$(gh api repos/$REPO/pulls/$PR/reviews --paginate --include 2>&1)
+  NEW_ETAG=$(echo "$REVIEWS_RESPONSE" | grep -i '^etag:' | tail -1 | sed 's/^[Ee][Tt][Aa][Gg]: *//;s/\r//')
+  [ -n "$NEW_ETAG" ] && jq --arg pr "$PR" --arg etag "$NEW_ETAG" \
+    '.prs[$pr].review_etag = $etag' .xgh/ship-prs-state.json > "/tmp/ship-prs-state-${PR}.tmp" && \
+    mv "/tmp/ship-prs-state-${PR}.tmp" .xgh/ship-prs-state.json
+fi
+
+# Parse REVIEW from response body (skip if 304)
+if [ "${REVIEW_UNCHANGED}" = "false" ]; then
+  REVIEW=$(echo "$REVIEWS_RESPONSE" | python3 -c "
+import sys, json, re
+text = sys.stdin.read()
+# Strip HTTP headers — body starts after first blank line following the status line
+body_match = re.search(r'\r?\n\r?\n([\[{].*)', text, re.DOTALL)
+body = body_match.group(1) if body_match else text
+try:
+    data = json.loads(body)
+    items = [r for r in data if r.get('user', {}).get('login') == '<REVIEWER>']
+    if not items: print('null')
+    else: last = items[-1]; print(json.dumps({'state': last['state'], 'submitted_at': last['submitted_at']}))
+except: print('null')")
+fi
 
 # Comment count from reviewer
 COMMENTS=$(gh api repos/$REPO/pulls/$PR/comments --paginate \
@@ -222,6 +281,8 @@ fi
 Compare against baselines stored in state file.
 
 #### B1 — Null REVIEW guard (no review yet)
+
+**ETag shortcut:** If `REVIEW_UNCHANGED == true` (304 Not Modified), skip sections C and D entirely — no review data changed. Proceed to mergeability check only (Step D merge criteria, using last known review state from state file). This is the primary path during quiet periods between Copilot review cycles.
 
 If `REVIEW` is null (no review submitted yet):
 - Skip checks C and D
@@ -584,7 +645,7 @@ Load `.xgh/ship-prs-state.json` and display:
 ## 🐴🤖 xgh ship-prs — status
 
 Repo: ipedro/lossless-claude | Provider: github | Reviewer: copilot-pull-request-reviewer[bot]
-Merge: squash | Cron: <job-id> every 3m | Max fix cycles: 3
+Merge: squash | Cron: <job-id> every 1m | Max fix cycles: 3
 Active since: 2026-03-22T03:00:00Z | Paused: false
 
 | PR   | Status      | Last Action                     | Review    | Comments | Fixes | Copilot Rounds | Agent |
@@ -684,6 +745,8 @@ Provider-specific quirks, reviewer behavior, and API patterns are documented in 
 | Concurrent cron ticks double-merging | merging flag prevents double-merge across overlapping ticks |
 | Branch requires N approvals but 1 reviewer | Pre-flight warning at start |
 | Copilot suggestion accepted but breaks tests | C3: run test_command before committing; if tests fail, revert + treat as reject |
+| API rate limit exhausted by blind review polling | ETag conditional requests: 304 Not Modified is free (no rate-limit cost). Stored in `review_etag` per PR; passed as `If-None-Match` on each poll. Only 200 responses (new data) consume quota. |
+| ETag absent in response (rare GitHub behavior) | If `NEW_ETAG` is empty after a 200, skip the ETag save — next poll falls back to full fetch. No crash. |
 | Suggestion targets code that has since changed | C2: compare diff_hunk against current file; if stale, skip + reply "stale, please re-review" |
 | Multiple suggestions in one comment | C1: parse all fenced blocks per comment; evaluate and act on each independently |
 | Negotiation loops without progress | C6: cap at max_fix_cycles (default 3); ship with [NEGOTIATION_CAPPED] watermark |
@@ -704,6 +767,12 @@ Runtime state only — add to `.gitignore`.
 - `status` reads only
 - `stop` deletes it
 - `poll-once` creates/updates but leaves no background process
+
+**Per-PR ETag state** (added to each PR block on first reviews fetch):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `review_etag` | string\|null | GitHub ETag from last successful `GET .../reviews` response. `null` on first cycle. Used as `If-None-Match` header on subsequent polls. 304 response means no new review data — skips C/D processing. |
 
 **Per-PR negotiation state** (added to each PR block when `reviewer_comment_author == "Copilot"`):
 

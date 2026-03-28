@@ -1,33 +1,42 @@
-# GitHub Copilot Instructions — xgh (eXtreme Go Horse)
+# Copilot Review Instructions — xgh (extreme-go-horse)
 
-> Full agent instructions are in [`AGENTS.md`](../AGENTS.md) at the repository root.
-> Read it before making any changes to this repository.
+This repo is a GitHub context ingestion pipeline: provider scripts pull data via `gh` CLI, transform it with `jq`, and store structured memory via lossless-claude (lcm). It also contains xgh skills and agent definitions.
 
-## Summary
+## Primary concerns
 
-xgh is a **Model Context Server (MCS) tech pack** for Claude Code that provides persistent, team-shared memory via lossless-claude MCP + a git-committed context tree. The tech stack is Bash + YAML + Markdown (no compiled runtime).
+### Provider script correctness (highest priority)
+- All `gh` CLI calls must handle non-zero exit codes. Flag bare `gh api ...` without error checking.
+- `jq` expressions must handle null and missing fields. Flag `.field` without `// "default"` fallback on optional API fields.
+- Flag any `jq` expression that would fail on empty array input (e.g., `.[0]` without `// null` guard).
 
-## Key conventions
+### Error handling
+- Scripts must not silently swallow errors. `command || true` is only acceptable with a comment explaining why.
+- Flag missing `|| exit 1` after critical operations (API calls, file writes).
 
-- All bash scripts: `#!/usr/bin/env bash` + `set -euo pipefail`
-- Tests live in `tests/` and use the `assert_*` bash helper pattern
-- Write a failing test before implementing any feature
-- Implementation is tracked in `.xgh/plans/` with `- [ ]` / `- [x]` checkboxes
-- Never commit API keys or secrets — use environment variables
+### Bash 3.2 compatibility (macOS default)
+- No `declare -A` associative arrays (bash 4+ only).
+- No `mapfile` or `readarray`.
+- No `&>>` append-redirect.
+- Use `#!/usr/bin/env bash` not `#!/bin/bash`.
 
-## Install
+### YAML and frontmatter validity
+- YAML keys with special characters must be quoted.
+- No tab characters in YAML (use spaces).
+- Markdown frontmatter must be valid YAML — flag unquoted colons in values.
 
-```bash
-claude plugin install xgh@extreme-go-horse
-/xgh-init
-```
+### LCM tagging conventions
+- All `lcm_store` calls must include tags following this pattern: `[project:name, type:solution|gotcha|decision, sprint:spN]`.
+- Flag lcm calls missing the `type:` or `project:` tags.
+- `sprint:` tag must match the current sprint identifier format `spN` (e.g., `sp2`).
 
-## Run tests
+### ingest.yaml cron safety
+- No cron schedule may run more frequently than every 5 minutes. Flag `*/1`, `*/2`, `*/3`, `*/4` minute intervals.
+- Validate cron expression has exactly 5 fields.
 
-```bash
-bash tests/test-config.sh
-```
+### Shell safety
+- `set -euo pipefail` at the top of every provider script.
+- All `$variables` quoted in commands, especially file paths.
 
-## Current status
-
-Plan 1 (Foundation) is complete. Plans 2–6 are pending — see [`AGENTS.md`](../AGENTS.md#implementation-status) for the full roadmap.
+## What to skip
+- Don't flag missing unit tests — this pipeline is tested by running against live GitHub data.
+- Don't flag `gh` CLI usage patterns that are valid per `gh help`.

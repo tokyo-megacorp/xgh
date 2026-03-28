@@ -52,11 +52,20 @@ sys.exit(1)
 PYSCOPE
 }
 
+# Parallel mode flag: XGH_PARALLEL_RETRIEVE=1 runs providers concurrently
+# Each provider owns its own cursor file ($provider_dir/cursor) — no shared state,
+# so parallel execution is safe. Default: sequential (backward compatible).
+PARALLEL="${XGH_PARALLEL_RETRIEVE:-0}"
+
 # Discover and run providers
 total=0
 success=0
 failed=0
 items_before=$(find "$INBOX_DIR" -name "*.md" -not -name "WARN_*" | wc -l | tr -d ' ')
+
+# Arrays to track background jobs when running in parallel mode
+declare -a pids=()
+declare -a pid_names=()
 
 for provider_dir in "$PROVIDERS_DIR"/*/; do
     [ -d "$provider_dir" ] || continue
@@ -81,27 +90,66 @@ for provider_dir in "$PROVIDERS_DIR"/*/; do
 
     total=$((total + 1))
 
-    # Export contract env vars for fetch.sh
-    export PROVIDER_DIR="$provider_dir"
-    export CURSOR_FILE="$provider_dir/cursor"
-    export INBOX_DIR  # promote script-level var to env for fetch.sh subprocess
-    export TOKENS_FILE="$HOME/.xgh/tokens.env"
-
-    rc=0
-    # fetch.sh may write a cursor file for incremental pagination on next run
-    run_with_timeout 30 bash "$script" 2>>"$HOME/.xgh/logs/provider-$name.log" || rc=$?
-    if [ "$rc" -eq 0 ]; then
-        success=$((success + 1))
-    elif [ "$rc" -eq 2 ]; then
-        success=$((success + 1))
-        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever: WARN $name — partial failure (exit 2)" >> "$LOG_FILE"
+    if [ "$PARALLEL" = "1" ]; then
+        # Launch provider in background; capture exit code via temp file
+        rc_file="$HOME/.xgh/logs/provider-$name.rc"
+        (
+            export PROVIDER_DIR="$provider_dir"
+            export CURSOR_FILE="$provider_dir/cursor"
+            export INBOX_DIR
+            export TOKENS_FILE="$HOME/.xgh/tokens.env"
+            rc=0
+            run_with_timeout 30 bash "$script" 2>>"$HOME/.xgh/logs/provider-$name.log" || rc=$?
+            echo "$rc" > "$rc_file"
+        ) &
+        pids+=($!)
+        pid_names+=("$name")
     else
-        failed=$((failed + 1))
-        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever: ERROR $name — exit code $rc" >> "$LOG_FILE"
+        # Sequential mode (default — backward compatible)
+        export PROVIDER_DIR="$provider_dir"
+        export CURSOR_FILE="$provider_dir/cursor"
+        export INBOX_DIR  # promote script-level var to env for fetch.sh subprocess
+        export TOKENS_FILE="$HOME/.xgh/tokens.env"
+
+        rc=0
+        # fetch.sh may write a cursor file for incremental pagination on next run
+        run_with_timeout 30 bash "$script" 2>>"$HOME/.xgh/logs/provider-$name.log" || rc=$?
+        if [ "$rc" -eq 0 ]; then
+            success=$((success + 1))
+        elif [ "$rc" -eq 2 ]; then
+            success=$((success + 1))
+            echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever: WARN $name — partial failure (exit 2)" >> "$LOG_FILE"
+        else
+            failed=$((failed + 1))
+            echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever: ERROR $name — exit code $rc" >> "$LOG_FILE"
+        fi
     fi
 done
+
+# Wait for all background jobs (parallel mode only)
+if [ "$PARALLEL" = "1" ] && [ "${#pids[@]}" -gt 0 ]; then
+    for i in "${!pids[@]}"; do
+        pid="${pids[$i]}"
+        pname="${pid_names[$i]}"
+        wait "$pid" 2>/dev/null || true
+        rc_file="$HOME/.xgh/logs/provider-$pname.rc"
+        rc=0
+        [ -f "$rc_file" ] && rc=$(cat "$rc_file") && rm -f "$rc_file"
+        if [ "$rc" -eq 0 ]; then
+            success=$((success + 1))
+        elif [ "$rc" -eq 2 ]; then
+            success=$((success + 1))
+            echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever: WARN $pname — partial failure (exit 2)" >> "$LOG_FILE"
+        else
+            failed=$((failed + 1))
+            echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever: ERROR $pname — exit code $rc" >> "$LOG_FILE"
+        fi
+    done
+fi
 
 items_after=$(find "$INBOX_DIR" -name "*.md" -not -name "WARN_*" | wc -l | tr -d ' ')
 new_items=$((items_after - items_before))
 
-echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever: $total providers, $success ok, $failed failed, $new_items new items" >> "$LOG_FILE"
+mode_label="sequential"
+[ "$PARALLEL" = "1" ] && mode_label="parallel"
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) retriever[$mode_label]: $total providers, $success ok, $failed failed, $new_items new items" >> "$LOG_FILE"

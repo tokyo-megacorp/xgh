@@ -13,6 +13,7 @@ Passively watch a batch of PRs and surface changes between polls: new comments, 
 
 ```
 /xgh-watch-prs start <PR> [<PR>...] [--repo owner/repo] [--interval 3m] [--reviewer <login>]
+/xgh-watch-prs discover [--repo owner/repo | --repos all] [--interval 3m] [--reviewer <login>]
 /xgh-watch-prs poll-once <PR> [<PR>...]
 /xgh-watch-prs status
 /xgh-watch-prs stop
@@ -166,6 +167,84 @@ If no changes: `✅ No changes since last tick.`
 #### D — Update state (no GitHub writes)
 
 Update `last_seen_*` fields in `.xgh/watch-prs-state.json` with values from the DELTA. No calls to GitHub mutation endpoints. If a DELTA entry has `"done": true`, also set `prs["<PR>"].status = "merged"` in `.xgh/watch-prs-state.json`.
+
+---
+
+### `discover` — Auto-discover open PRs and start watching
+
+Auto-fetches all open PRs from one or more repos and passes them to the `start` flow. This is the differentiator from pr-babysitter: the discovery is automatic — you don't need to know PR numbers upfront.
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--repo owner/repo` | Discover open PRs from a single repo |
+| `--repos all` | Discover open PRs from all org repos (see default list below) |
+| `--interval 3m` | Polling interval (passed through to `start`) |
+| `--reviewer <login>` | Reviewer login override (passed through to `start`) |
+
+If neither `--repo` nor `--repos` is given, fall back to `--repo` auto-detected from current git remote (same logic as `start`).
+
+**Step 1 — Build repo list:**
+
+- `--repo owner/repo` → single-item list: `[owner/repo]`
+- `--repos all` → fixed list:
+  ```
+  extreme-go-horse/xgh
+  ipedro/claudinho
+  ipedro/autoimprove
+  lossless-claude/lcm
+  ```
+- Neither flag → auto-detect from current directory's git remote (same as `start` bootstrap)
+
+**Step 2 — Fetch open PR numbers per repo:**
+
+For each repo in the list:
+
+```bash
+gh pr list --repo <REPO> --state open --json number --jq '[.[].number]'
+```
+
+Collect results. If a repo returns an empty list, skip it silently (no open PRs). If the `gh` call fails (e.g., no access), print a warning and continue:
+
+```
+⚠️ Could not fetch PRs from <REPO>: <error>. Skipping.
+```
+
+**Step 3 — Aggregate and report:**
+
+Print a discovery summary before handing off:
+
+```
+## 🐴🤖 xgh watch-prs — discover
+
+Discovered open PRs:
+  extreme-go-horse/xgh  →  #12, #14, #17
+  ipedro/autoimprove    →  #3
+  lossless-claude/lcm   →  (none)
+
+Starting watch session for 4 PRs across 2 repos...
+```
+
+If zero PRs found across all repos:
+
+```
+ℹ️ No open PRs found. Nothing to watch.
+```
+
+Exit without calling `start`.
+
+**Step 4 — Hand off to `start` per repo:**
+
+For each repo that has open PRs, invoke the `start` flow with its PR numbers:
+
+```
+start <PR1> <PR2> ... --repo <REPO> [--interval <interval>] [--reviewer <reviewer>]
+```
+
+If multiple repos have open PRs, each repo gets its own `start` invocation and its own state file (`.xgh/watch-prs-state.json` in the repo's working directory if discoverable, otherwise skip multi-repo state isolation and use a single session for the first batch with a note).
+
+> **Note:** When `--repos all` spans multiple repos the state file path is per-repo. If the user's working directory is not one of the target repos, use a temporary path `.xgh/watch-prs-<repo-slug>-state.json` in `~/.xgh/` and note this in the output.
 
 ---
 

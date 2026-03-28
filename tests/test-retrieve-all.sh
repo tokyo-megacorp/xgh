@@ -22,5 +22,13 @@ assert_contains "scripts/retrieve-all.sh" "CURSOR_FILE"
 assert_contains "scripts/retrieve-all.sh" "TOKENS_FILE"
 assert_contains "scripts/retrieve-all.sh" "mode: cli"
 
+# Retry/backoff assertions (issue #168)
+assert_contains "scripts/retrieve-all.sh" "RETRIEVE_RETRY"
+assert_contains "scripts/retrieve-all.sh" "RETRIEVE_FAILED"
+assert_contains "scripts/retrieve-all.sh" "RETRIEVE_SUCCESS"
+assert_contains "scripts/retrieve-all.sh" "_max_attempts=3"
+assert_contains "scripts/retrieve-all.sh" "run_retrieve"
+assert_contains "scripts/retrieve-all.sh" "exit 0"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

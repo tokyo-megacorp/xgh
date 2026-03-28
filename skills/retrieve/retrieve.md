@@ -12,6 +12,47 @@ Invoked by CronCreate:
   recurring: true
 ```
 
+## Usage
+
+Run manually:
+```
+/xgh-retrieve
+```
+
+Limit retrieval to a single project (avoids scanning all configured projects):
+```
+XGH_PROJECT_SCOPE=<project-name> /xgh-retrieve
+```
+
+Example:
+```
+XGH_PROJECT_SCOPE=passcode-feature /xgh-retrieve
+```
+
+### `XGH_PROJECT_SCOPE` env var
+
+**What it does:** When set, `XGH_PROJECT_SCOPE` restricts `retrieve-all.sh` to only run
+providers whose `provider.yaml` sources include at least one project matching the given name.
+All other providers are skipped for this run.
+
+**Why it matters:** Without scoping, every retrieval cycle scans providers for *all* configured
+projects. On a large team with 10+ projects, this can consume significant tokens and wall-clock
+time. Setting `XGH_PROJECT_SCOPE` to the project you are currently working on cuts retrieval
+down to just the relevant Slack channels, Jira queries, and GitHub feeds — typically 70–90%
+fewer providers.
+
+**Accepts:** A single project name (must match the `name` field in `ingest.yaml`). Comma-separated
+multi-project scope is not currently supported by the CLI providers; use the full run for that.
+
+**Auto-set:** `detect-project.sh` (Step 0) sets `XGH_PROJECT_SCOPE` automatically when Claude Code
+detects a git repo that matches a configured project. Manual invocations skip auto-detection, so
+you must set the env var explicitly if you want scoped retrieval.
+
+**Implementation:** Lines 36–54 of `scripts/retrieve-all.sh` — the `in_scope()` function parses
+each provider's `provider.yaml` and returns non-zero if the provider's sources do not intersect
+with `$XGH_PROJECT_SCOPE`.
+
+---
 
 ## Guard checks (run before anything else)
 

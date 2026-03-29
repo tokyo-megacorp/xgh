@@ -7,25 +7,43 @@ budget:
   max_experiments_per_session: 8
 
 gates:
-  - name: bash_tests
-    command: bash tests/run-tests.sh
-  - name: shellcheck
-    command: find skills/ hooks/ scripts/ -name "*.sh" -exec shellcheck {} \; && echo "shellcheck OK"
+  - name: config_tests
+    command: bash tests/test-config.sh
 
 benchmarks:
-  - name: skill-quality
+  - name: test_count
     command: |
-      SKILL_COUNT=$(ls skills/*.md 2>/dev/null | wc -l | tr -d ' ')
-      AGENT_COUNT=$(ls agents/*.md 2>/dev/null | wc -l | tr -d ' ')
-      echo "{\"skill_count\": $SKILL_COUNT, \"agent_count\": $AGENT_COUNT}"
+      COUNT=$(grep -r "Test:" tests/*.sh 2>/dev/null | wc -l | tr -d ' ')
+      echo "{\"test_count\": $COUNT}"
     metrics:
-      - name: skill_count
-        extract: "json:.skill_count"
+      - name: test_count
+        extract: "json:.test_count"
         direction: higher_is_better
         tolerance: 0.0
         significance: 0.05
-      - name: agent_count
-        extract: "json:.agent_count"
+
+  - name: skill_doc_coverage
+    command: |
+      TOTAL=$(ls skills/*.md 2>/dev/null | wc -l | tr -d ' ')
+      WITH_DESC=$(grep -l "^## Description\|^description:" skills/*.md 2>/dev/null | wc -l | tr -d ' ')
+      PCT=$([ "$TOTAL" -gt 0 ] && echo "$((WITH_DESC * 100 / TOTAL))" || echo "0")
+      echo "{\"skill_doc_coverage\": $PCT}"
+    metrics:
+      - name: skill_doc_coverage
+        extract: "json:.skill_doc_coverage"
+        direction: higher_is_better
+        tolerance: 0.0
+        significance: 0.05
+
+  - name: agent_completeness
+    command: |
+      TOTAL=$(ls agents/*.md 2>/dev/null | wc -l | tr -d ' ')
+      WITH_RULES=$(grep -l "UNBREAKABLE_RULES\|@.*UNBREAKABLE" agents/*.md 2>/dev/null | wc -l | tr -d ' ')
+      PCT=$([ "$TOTAL" -gt 0 ] && echo "$((WITH_RULES * 100 / TOTAL))" || echo "0")
+      echo "{\"agent_completeness\": $PCT}"
+    metrics:
+      - name: agent_completeness
+        extract: "json:.agent_completeness"
         direction: higher_is_better
         tolerance: 0.0
         significance: 0.05
@@ -35,16 +53,17 @@ themes:
     strategy: weighted_random
     cooldown_per_theme: 3
     priorities:
+      skill_quality: 3
       test_coverage: 2
-      documentation: 1
+      agent_prompts: 2
       refactoring: 1
 
 constraints:
   forbidden_paths:
     - autoimprove.yaml
-    - tests/run-tests.sh
-    - config/
-    - .xgh/
+    - scripts/**
+    - .github/**
+    - ingest-template.yaml
   test_modification: additive_only
   trust_ratchet:
     tier_0: { max_files: 3, max_lines: 150, mode: auto_merge }

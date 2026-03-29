@@ -159,13 +159,6 @@ local_agents:
     tools: ["Read", "Grep", "Glob"]
     capabilities: [retrieval, audit, memory]
 
-  codex-driver:
-    type: agent
-    model: sonnet
-    color: cyan
-    tools: ["Bash", "Read", "Glob", "Write"]
-    capabilities: [codex-dispatch, flag-detection, retry-logic, result-parsing]
-
   opencode-driver:
     type: agent
     model: sonnet

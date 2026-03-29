@@ -51,7 +51,6 @@ claude plugin install xgh@extreme-go-horse
 | Agent | Model | Capabilities |
 |-------|-------|-------------|
 | code-reviewer | sonnet | `code-review`, `architecture`, `conventions` |
-| codex-driver | sonnet | `codex`, `dispatch`, `execution` |
 | collaboration-dispatcher | sonnet | `dispatch`, `routing`, `coordination` |
 | context-curator | haiku | `context-tree`, `curation`, `indexing` |
 | investigation-lead | opus | `debugging`, `investigation`, `root-cause` |

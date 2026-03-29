@@ -18,7 +18,7 @@
 | `skills/coding-agents/coding-agents.md` | CLI probing logic, models.yaml generation | None (creates files) |
 | `skills/_shared/references/model-detection.md` | Shared model detection patterns | `~/.xgh/user_providers/*/models.yaml` |
 | `skills/opencode/opencode.md` | Add model detection to OpenCode dispatch | `model-detection.md` |
-| `skills/codex/codex.md` | Add model detection to Codex dispatch | `model-detection.md` |
+| ~~`skills/codex/codex.md`~~ | ~~Add model detection to Codex dispatch~~ | _Removed — codex-driver deprecated, replaced by ai-bridge_ |
 | `skills/gemini/gemini.md` | Add model detection to Gemini dispatch | `model-detection.md` |
 | `tests/test-coding-agents.sh` | Unit and integration tests | All components |
 | `config/agents.yaml` | Add coding-agents driver agent (if needed) | None |
@@ -613,10 +613,10 @@ git commit -m "refactor(opencode): use dynamic model detection"
 
 ---
 
-## Task 8: Update Codex dispatch skill with model detection
+## ~~Task 8: Update Codex dispatch skill with model detection~~ _(REMOVED — codex-driver deprecated, replaced by ai-bridge)_
 
 **Files:**
-- Modify: `skills/codex/codex.md`
+- ~~Modify: `skills/codex/codex.md`~~ — file deleted
 
 - [ ] **Step 1: Add model detection section**
 
@@ -658,6 +658,7 @@ fi
 
 **Then dispatch with the model flag:**
 ```bash
+# NOTE: xgh:codex-driver is deprecated — replaced by ai-bridge. Task 8 is moot.
 Agent tool: subagent_type="xgh:codex-driver"
 Prompt: "Dispatch type: exec ... $MODEL_FLAG"
 ```

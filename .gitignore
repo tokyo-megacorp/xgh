@@ -10,6 +10,9 @@
 .xgh/local/
 .xgh/model-profiles.yaml
 .xgh/docs/research/
+.xgh/run/
+.xgh/adversarial-review-*.md
+.xgh/pr-*.md
 data/cipher-sessions.db*
 .claude/settings.local.json
 .claude/scheduled_tasks.lock

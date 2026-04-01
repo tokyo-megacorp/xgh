@@ -1,6 +1,7 @@
 ---
 name: xgh:retrieve
 description: "This skill should be used when the user runs /xgh-retrieve or when invoked by the CronCreate scheduler (every 5 minutes). Headless retrieval loop — scans configured Slack channels, follows links 1-hop to Jira/Confluence/GitHub/Figma, stashes raw content to ~/.xgh/inbox/, and detects urgency."
+user_facing: false
 ---
 
 # xgh:retrieve — Retrieval Loop

@@ -1,6 +1,7 @@
 ---
 name: xgh:archive
 description: "Use this skill when the user runs /xgh-archive or /xgh-archive --obituary. Archives a file or feature by moving it to .xgh/archived/ with a timestamp prefix. With --obituary, also creates a GitHub issue labeled kind:decommission documenting what it did, why it was removed, what metric it failed to move, and who removed it — then stores the decision in LCM."
+user_facing: false
 ---
 
 # xgh:archive — Archive & Obituary Workflow

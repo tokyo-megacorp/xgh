@@ -1,6 +1,7 @@
 ---
 name: xgh:glm
 description: "This skill should be used when the user asks to \"dispatch to glm\", \"run glm\", \"glm exec\", \"glm review\", \"use glm for\", \"send to glm\", or wants to delegate implementation or code review tasks to Z.AI's GLM models via OpenCode CLI. Supports worktree-isolated parallel dispatch and same-directory sequential dispatch."
+user_facing: false
 ---
 
 > **Context-mode:** This skill primarily runs Bash commands. Use Bash directly for git

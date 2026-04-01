@@ -1,6 +1,7 @@
 ---
 name: xgh:calibrate
 description: "Use when running /xgh-calibrate or asking to tune the dedup threshold. Calibrates similarity threshold against real lossless-claude memory pairs, computes F1 scores at multiple thresholds, and offers to update analyzer.dedup_threshold in ingest.yaml."
+user_facing: false
 ---
 
 # xgh:calibrate — Dedup Threshold Calibration

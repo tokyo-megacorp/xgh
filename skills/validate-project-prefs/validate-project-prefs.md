@@ -1,6 +1,7 @@
 ---
 name: xgh:validate-project-prefs
 description: "Use when checking that skills read PR workflow values from config/project.yaml instead of hardcoding reviewer logins, repo names, or merge methods; and to audit all 11 preference domains, lib/preferences.sh health, hook ordering, and cross-domain dependencies."
+user_facing: false
 ---
 
 # xgh:validate-project-prefs — Preference Compliance Checker

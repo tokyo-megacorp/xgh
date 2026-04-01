@@ -1,6 +1,7 @@
 ---
 name: xgh:trigger
 description: "This skill should be used when the user runs /xgh-trigger or asks to list triggers, test triggers, silence noisy triggers, or view trigger firing history. Manages the xgh trigger engine — list, test, silence, and inspect trigger rules and their firing history."
+user_facing: false
 ---
 
 ---

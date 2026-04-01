@@ -1,6 +1,7 @@
 ---
 name: xgh:opencode
 description: "This skill should be used when the user asks to \"dispatch to opencode\", \"run opencode\", \"opencode exec\", \"opencode review\", \"use opencode for\", \"send to opencode\", or wants to delegate implementation or code review tasks to OpenCode CLI agent. Supports worktree-isolated parallel dispatch and same-directory sequential dispatch."
+user_facing: false
 ---
 
 > **Context-mode:** This skill primarily runs Bash commands. Use Bash directly for git

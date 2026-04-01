@@ -1,6 +1,7 @@
 ---
 name: xgh:frontmatter
 description: "This skill should be used when the user runs /xgh-frontmatter, asks to 'validate frontmatter', 'check frontmatter', 'fix frontmatter', 'audit file headers', or 'add missing frontmatter'. Validates YAML frontmatter in markdown files against the schema in config/frontmatter-spec.yaml, reports missing or invalid fields, and optionally auto-adds missing required fields with --fix."
+user_facing: false
 ---
 
 > **Output format:** Follow the [xgh output style guide](../../templates/output-style.md). Start with `## 🐴🤖 xgh frontmatter`. Use markdown tables for structured data. Use ✅ ⚠️ ❌ for status. End with an italicized next step.

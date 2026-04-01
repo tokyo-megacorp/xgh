@@ -1,6 +1,7 @@
 ---
 name: xgh:init-providers
 description: "This skill should be used when the user runs /xgh-init-providers, asks to 'regenerate providers', 'fix empty providers', 'providers directory is empty', or after manually editing ingest.yaml without running /xgh-track. Reads ingest.yaml and generates provider scripts in ~/.xgh/user_providers/ for all projects with github access."
+user_facing: false
 ---
 
 # xgh:init-providers — Generate Provider Scripts from ingest.yaml

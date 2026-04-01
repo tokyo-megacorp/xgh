@@ -1,6 +1,7 @@
 ---
 name: xgh:seed
 description: "Use when injecting xgh project context into another AI CLI agent before dispatch (Gemini, OpenCode). Writes a project-context brief to .gemini/skills/xgh/ or .opencode/skills/xgh/ so dispatched agents start with project memory pre-loaded."
+user_facing: false
 ---
 
 # xgh:seed — Context Injection for Dispatched Agents

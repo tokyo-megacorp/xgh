@@ -1,6 +1,7 @@
 ---
 name: xgh:config
 description: "This skill should be used when the user runs /xgh-config or asks to 'edit config', 'configure project', 'add project to xgh'. Structured YAML editor for ~/.xgh/ingest.yaml — supports showing sections by dot-path, setting values with type validation, adding/removing projects interactively, and validating required fields."
+user_facing: false
 ---
 
 # xgh:config — Manifest Editor

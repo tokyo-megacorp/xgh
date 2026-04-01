@@ -1,6 +1,7 @@
 ---
 name: xgh:init
 description: "This skill should be used when the user runs /xgh-init or says 'set up xgh', 'initialize xgh', 'get started'. First-run onboarding after install — verifies MCP connections, sets up profile, adds first project, runs initial retrieval, and optionally profiles the team and indexes the codebase."
+user_facing: false
 ---
 
 # xgh:init — First-Run Onboarding

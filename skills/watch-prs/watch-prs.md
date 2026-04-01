@@ -1,6 +1,7 @@
 ---
 name: xgh:watch-prs
 description: "Use /xgh-watch-prs to passively monitor PRs — surfaces review changes, new comments, CI status, and merge-readiness without touching anything. Never merges, never fixes comments, never requests reviews. Pairs with /xgh-ship-prs for active orchestration."
+user_facing: false
 ---
 
 > **Output format:** Start with `## 🐴🤖 xgh watch-prs`. Use markdown tables for state snapshots. Use ✅ ⚠️ ❌ for status. Show change-log between polls as bullet list. Keep per-poll output terse.

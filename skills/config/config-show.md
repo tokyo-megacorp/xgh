@@ -1,6 +1,7 @@
 ---
 name: xgh:config-show
 description: "This skill should be used when the user runs /xgh-config show or asks to 'show preferences', 'show project config', 'what are the current preferences', 'show resolved config'. Displays all resolved preferences for the current branch from config/project.yaml, with source attribution (project default vs branch override) and a pending preferences count."
+user_facing: false
 ---
 
 # xgh:config-show — Display Resolved Project Preferences

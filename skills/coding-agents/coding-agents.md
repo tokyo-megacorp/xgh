@@ -1,6 +1,7 @@
 ---
 name: xgh:coding-agents
 description: "Use when the user asks to \"/xgh-coding-agents\", wants to see available coding agents (OpenCode, Gemini), probe CLI capabilities, or refresh model mappings."
+user_facing: false
 ---
 
 # xgh:coding-agents — Coding Agent Management

@@ -1,6 +1,7 @@
 ---
 name: xgh:analyze
 description: "This skill should be used when the user runs /xgh-analyze, when invoked by the CronCreate scheduler, or when ~/.xgh/inbox/.urgent exists. Headless analyzer loop — reads ~/.xgh/inbox/, classifies content types, extracts structured memories, deduplicates against lossless-claude, writes to workspace or personal collection, manages TTL, and generates Obsidian-compatible daily digest."
+user_facing: false
 ---
 
 # xgh:analyze — Analysis Loop

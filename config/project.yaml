@@ -110,7 +110,7 @@ preferences:
 
   pr:
     provider: github
-    repo: extreme-go-horse/xgh
+    repo: tokyo-megacorp/xgh
     reviewer: copilot-pull-request-reviewer[bot]
     reviewer_comment_author: Copilot
     review_on_push: true

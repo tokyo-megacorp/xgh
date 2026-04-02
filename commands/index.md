@@ -1,6 +1,6 @@
 ---
 name: xgh-index
-description: Raw codebase inventory — extracts module list, key files, and naming conventions into lossless-claude memory.
+description: Raw codebase inventory — extracts module list, key files, and naming conventions into MAGI memory.
 ---
 
 ARGUMENTS: $ARGUMENTS

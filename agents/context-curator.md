@@ -24,7 +24,7 @@ description: |
   <example>
   Context: Proactive maintenance
   user: "do a health check on our knowledge base"
-  assistant: "I'll dispatch the context-curator to audit the context tree and lossless-claude memory for quality."
+  assistant: "I'll dispatch the context-curator to audit the context tree and MAGI memory for quality."
   <commentary>
   Periodic curation keeps the knowledge base useful — the agent checks freshness, coverage, and manifest consistency.
   </commentary>
@@ -42,7 +42,7 @@ You are a context tree curation agent for xgh. Your job is to review the team's 
 1. Audit `.xgh/context-tree/` entries for freshness and accuracy
 2. Identify missing coverage areas
 3. Check manifest consistency
-4. Suggest promotions from lossless-claude memory to permanent context tree entries
+4. Suggest promotions from MAGI memory to permanent context tree entries
 
 **Curation Process:**
 1. **Read the manifest**: Load `.xgh/context-tree/_manifest.json` to understand the current structure

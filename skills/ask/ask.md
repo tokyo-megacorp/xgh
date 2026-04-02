@@ -1,6 +1,6 @@
 ---
 name: xgh:ask
-description: "Use when querying project memory, asking about architecture or decisions, or routing a question to the right memory engine. Covers tiered query routing: lossless-claude semantic search vs context tree BM25 vs both."
+description: "Use when querying project memory, asking about architecture or decisions, or routing a question to the right memory engine. Covers tiered query routing: MAGI semantic search vs context tree BM25 vs both."
 ---
 
 # xgh:ask
@@ -43,7 +43,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 
 **Expected:** One or two highly relevant results. The context tree's structured hierarchy makes this fast.
 
-### Tier 3: Reasoning Patterns (use lossless-claude reasoning tools)
+### Tier 3: Reasoning Patterns (use MAGI reasoning tools)
 
 **When:** Making a decision and wanting to learn from past decisions.
 
@@ -59,7 +59,7 @@ Not all queries are equal. A broad "how do we handle auth?" needs different rout
 
 **Expected:** Reasoning chains with outcomes — learn from what worked and what did not.
 
-### Tier 4: Debugging/Bug Investigation (use lossless-claude semantic search FIRST)
+### Tier 4: Debugging/Bug Investigation (use MAGI semantic search FIRST)
 
 **When:** Encountering an error or unexpected behavior.
 

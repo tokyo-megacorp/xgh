@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: |
-  Use this agent to review code quality within a collaboration workflow — evaluates implementations against architecture, conventions, and team patterns stored in lossless-claude memory. Handles in-session file-level review; for GitHub PR review, use pr-reviewer instead. Examples:
+  Use this agent to review code quality within a collaboration workflow — evaluates implementations against architecture, conventions, and team patterns stored in MAGI memory. Handles in-session file-level review; for GitHub PR review, use pr-reviewer instead. Examples:
 
   <example>
   Context: Implementation task completed in a collaboration thread
@@ -37,7 +37,7 @@ The code-reviewer is a focused review specialist within xgh multi-agent workflow
 2. **Evaluates** code against team conventions, architecture decisions, and past patterns
 3. **Flags** issues (bugs, style violations, security concerns, missing tests)
 4. **Approves or rejects** with structured feedback
-5. **Stores** review findings to lossless-claude so patterns are available to future reviews
+5. **Stores** review findings to MAGI so patterns are available to future reviews
 
 The reviewer does NOT implement changes itself. It documents findings and hands off to the implementing agent.
 

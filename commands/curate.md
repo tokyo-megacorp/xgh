@@ -64,7 +64,7 @@ Use the `xgh:curate` skill to:
    - If the domain does not exist in the manifest, create it
    - Include: name, path, importance, maturity
 
-### Step 4: Store in lossless-claude
+### Step 4: Store in MAGI
 
 1. Extract key learnings as a concise summary (3-7 bullets), then call magi_store with the
    summary as body and context-appropriate tags. Do not pass raw conversation content to magi_store.

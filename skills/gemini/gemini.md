@@ -154,7 +154,7 @@ Follow `skills/_shared/references/dispatch-template.md` Step 4.
 
 Follow `skills/_shared/references/dispatch-template.md` Step 5. Use `<CLI_LABEL>` = `Gemini`, `<cli>` = `gemini`.
 
-**Write observation to model profiles** (always, regardless of lossless-claude):
+**Write observation to model profiles** (always, regardless of MAGI):
 
 After the dispatch completes, append one observation to `.xgh/model-profiles.yaml`. Create the file if it doesn't exist.
 

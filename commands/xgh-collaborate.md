@@ -51,7 +51,7 @@ Start a multi-agent collaboration workflow using the xgh collaboration bus.
 3. The dispatcher orchestrates the workflow:
    - Assigns agents to roles defined in the workflow template
    - Drives each step in order, respecting `depends_on` and `condition` fields
-   - Stores all inter-agent messages in lossless-claude workspace under the `thread_id`
+   - Stores all inter-agent messages in MAGI workspace under the `thread_id`
    - Loops through feedback cycles until completion conditions are met
 
 4. Reports workflow progress and final status to the user.
@@ -67,8 +67,8 @@ Start a multi-agent collaboration workflow using the xgh collaboration bus.
 
 ## Message Protocol
 
-All inter-agent messages use the xgh message protocol stored in lossless-claude workspace. See `skills/collab/collab.md` for full protocol details.
+All inter-agent messages use the xgh message protocol stored in MAGI workspace. See `skills/collab/collab.md` for full protocol details.
 
 ## Dispatcher Agent
 
-The collaboration-dispatcher agent (`agents/collaboration-dispatcher.md`) manages the full workflow lifecycle — reading templates, assigning roles, dispatching tasks, and monitoring progress via lossless-claude workspace messages.
+The collaboration-dispatcher agent (`agents/collaboration-dispatcher.md`) manages the full workflow lifecycle — reading templates, assigning roles, dispatching tasks, and monitoring progress via MAGI workspace messages.

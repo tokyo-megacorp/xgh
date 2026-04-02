@@ -1,7 +1,7 @@
 ---
 name: collaboration-dispatcher
 description: |
-  Use this agent to orchestrate multi-agent workflows — manages collaboration threads, dispatches work items, monitors progress, and routes messages between agents via lossless-claude memory. Examples:
+  Use this agent to orchestrate multi-agent workflows — manages collaboration threads, dispatches work items, monitors progress, and routes messages between agents via MAGI memory. Examples:
 
   <example>
   Context: User wants to run a structured review workflow
@@ -33,7 +33,7 @@ A subagent that orchestrates multi-agent workflows through MAGI workspace memory
 
 The collaboration-dispatcher is the traffic controller for multi-agent workflows. It:
 
-1. **Creates** collaboration threads in lossless-claude workspace
+1. **Creates** collaboration threads in MAGI workspace
 2. **Dispatches** work items to agents according to workflow templates
 3. **Monitors** thread progress and routes messages between agents
 4. **Enforces** workflow rules (ordering, dependencies, gates)

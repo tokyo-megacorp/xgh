@@ -21,7 +21,7 @@ Start a systematic investigation of a bug or incident. Reads context from Slack,
 ## Behavior
 
 1. Load the `xgh:investigate` skill from `skills/investigate/investigate.md`
-2. Auto-detect available MCP integrations (Slack, Jira, lossless-claude)
+2. Auto-detect available MCP integrations (Slack, Jira, MAGI)
 3. If a Slack thread URL was provided, read the thread immediately
 4. If no URL was provided, ask the user to describe the issue or paste a URL
 5. Execute all 4 phases of the investigate workflow:

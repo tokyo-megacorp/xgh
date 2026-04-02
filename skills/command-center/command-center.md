@@ -201,7 +201,7 @@ If neither is active:
 Compact output — one line per project, counts only:
 
 ```
-🐴🤖 pulse — context-mode: 2 new · xgh: quiet · inspector: quiet · lossless-claude: quiet
+🐴🤖 pulse — context-mode: 2 new · xgh: quiet · inspector: quiet · MAGI: quiet
 ```
 
 For each project, fetch only the count of new/open items from GitHub (unread PRs + assigned issues). Skip memory and Slack for pulse. Output on a single line.

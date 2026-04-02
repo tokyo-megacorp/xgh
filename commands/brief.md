@@ -11,7 +11,7 @@ Run the `xgh:briefing` skill to generate a structured morning/session briefing.
 
 The briefing will:
 
-1. Detect which integrations are available (Slack, Jira, GitHub, lossless-claude)
+1. Detect which integrations are available (Slack, Jira, GitHub, MAGI)
 2. Query each source for urgent items, in-progress work, and incoming tasks
 3. Produce a categorised summary with a single Suggested Focus
 4. Ask how you'd like to proceed

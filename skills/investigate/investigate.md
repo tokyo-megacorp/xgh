@@ -363,6 +363,6 @@ Generate a structured investigation report.
 | 3 failed hypotheses hard gate | Prevents infinite rabbit holes. Forces the agent to seek human expertise. |
 | One hypothesis at a time | Forces focus. Prevents shotgun debugging. |
 | Report saved to context tree | Future investigations can reference past findings. Searchable by team. |
-| Curated to lossless-claude | Semantic search finds similar bugs even with different keywords. |
+| Curated to MAGI | Semantic search finds similar bugs even with different keywords. |
 | Interactive triage before debug | Avoids duplicate work. Connects to existing team workflows. |
 | Graceful degradation | Works for any team regardless of MCP configuration. |

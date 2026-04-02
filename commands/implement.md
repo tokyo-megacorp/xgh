@@ -22,7 +22,7 @@ Implement a ticket end-to-end. Gathers context from every available source (tick
 ## Behavior
 
 1. Load the `xgh:implement` skill from `skills/implement/implement.md`
-2. Auto-detect available MCP integrations (Jira, Slack, Figma, lossless-claude)
+2. Auto-detect available MCP integrations (Jira, Slack, Figma, MAGI)
 3. If a ticket ID was provided, fetch it immediately
 4. If no ticket ID was provided:
    - If task manager MCP available: search for recently assigned tickets

@@ -28,7 +28,7 @@ Follow the shared detection protocol in `skills/_shared/references/mcp-auto-dete
 | Integration | Detection signal | Capability |
 |-------------|-----------------|------------|
 | Atlassian | `searchJiraIssuesUsingJql` tool available | Ticket history, open backlog |
-| lossless-claude | `lcm_search` tool available (lossless-claude) | Cache profiles, recall past analyses |
+| MAGI | `magi_query` tool available | Cache profiles, recall past analyses |
 
 If Atlassian MCP is not available, abort with:
 
@@ -36,8 +36,8 @@ If Atlassian MCP is not available, abort with:
 Atlassian MCP is required for this skill. Run /xgh-setup to configure it.
 ```
 
-If lossless-claude is available, search for a cached profile before fetching:
-- Query: [SEARCH] → call `lcm_search("team-profile <engineer name>")`
+If MAGI is available, search for a cached profile before fetching:
+- Query: [SEARCH] → call `magi_query("team-profile <engineer name>")`
 - If a profile exists from the last 7 days, offer to use cached data or refresh
 
 ---
@@ -341,9 +341,9 @@ Print a concise summary to the conversation with key highlights:
 - Top 3 recommended tickets (if project key provided)
 - Any notable findings (e.g., "cycle time has increased 40% in the last 30d vs 90d average")
 
-### lossless-claude Storage (if available)
+### MAGI Storage (if available)
 
-After generating the report, use [STORE] → call `lcm_store(text, ["reasoning"])` to store:
+After generating the report, use [STORE] → call `magi_store(path, title, body, tags)` to store:
 - Engineer throughput baseline (for future comparison)
 - Sweet spot identification (for future assignment queries)
 - Estimation basis (so future sessions can reference without re-fetching)

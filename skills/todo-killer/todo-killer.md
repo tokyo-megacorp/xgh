@@ -89,7 +89,7 @@ TODO: migrate to async/await — callback hell
 Context: 30 lines around the comment
 ```
 
-Before fixing, also run [SEARCH] → call `lcm_search('TODO context: <todo text>')` — check if this has been attempted before or if there's a known pattern for the migration.
+Before fixing, also run [SEARCH] → call `magi_query('TODO context: <todo text>')` — check if this has been attempted before or if there's a known pattern for the migration.
 
 ### 2b. Classify fixability
 
@@ -178,13 +178,13 @@ Never write `status: deprecated` or higher directly — that's human intent.
 
 ## Deduplication
 
-Before writing to `patterns.yaml`, check lossless-claude memory for existing knowledge about the same pattern:
+Before writing to `patterns.yaml`, check MAGI memory for existing knowledge about the same pattern:
 
 ```
-lcm_search("TODO migration async/await [REPO]")
+magi_query("TODO migration async/await [REPO]")
 ```
 
-If lossless-claude already has this as a team decision, use that context to set richer metadata.
+If MAGI already has this as a team decision, use that context to set richer metadata.
 
 ## When to Skip
 

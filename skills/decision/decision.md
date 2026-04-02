@@ -12,10 +12,10 @@ Follow the shared execution mode protocol in `skills/_shared/references/executio
 
 ---
 
-# xgh:decision — LCM Decision → GitHub Issue Pipeline
+# xgh:decision — MAGI Decision → GitHub Issue Pipeline
 
 Records a decision through the full UNBREAKABLE_RULES §10 pipeline:
-`lcm_store` → `gh issue create` → `gh project item-add`
+`magi_store` → `gh issue create` → `gh project item-add`
 
 ## Usage
 
@@ -67,14 +67,14 @@ If detection fails or output is empty, prompt: `Which GitHub repo? (owner/repo f
 
 ## Step 2 — Idempotency check
 
-Before creating anything, search LCM for a recent matching decision:
+Before creating anything, search MAGI for a recent matching decision:
 
-Use `lcm_search` with query: the decision text (or key phrases from it), filtered to tag `category:decision`.
+Use `magi_query` with query: the decision text (or key phrases from it).
 
 If a match is found whose stored text closely resembles the current decision, report:
 ```
 ⚠️  Duplicate detected: this decision was already recorded.
-   LCM ID: {lcm_id}
+   MAGI path: {magi_path}
    Issue: {issue_url}
    Stored: {date}
 
@@ -89,9 +89,11 @@ Show what would be created without executing:
 ```
 DRY RUN — nothing will be created
 
-  LCM entry:
-    text: "Decision: {decision text} | Owner: {owner} | Sprint: {sprint} | Repo: {repo}"
-    tags: ["category:decision", "owner:{owner}", "sprint:{sprint}", "project:xgh"]
+  MAGI entry:
+    path: "decisions/{slug}.md"
+    title: "Decision: {decision text}"
+    body: "Decision: {decision text} | Owner: {owner} | Sprint: {sprint} | Repo: {repo}"
+    tags: "category:decision,owner:{owner},sprint:{sprint}"
 
   GitHub Issue (to be created in {repo}):
     Title: Decision: {decision text}
@@ -104,8 +106,8 @@ DRY RUN — nothing will be created
       {owner}
       ## Sprint
       {sprint}
-      ## LCM Reference
-      (assigned after lcm_store)
+      ## MAGI Reference
+      (assigned after magi_store)
 
   Project item: would be added to project #{project} (if detected)
 ```
@@ -116,13 +118,15 @@ Stop after preview — do not execute any real operations.
 
 Execute in order. If any step fails, report the failure and stop.
 
-### 4a — LCM store
+### 4a — MAGI store
 
-Call `lcm_store` MCP tool with:
-- `text`: `"Decision: {decision text} | Owner: {owner} | Sprint: {sprint} | Repo: {repo}"`
-- `tags`: `["category:decision", "owner:{owner}", "sprint:{sprint}"]`
+Call `magi_store` MCP tool with:
+- `path`: `"decisions/{slug}.md"`
+- `title`: `"Decision: {decision text}"`
+- `body`: `"Decision: {decision text} | Owner: {owner} | Sprint: {sprint} | Repo: {repo}"`
+- `tags`: `"category:decision,owner:{owner},sprint:{sprint}"`
 
-Capture the returned `id` as `{lcm_id}`.
+Capture the returned path as `{magi_path}`.
 
 ### 4b — GitHub Issue create
 
@@ -142,8 +146,8 @@ Recorded via /xgh-track decision
 ## Sprint
 {sprint}
 
-## LCM Reference
-{lcm_id}"
+## MAGI Reference
+{magi_path}"
 ```
 
 Attempt with `--label "decision"` first. If that fails (label doesn't exist in repo), retry without the label flag.
@@ -183,7 +187,7 @@ If project detection fails or returns empty, skip and note: "⚠️ No project l
   Owner:    {owner}
   Sprint:   {sprint}
 
-  LCM:    {lcm_id}
+  MAGI:   {magi_path}
   Issue:  {issue_url}
   Project: #{project} — item added ✓  (or: ⚠️ not linked)
 
@@ -198,8 +202,8 @@ If the "decision" label doesn't exist in the target repo, `gh issue create --lab
 ### Wrong org for project
 `gh project item-add` requires `--owner` to be the org/user who owns the project, not necessarily the repo org.
 
-### LCM store before issue create
-Always call `lcm_store` first — the `lcm_id` is embedded in the issue body for auditability.
+### MAGI store before issue create
+Always call `magi_store` first — the MAGI path is embedded in the issue body for auditability.
 
 ### Idempotency scope
-Idempotency is checked only via LCM search. If LCM is unavailable, skip the check with a warning: "⚠️ LCM unavailable — skipping duplicate check."
+Idempotency is checked only via MAGI search. If MAGI is unavailable, skip the check with a warning: "⚠️ MAGI unavailable — skipping duplicate check."

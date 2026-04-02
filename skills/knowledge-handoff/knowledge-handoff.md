@@ -101,15 +101,19 @@ affectedFiles: [list of key files]
 When merge is detected:
 
 ```
-Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
-Query: "[branch-name] decisions patterns implementation"
+Tool: magi_query(query)
+Parameters:
+  query: "[branch-name] decisions patterns implementation"
+  limit: 10
 ```
 
 Also gather from the PR context bridge thread (if available):
 
 ```
-Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
-Query: "thread:PR-[branch-name] context summary"
+Tool: magi_query(query)
+Parameters:
+  query: "PR-[branch-name] context summary"
+  limit: 10
 ```
 
 ### Step 2: Analyze affected files
@@ -151,8 +155,8 @@ Coupling signal: token-refresh.ts + rate-limits.yaml changed together — rate l
 ### Step 3: Extract learnings from session
 
 ```
-Extract key learnings as a concise summary (3-7 bullets), then call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store.
-Use tags: ["workspace"]
+Extract key learnings as a concise summary (3-7 bullets), then call magi_store with the summary text and context-appropriate tags. Do not pass raw conversation content to magi_store.
+Use tags: "workspace"
 Context: "Merge of [branch-name]. Extract patterns, gotchas, key files, architecture decisions, and warnings for the next developer."
 ```
 
@@ -161,15 +165,12 @@ Context: "Merge of [branch-name]. Extract patterns, gotchas, key files, architec
 Compile the gathered information into the handoff structure above.
 
 ```
-Tool: lcm_store(text, ["workspace"])
-Content: [compiled handoff summary in the structure above]
-Metadata:
-  type: handoff
-  scope: handoff
-  thread: handoff-[branch-name]
-  domain: [detected domain]
-  affectedFiles: [list of changed files]
-  status: completed
+Tool: magi_store(path, title, body, tags)
+Parameters:
+  path: "handoffs/[domain]/[date]-[branch-name].md"
+  title: "Handoff: [area/feature name]"
+  body: [compiled handoff summary in the structure above]
+  tags: "workspace,handoff"
 ```
 
 ### Step 5: Sync to context tree
@@ -184,11 +185,10 @@ Write the handoff to the context tree at the appropriate domain path:
 When any developer's Claude touches files that were part of a recent handoff, the session-start hook queries:
 
 ```
-Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
-Query: "handoff [file-path] gotchas patterns warnings"
-Filter:
-  type: handoff
-  affectedFiles: [current file]
+Tool: magi_query(query)
+Parameters:
+  query: "handoff [file-path] gotchas patterns warnings"
+  limit: 5
 ```
 
 The retrieved handoff context is injected into the developer's session automatically.
@@ -199,9 +199,9 @@ The retrieved handoff context is injected into the developer's session automatic
 
 | Tool | Usage |
 |---|---|
-| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, ["workspace"])` | Extract session learnings for handoff summary generation. Do not pass raw conversation content to lcm_store. |
-| [STORE] → call `lcm_store(text, ["workspace"])` | Store the compiled handoff summary to workspace |
-| [SEARCH] → call `lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })` | Query PR thread context; auto-query handoffs for next developer |
+| Extract 3-7 bullet summary → [STORE] → call `magi_store(path, title, body, tags)` | Extract session learnings for handoff summary generation. Do not pass raw conversation content to magi_store. |
+| [STORE] → call `magi_store(path, title, body, tags)` | Store the compiled handoff summary to workspace |
+| [SEARCH] → call `magi_query(query)` | Query PR thread context; auto-query handoffs for next developer |
 
 ## Composability
 

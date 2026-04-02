@@ -1,6 +1,6 @@
 ---
 name: xgh:implement
-description: "This skill should be used when the user runs /xgh-implement or asks to implement a ticket, 'implement this Jira ticket', 'build this feature', 'start on this task'. Full-context ticket implementation — gathers context from Jira, Slack, Figma, and lossless-claude memory, then drives a complete implementation from ticket to PR."
+description: "This skill should be used when the user runs /xgh-implement or asks to implement a ticket, 'implement this Jira ticket', 'build this feature', 'start on this task'. Full-context ticket implementation — gathers context from Jira, Slack, Figma, and MAGI memory, then drives a complete implementation from ticket to PR."
 ---
 
 ## Preamble — Execution mode
@@ -149,7 +149,7 @@ Consider delegating to `xgh:design` if the ticket is UI-heavy.
 
 ### Step 2.3: xgh Memory (if memory backend available — see `_shared/references/memory-backend.md`)
 
-[SEARCH] related past work — call `lcm_search(query)` for each:
+[SEARCH] related past work — call `magi_query(query)` for each:
 - Ticket title and key terms
 - Affected module/component names (e.g., "rate limiting", "middleware", "API")
 - Technical domain (e.g., "authentication", "caching")
@@ -159,7 +159,7 @@ Surfaces: related past work, team conventions, architecture decisions, similar f
 
 After implementing, extract key learnings as a concise summary (3–7 bullets):
 
-[STORE] learnings, tags: `["session"]` — call `lcm_store(summary, ["session"])`. Do not pass raw conversation content.
+[STORE] learnings, tags: `"session"` — call `magi_store(path, title, summary, "session")`. Do not pass raw conversation content.
 
 ### Step 2.4: Codebase Analysis (always)
 
@@ -453,7 +453,7 @@ Ready for review.
 
 #### Step 6.4: Curate Learnings (if memory backend available — see `_shared/references/memory-backend.md`)
 
-Extract key learnings as a concise summary (3–7 bullets). [STORE] tags: `["session"]` — call `lcm_store(summary, ["session"])`. Do not pass raw conversation content. Store:
+Extract key learnings as a concise summary (3–7 bullets). [STORE] tags: `"session"` — call `magi_store(path, title, summary, "session")`. Do not pass raw conversation content. Store:
 - Implementation patterns used (middleware pattern, config pattern)
 - Decisions made and rationale (token-bucket vs sliding-window)
 - New conventions established (rate limit config format)

@@ -1,6 +1,6 @@
 ---
 name: xgh:index
-description: "This skill should be used when the user runs /xgh-index or asks to 'index repo', 'index codebase', 'scan the codebase'. Raw codebase inventory — extracts module list, key files, and naming conventions into lossless-claude memory. Reads stack and surfaces from ~/.xgh/ingest.yaml."
+description: "This skill should be used when the user runs /xgh-index or asks to 'index repo', 'index codebase', 'scan the codebase'. Raw codebase inventory — extracts module list, key files, and naming conventions into MAGI memory. Reads stack and surfaces from ~/.xgh/ingest.yaml."
 ---
 
 # xgh:index — Codebase Inventory
@@ -66,19 +66,20 @@ Sample 5–10 files across the repo. Extract:
 
 ## Step 7 — Store to memory
 
-For each module found, [STORE] → call `lcm_store` with a summary in this exact format:
+For each module found, [STORE] → call `magi_store` with a summary in this exact format:
 
 ```
-[REPO][MODULE] <module-name>: <one-sentence purpose>
-Key files: path/to/file1, path/to/file2
-Pattern: <naming or architectural pattern observed>
-Stack: <stack from ingest.yaml>
-Indexed: <ISO date>
+path: "index/<repo-name>/<module-name>.md"
+title: "[REPO][MODULE] <module-name>: <one-sentence purpose>"
+body: |
+  Key files: path/to/file1, path/to/file2
+  Pattern: <naming or architectural pattern observed>
+  Stack: <stack from ingest.yaml>
+  Indexed: <ISO date>
+tags: "xgh:index,<repo-name>"
 ```
 
-Tags: `["xgh:index", "<repo-name>"]`
-
-Do not pass raw file content to `lcm_store` (or equivalent — see `_shared/references/memory-backend.md`). Synthesize a concise summary for each module.
+Do not pass raw file content to `magi_store` (or equivalent — see `_shared/references/memory-backend.md`). Synthesize a concise summary for each module.
 
 ## Step 8 — Update index timestamp
 

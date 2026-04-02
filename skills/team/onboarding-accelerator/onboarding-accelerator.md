@@ -13,7 +13,7 @@ description: "This skill should be used when a new developer starts their first 
 
 ## When This Skill Activates
 
-- First session for a new developer (detected by: no prior session history in lossless-claude, or explicit `/xgh onboard` command)
+- First session for a new developer (detected by: no prior session history in MAGI, or explicit `/xgh onboard` command)
 - When a developer explicitly asks for a project overview or team context
 - When session-start hook detects an unrecognized developer identifier
 
@@ -21,18 +21,15 @@ description: "This skill should be used when a new developer starts their first 
 
 ## Knowledge Categories
 
-The onboarding accelerator queries lossless-claude for five categories of team knowledge:
+The onboarding accelerator queries MAGI for five categories of team knowledge:
 
 ### 1. Architecture Decisions
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
   query: "architecture decisions design system structure"
-  scope: workspace
-  filter:
-    type: decision
-    maturity: core OR validated
+  limit: 10
 ```
 
 Surfaces: major architecture choices, system design, module boundaries, data flow, technology choices with rationale.
@@ -40,14 +37,10 @@ Surfaces: major architecture choices, system design, module boundaries, data flo
 ### 2. Coding Conventions
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
   query: "convention rules patterns naming style"
-  scope: workspace
-  filter:
-    type: convention
-    scope: team
-    maturity: core OR validated
+  limit: 10
 ```
 
 Surfaces: code style rules, naming conventions, patterns to follow, patterns to avoid, testing requirements.
@@ -55,12 +48,10 @@ Surfaces: code style rules, naming conventions, patterns to follow, patterns to 
 ### 3. Gotchas and Warnings
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
   query: "gotcha warning trap pitfall edge-case unexpected"
-  scope: workspace
-  filter:
-    type: gotcha OR type: warning OR type: handoff
+  limit: 10
 ```
 
 Surfaces: non-obvious behaviors, common mistakes, edge cases, "things that look right but aren't", workarounds.
@@ -68,12 +59,10 @@ Surfaces: non-obvious behaviors, common mistakes, edge cases, "things that look 
 ### 4. Incidents and Fixes
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
   query: "incident bug fix root-cause investigation"
-  scope: workspace
-  filter:
-    type: incident OR type: investigation
+  limit: 10
 ```
 
 Surfaces: past production issues, root causes, fixes applied, prevention measures, monitoring gaps.
@@ -81,12 +70,10 @@ Surfaces: past production issues, root causes, fixes applied, prevention measure
 ### 5. Ownership Map
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
   query: "ownership module area responsible team member"
-  scope: workspace
-  filter:
-    type: ownership OR type: handoff
+  limit: 10
 ```
 
 Surfaces: who owns what modules, who to ask about what, recent handoffs, domain expertise map.
@@ -205,7 +192,7 @@ After the briefing, prompt the new developer:
 I'll pull up the specific context you need."
 ```
 
-When the developer asks about a specific area, query lossless-claude for deep context on that domain and present it with full detail.
+When the developer asks about a specific area, query MAGI for deep context on that domain and present it with full detail.
 
 ---
 
@@ -214,18 +201,17 @@ When the developer asks about a specific area, query lossless-claude for deep co
 Track the onboarding session for future reference:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "onboarding/[developer-identifier]-[date].md"
+  title: "Onboarding: [developer identifier]"
+  body: |
     Onboarding session completed for [developer identifier].
     Knowledge delivered: [N] architecture, [N] conventions, [N] gotchas, [N] incidents, [N] ownership.
     Areas of interest: [what the developer asked about]
     Gaps identified: [areas with thin documentation]
-  metadata:
-    type: onboarding
-    scope: team
-    developer: [identifier]
-    session_date: [ISO timestamp]
+    Session date: [ISO timestamp]
+  tags: "onboarding,session"
 ```
 
 ---
@@ -234,9 +220,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| [SEARCH] → call `lcm_search(query)` | Query all 5 knowledge categories for onboarding briefing |
-| [STORE] → call `lcm_store(text, ["reasoning"])` | Store onboarding session metadata and identified gaps |
-| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, context-tag)` | Extract session learnings if developer shares new context |
+| [SEARCH] → call `magi_query(query)` | Query all 5 knowledge categories for onboarding briefing |
+| [STORE] → call `magi_store(path, title, body, tags)` | Store onboarding session metadata and identified gaps |
+| Extract 3-7 bullet summary → [STORE] → call `magi_store(path, title, body, tags)` | Extract session learnings if developer shares new context |
 
 ## Composability
 

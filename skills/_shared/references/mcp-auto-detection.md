@@ -17,7 +17,7 @@ See [`memory-backend.md`](memory-backend.md) for canonical memory ops — use `[
 
 | Integration | Detection signal | Capability |
 |-------------|-----------------|------------|
-| lossless-claude | `mcp__lossless-claude__lcm_search` tool available | xgh memory, session state, conventions |
+| MAGI | `mcp__magi__magi_query` tool available | xgh memory, session state, conventions |
 | cipher (legacy) | `cipher_memory_search` tool available | xgh memory (legacy backend) |
 | Slack MCP | `mcp__claude_ai_Slack__slack_read_thread` tool available | Thread reading, message search |
 | Atlassian/Jira | `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJQL` tool available | Ticket history, task management |
@@ -30,7 +30,7 @@ See [`memory-backend.md`](memory-backend.md) for canonical memory ops — use `[
 After detection, surface which integrations are available so the user understands what is active:
 
 ```
-✓ lossless-claude — memory and conventions available
+✓ MAGI — memory and conventions available
 ✓ Slack — thread reading and search available
 ✓ Atlassian — Jira ticket access available
 ✗ Figma — not configured (will ask for manual input if needed)
@@ -40,7 +40,7 @@ Or with legacy backend:
 
 ```
 ✓ cipher (legacy) — memory available
-✗ lossless-claude — not configured
+✗ MAGI — not configured
 ```
 
 ## Graceful Degradation Principle

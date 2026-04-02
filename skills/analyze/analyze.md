@@ -1,6 +1,6 @@
 ---
 name: xgh:analyze
-description: "This skill should be used when the user runs /xgh-analyze, when invoked by the CronCreate scheduler, or when ~/.xgh/inbox/.urgent exists. Headless analyzer loop — reads ~/.xgh/inbox/, classifies content types, extracts structured memories, deduplicates against lossless-claude, writes to workspace or personal collection, manages TTL, and generates Obsidian-compatible daily digest."
+description: "This skill should be used when the user runs /xgh-analyze, when invoked by the CronCreate scheduler, or when ~/.xgh/inbox/.urgent exists. Headless analyzer loop — reads ~/.xgh/inbox/, classifies content types, extracts structured memories, deduplicates against MAGI, writes to workspace or personal collection, manages TTL, and generates Obsidian-compatible daily digest."
 ---
 
 # xgh:analyze — Analysis Loop
@@ -99,8 +99,8 @@ For each classified item, build this payload:
 ## Step 5 — Deduplicate
 
 Before writing each payload:
-1. Call [SEARCH] → call `lcm_search(query)` with the summary text as query
-2. If any result has similarity score ≥ `analyzer.dedup_threshold` (default 0.85):
+1. Call [SEARCH] → call `magi_query(query)` with the summary text as query
+2. If any result has score ≥ `analyzer.dedup_threshold` (default 0.85):
    - Skip writing a new entry (the existing memory covers this content)
 3. If no near-duplicate, proceed to Step 6
 
@@ -109,26 +109,26 @@ Before writing each payload:
 Track run count in `~/.xgh/logs/.analyzer-run-count` (increment each run, reset at 100).
 
 When count mod 5 == 0:
-1. Search lossless-claude for memories with `xgh_status: active` and non-null `xgh_ttl`
+1. Search MAGI for memories with `xgh_status: active` and non-null `xgh_ttl` via `magi_query("xgh_status active")`
 2. For each where `xgh_ttl` < now: mark as `xgh_status: decayed` in the next digest
 3. Check if any current inbox items reference the same project/topic as decayed memories — if so, reset their TTL to now + original duration
 
-## Step 7 — Write to lossless-claude
+## Step 7 — Write to MAGI
 
-> **Note:** lossless-claude writes are always allowed regardless of provider access levels. lossless-claude is internal memory, not an external provider — the `providers.<type>.access` setting only governs writes back to external services (Slack, Jira, Confluence, GitHub, Figma).
+> **Note:** MAGI writes are always allowed regardless of provider access levels. MAGI is internal memory, not an external provider — the `providers.<type>.access` setting only governs writes back to external services (Slack, Jira, Confluence, GitHub, Figma).
 
 Route based on `content_types.<type>.promote_to` from `ingest.yaml`:
 
-**workspace** → Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the summary text and tags: ["workspace"]. Do not pass raw conversation content to lcm_store.
+**workspace** → Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call magi_store with the summary text and tags: "workspace". Do not pass raw conversation content to magi_store.
 
 ```
-lcm_store("<summary>", ["workspace"])
+magi_store("workspace/<project>/<slug>.md", "<title>", "<summary>", "workspace")
 ```
 
-**personal** → Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"].
+**personal** → Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call magi_store with the summary text and context-appropriate tags. Do not pass raw conversation content to magi_store. Use tags: "session".
 
 ```
-lcm_store("<summary>", ["session"])
+magi_store("session/<project>/<slug>.md", "<title>", "<summary>", "session")
 ```
 
 Cap total writes at `analyzer.max_memories_per_run`. If cap reached, leave remaining inbox files for the next run.
@@ -171,7 +171,7 @@ If any inbox item contains a pattern like `Session [a-f0-9]{8,}` or a `/xgh-impl
 1. Extract session ID and ticket association
 2. Write a session index entry:
 ```
-lcm_store("Claude session <id> worked on <tickets>: <one-line summary>", ["workspace"])
+magi_store("workspace/sessions/<id>.md", "Session <id>: <tickets>", "Claude session <id> worked on <tickets>: <one-line summary>", "workspace,session")
 ```
 
 ## Step 9 — Move processed files
@@ -232,7 +232,7 @@ Two items with similar wording but different scopes (e.g., "auth token rotation"
 If a source item's timestamp is newer than the memory's `created_at`, recalculate TTL from the new source date — not the original curation date. Forgetting this causes stale memories to survive past their correct expiry.
 
 ### Creating duplicates instead of updating
-When an inbox item supersedes an existing memory, update the lossless-claude entry in place using `lcm_store` with the same title. Do not append a new entry — duplicates degrade retrieval quality and inflate dedup false-positive rates.
+When an inbox item supersedes an existing memory, update the MAGI entry in place using `magi_store` with the same path. Do not append a new entry — duplicates degrade retrieval quality and inflate dedup false-positive rates.
 
 ### Filing items with no project match
 If an inbox item cannot be mapped to an active project in `ingest.yaml`, log `WARN: no project match for <item>` and skip it. Do not file it under a random or fallback project — misattributed memories are worse than no memory.

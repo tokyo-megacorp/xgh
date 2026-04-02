@@ -98,7 +98,7 @@ git branch -D "$BRANCH"
 Store the dispatch outcome for future reference. Replace all placeholders: `<CLI_LABEL>` (display name, e.g. "OpenCode"), `<cli>` (tag slug, e.g. `"opencode"`):
 
 ```
-lcm_store("<CLI_LABEL> dispatch: <type> | model: <model> | isolation: <mode> | <outcome summary>", ["session", "<cli>"])
+magi_store("session/<cli>-dispatch.md", "<CLI_LABEL> dispatch outcome", "<CLI_LABEL> dispatch: <type> | model: <model> | isolation: <mode> | <outcome summary>", "session,<cli>")
 ```
 
 ---

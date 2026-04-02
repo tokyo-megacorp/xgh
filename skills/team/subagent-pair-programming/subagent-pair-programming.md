@@ -1,15 +1,15 @@
 ---
 name: xgh:subagent-pair-programming
-description: "This skill should be used when the user wants TDD with enforced separation of concerns, asks for 'subagent pair programming', or wants to dispatch a spec-writer and implementer as separate agents. Coordinates two subagents — Spec Writer and Implementer — through lossless-claude memory: spec writer writes failing tests, implementer writes minimal code to pass."
+description: "This skill should be used when the user wants TDD with enforced separation of concerns, asks for 'subagent pair programming', or wants to dispatch a spec-writer and implementer as separate agents. Coordinates two subagents — Spec Writer and Implementer — through MAGI memory: spec writer writes failing tests, implementer writes minimal code to pass."
 ---
 
 # xgh:subagent-pair-programming — Subagent Pair Programming
 
-> Dispatch two subagents — a Spec Writer and an Implementer — that coordinate through lossless-claude memory. The Spec Writer writes failing tests; the Implementer writes minimal code to pass. TDD enforced by architecture, not willpower.
+> Dispatch two subagents — a Spec Writer and an Implementer — that coordinate through MAGI memory. The Spec Writer writes failing tests; the Implementer writes minimal code to pass. TDD enforced by architecture, not willpower.
 
 ## Iron Law
 
-> **THE SPEC WRITER AND IMPLEMENTER MUST NEVER BE THE SAME AGENT.** Separation of concerns is physical, not logical. The spec writer cannot see the implementation; the implementer cannot modify the tests. lossless-claude memory is the contract between them.
+> **THE SPEC WRITER AND IMPLEMENTER MUST NEVER BE THE SAME AGENT.** Separation of concerns is physical, not logical. The spec writer cannot see the implementation; the implementer cannot modify the tests. MAGI memory is the contract between them.
 
 ## Rationalization Table
 
@@ -18,7 +18,7 @@ description: "This skill should be used when the user wants TDD with enforced se
 | "I can do TDD in a single agent — just write tests first" | Single agents cheat by peeking at implementation while writing specs |
 | "Two subagents is overkill for a small feature" | Small features are where TDD habits form. Skip it here, skip it everywhere |
 | "The spec writer doesn't have enough context to write good tests" | That's exactly the point — specs should be writeable from requirements alone |
-| "Coordinating through lossless-claude is slower than just coding" | Slower per-task, but catches design flaws that would cost 10x to fix later |
+| "Coordinating through MAGI is slower than just coding" | Slower per-task, but catches design flaws that would cost 10x to fix later |
 | "The implementer needs to modify tests for edge cases" | Edge cases go back to the spec writer. Round-trip is the feature, not the bug |
 
 ## When This Skill Activates
@@ -43,26 +43,27 @@ Break the work into TDD-sized units. Each unit should:
 ### Step 2: Initialize thread
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pair-programming/pair-[session-id]/orchestration.md"
+  title: "Pair programming session: [description]"
+  body: |
     Pair programming session started.
     Task: [description]
     Units:
     1. [unit description]
     2. [unit description]
     ...
-  metadata:
-    thread: pair-[session-id]
-    type: orchestration
-    status: in_progress
+    Thread: pair-[session-id]
+    Status: in_progress
+  tags: "pair-programming,orchestration"
 ```
 
 ### Step 3: Dispatch Spec Writer (per unit)
 
 Dispatch a fresh subagent with ONLY these inputs:
 - The unit description (what to test)
-- Team conventions from lossless-claude (testing patterns)
+- Team conventions from MAGI (testing patterns)
 - The thread ID for storing specs
 
 The spec writer has NO access to:
@@ -73,8 +74,8 @@ The spec writer has NO access to:
 ### Step 4: Dispatch Implementer (per unit)
 
 Dispatch a fresh subagent with ONLY these inputs:
-- The test specs from the lossless-claude thread
-- Team conventions from lossless-claude (coding patterns)
+- The test specs from the MAGI thread
+- Team conventions from MAGI (coding patterns)
 - The thread ID for storing implementation
 
 The implementer has NO access to:
@@ -93,7 +94,7 @@ The orchestrator reviews:
 ### Step 6: Iterate or advance
 
 If review finds issues:
-- Send feedback to the appropriate subagent via lossless-claude thread
+- Send feedback to the appropriate subagent via MAGI thread
 - Subagent re-does their work with the feedback
 
 If review passes:
@@ -109,13 +110,10 @@ The spec writer subagent follows this process:
 ### Phase 1: Context gathering
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
   query: "[domain] testing patterns conventions"
-  scope: workspace
-  filter:
-    type: convention
-    domain: testing
+  limit: 10
 ```
 
 ### Phase 2: Write failing tests
@@ -129,9 +127,11 @@ Write tests based ONLY on the unit description and requirements. Tests must:
 ### Phase 3: Store specs to thread
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pair-programming/pair-[session-id]/unit-[unit-number]-spec.md"
+  title: "Test Spec: [unit name]"
+  body: |
     ## Test Spec: [unit name]
 
     ### Test file: [path]
@@ -149,12 +149,9 @@ Parameters:
 
     ### Run command:
     [exact command to run tests]
-  metadata:
-    thread: pair-[session-id]
-    type: test-spec
-    unit: [unit-number]
-    status: RED
-    files: [test file path]
+    Status: RED
+    Files: [test file path]
+  tags: "pair-programming,test-spec"
 ```
 
 ### Phase 4: Verify RED
@@ -162,15 +159,12 @@ Parameters:
 Run the tests and confirm they fail:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: "Tests verified RED. [N] tests, [N] failures. Failures are for the right reason: [missing implementation]."
-  metadata:
-    thread: pair-[session-id]
-    type: test-spec
-    unit: [unit-number]
-    status: RED
-    verified: true
+  path: "pair-programming/pair-[session-id]/unit-[unit-number]-spec-verified.md"
+  title: "Tests verified RED: [unit name]"
+  body: "Tests verified RED. [N] tests, [N] failures. Failures are for the right reason: [missing implementation]."
+  tags: "pair-programming,test-spec"
 ```
 
 ---
@@ -182,24 +176,19 @@ The implementer subagent follows this process:
 ### Phase 1: Read specs from thread
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
-  query: "thread:pair-[session-id] unit:[unit-number] test-spec"
-  scope: workspace
-  filter:
-    type: test-spec
-    status: RED
+  query: "pair-[session-id] unit-[unit-number] test-spec RED"
+  limit: 5
 ```
 
 ### Phase 2: Query conventions
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
   query: "[domain] implementation patterns conventions"
-  scope: workspace
-  filter:
-    type: convention
+  limit: 10
 ```
 
 ### Phase 3: Write minimal implementation
@@ -213,9 +202,11 @@ Write ONLY enough code to make the failing tests pass. Rules:
 ### Phase 4: Store implementation to thread
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pair-programming/pair-[session-id]/unit-[unit-number]-impl.md"
+  title: "Implementation: [unit name]"
+  body: |
     ## Implementation: [unit name]
 
     ### File: [path]
@@ -228,12 +219,9 @@ Parameters:
 
     ### Conventions followed:
     - [convention 1]
-  metadata:
-    thread: pair-[session-id]
-    type: implementation
-    unit: [unit-number]
-    status: GREEN
-    files: [implementation file path]
+    Status: GREEN
+    Files: [implementation file path]
+  tags: "pair-programming,implementation"
 ```
 
 ### Phase 5: Verify GREEN
@@ -241,15 +229,12 @@ Parameters:
 Run the tests and confirm they pass:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: "Tests verified GREEN. [N] tests, [N] passed."
-  metadata:
-    thread: pair-[session-id]
-    type: implementation
-    unit: [unit-number]
-    status: GREEN
-    verified: true
+  path: "pair-programming/pair-[session-id]/unit-[unit-number]-impl-verified.md"
+  title: "Tests verified GREEN: [unit name]"
+  body: "Tests verified GREEN. [N] tests, [N] passed."
+  tags: "pair-programming,implementation"
 ```
 
 ---
@@ -261,17 +246,16 @@ When the implementer discovers an edge case not covered by tests:
 1. Implementer stores a request back to thread:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pair-programming/pair-[session-id]/unit-[unit-number]-edge-case.md"
+  title: "Edge case request: [description]"
+  body: |
     Edge case discovered: [description]
     Why it matters: [explanation]
     Request: spec writer to add test for this case
-  metadata:
-    thread: pair-[session-id]
-    type: edge-case-request
-    unit: [unit-number]
-    for_agent: spec-writer
+    For agent: spec-writer
+  tags: "pair-programming,edge-case-request"
 ```
 
 2. Orchestrator dispatches spec writer again for the edge case
@@ -291,9 +275,11 @@ The orchestrator runs the complete test suite to verify all units work together.
 ### Step 2: Curate learnings
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pair-programming/pair-[session-id]/session-complete.md"
+  title: "Pair programming complete: [description]"
+  body: |
     Pair programming session complete.
     Task: [description]
     Units completed: [N]
@@ -301,10 +287,7 @@ Parameters:
     Patterns discovered: [list]
     Conventions followed: [list]
     Edge cases found via round-trip: [list]
-  metadata:
-    thread: pair-[session-id]
-    type: orchestration
-    status: completed
+  tags: "pair-programming,session"
 ```
 
 ---
@@ -313,9 +296,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| [STORE] → call `lcm_store(text, ["reasoning"])` | Store test specs (RED), implementations (GREEN), edge case requests, and session results |
-| [SEARCH] → call `lcm_search(query)` | Read test specs (implementer), query conventions (both), discover edge case requests |
-| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, context-tag)` | Extract session learnings for context tree curation |
+| [STORE] → call `magi_store(path, title, body, tags)` | Store test specs (RED), implementations (GREEN), edge case requests, and session results |
+| [SEARCH] → call `magi_query(query)` | Read test specs (implementer), query conventions (both), discover edge case requests |
+| Extract 3-7 bullet summary → [STORE] → call `magi_store(path, title, body, tags)` | Extract session learnings for context tree curation |
 
 ## Composability
 

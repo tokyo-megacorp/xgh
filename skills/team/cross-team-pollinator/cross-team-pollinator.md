@@ -1,11 +1,11 @@
 ---
 name: xgh:cross-team-pollinator
-description: "This skill should be used when curating knowledge to the _shared/ directory, when querying memory that should include org-scoped results, or when implementation touches a cross-team API boundary or shared library. Breaks knowledge silos between teams — auto-promotes _shared/ directory entries to org-scope in lossless-claude workspace so other teams benefit."
+description: "This skill should be used when curating knowledge to the _shared/ directory, when querying memory that should include org-scoped results, or when implementation touches a cross-team API boundary or shared library. Breaks knowledge silos between teams — auto-promotes _shared/ directory entries to org-scope in MAGI workspace so other teams benefit."
 ---
 
 # xgh:cross-team-pollinator — Cross-Team Pollinator
 
-> Break knowledge silos between teams. The `_shared/` directory in each team's context tree auto-promotes to `scope: org` in lossless-claude workspace. Other teams' hooks query org-scoped memories alongside their own.
+> Break knowledge silos between teams. The `_shared/` directory in each team's context tree auto-promotes to `scope: org` in MAGI workspace. Other teams' hooks query org-scoped memories alongside their own.
 
 ## Iron Law
 
@@ -14,7 +14,7 @@ description: "This skill should be used when curating knowledge to the _shared/ 
 ## When This Skill Activates
 
 - **Promotion**: When knowledge is curated to the `_shared/` directory of the context tree
-- **Query enrichment**: On every `lcm_search` call, org-scoped results are merged alongside team-scoped results
+- **Query enrichment**: On every `magi_query` call, org-scoped results are merged alongside team-scoped results
 - **Discovery**: When implementation touches an API boundary, shared library, or cross-team contract
 
 ---
@@ -33,16 +33,13 @@ Knowledge qualifies for org-scope promotion when it:
 When a file is written to or moved to `_shared/`:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: [the shared knowledge content]
-  metadata:
-    type: [original type]
-    scope: org
-    origin_team: [team name from config]
-    origin_path: [context tree path]
-    maturity: [validated or core]
-    tags: [original tags + "cross-team"]
+  path: "_shared/[category]/[filename].md"
+  title: [the knowledge title]
+  body: [the shared knowledge content]
+  tags: "[original tags],cross-team"
+  scope: global
 ```
 
 ### What belongs in `_shared/`
@@ -70,29 +67,24 @@ Parameters:
 
 ### How org-scope memories are included
 
-Every [SEARCH] → call `lcm_search(query)` call in an xgh-enabled project includes BOTH scopes:
+Every [SEARCH] → call `magi_query(query)` call in an xgh-enabled project includes BOTH scopes:
 
 **Step 1: Team-scope query**
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
   query: "[the user's question or task context]"
-  scope: workspace
-  filter:
-    scope: team
-    team: [current team name]
+  limit: 10
 ```
 
-**Step 2: Org-scope query**
+**Step 2: Org-scope query (global notes)**
 
 ```
-Tool: lcm_search(query)
+Tool: magi_query(query)
 Parameters:
   query: "[the user's question or task context]"
-  scope: workspace
-  filter:
-    scope: org
+  limit: 10
 ```
 
 **Step 3: Merge and rank results**
@@ -132,24 +124,23 @@ Where:
 
 1. **Recognize it**: "This affects other teams" — API format changes, shared library updates, contract changes
 2. **Curate to `_shared/`**: Write or move the knowledge file to `_shared/[category]/`
-3. **Auto-promotion fires**: The file is stored to lossless-claude with `scope: org`
-4. **Other teams benefit**: Their next `lcm_search` includes this knowledge
+3. **Auto-promotion fires**: The file is stored to MAGI with `scope: global`
+4. **Other teams benefit**: Their next `magi_query` includes this knowledge
 
 ### Promoting existing team knowledge to org
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "_shared/[category]/[filename].md"
+  title: [knowledge title]
+  body: |
     [Existing team knowledge that should be shared]
     Origin: [team name]
     Why shared: [reason this matters to other teams]
-  metadata:
-    type: [original type]
-    scope: org
-    origin_team: [team name]
-    maturity: [current maturity]
-    promoted_from: [context tree path]
+    Promoted from: [context tree path]
+  tags: "[original tags],cross-team"
+  scope: global
 ```
 
 ---
@@ -158,9 +149,9 @@ Parameters:
 
 | Tool | Usage |
 |---|---|
-| [SEARCH] → call `lcm_search(query)` | Query both team-scope and org-scope memories |
-| [STORE] → call `lcm_store(text, ["reasoning"])` | Store org-promoted knowledge to workspace |
-| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, context-tag)` | Extract cross-team relevant learnings |
+| [SEARCH] → call `magi_query(query)` | Query both team-scope and org-scope memories |
+| [STORE] → call `magi_store(path, title, body, tags)` | Store org-promoted knowledge to workspace |
+| Extract 3-7 bullet summary → [STORE] → call `magi_store(path, title, body, tags)` | Extract cross-team relevant learnings |
 
 ## Composability
 

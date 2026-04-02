@@ -28,7 +28,7 @@ The briefing respects `XGH_TEAM` from the environment for workspace memory queri
 Follow the shared detection protocol in `skills/_shared/references/mcp-auto-detection.md`. Run `/xgh-setup` for any missing MCP the user wants to configure. Proceed with whatever is available — the briefing works with any combination.
 
 **Briefing-specific tool aliases used in this skill:**
-- **lossless-claude**: [SEARCH] → call `lcm_search(query)`, `lcm_store`
+- **MAGI**: [SEARCH] → call `magi_query(query)`, `magi_store`
 - **Slack**: `slack_search_public_and_private`, `slack_list_channels`
 - **Atlassian/Jira**: `searchJiraIssuesUsingJQL`, `getJiraIssue`
 - **GitHub**: `gh pr list`, `gh issue list`, `gh run list`
@@ -78,7 +78,7 @@ When teams mode is active, launch 5 Haiku workers simultaneously. Each worker is
 
 | Worker | Sources | Model |
 |--------|---------|-------|
-| Worker 1 | xgh Memory + Team Pulse (lcm_search calls) | haiku |
+| Worker 1 | xgh Memory + Team Pulse (magi_query calls) | haiku |
 | Worker 2 | Slack (if available) | haiku |
 | Worker 3 | Jira/Atlassian (if available) | haiku |
 | Worker 4 | GitHub (if available) | haiku |
@@ -102,14 +102,14 @@ Pass all worker results to the current (Sonnet) instance for the Prioritization 
 
 Gather from each source in order. Skip unavailable sources silently.
 
-#### 1. xgh Memory (always — lossless-claude)
+#### 1. xgh Memory (always — MAGI)
 
 Search for recent session state and pending work:
 
 ```
-lcm_search("last session", { limit: 3 })
-lcm_search("in progress", { limit: 3 })
-lcm_search("blocked", { limit: 2 })
+magi_query("last session", { limit: 3 })
+magi_query("in progress", { limit: 3 })
+magi_query("blocked", { limit: 2 })
 ```
 
 If project-scoped, prepend project name to search queries (e.g., "xgh last session").
@@ -155,11 +155,11 @@ figma_get_comments(file_key, limit=10)
 
 If project-scoped, only check file keys belonging to in-scope projects.
 
-#### 7. Team Pulse (always — from lossless-claude workspace)
+#### 7. Team Pulse (always — from MAGI workspace)
 
 ```
-lcm_search("team update", { limit: 3 })
-lcm_search("convention change", { limit: 2 })
+magi_query("team update", { limit: 3 })
+magi_query("convention change", { limit: 2 })
 ```
 
 ## Prioritization Engine
@@ -224,7 +224,7 @@ If the user says `/xgh-briefing meeting [name]`, filter output to items relevant
 Once the briefing is delivered:
 1. Ask: "Ready to start on [SUGGESTED FOCUS]? Or pick a different item."
 2. If user confirms: load context for that ticket/PR and invoke `xgh:implement-ticket` or `xgh:investigate` as appropriate.
-3. Store the session start state: Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]
+3. Store the session start state: Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call magi_store with the summary text and context-appropriate tags. Do not pass raw conversation content to magi_store. Use tags: "session"
 
 ## Scheduler nudge
 
@@ -243,7 +243,7 @@ If no active CronCreate jobs are found or the pause file exists, append to the b
 
 | If you see | Do this |
 |------------|---------|
-| memory backend unavailable | Skip memory sections, note "Run /xgh-setup to enable memory" |
+| MAGI backend unavailable | Skip memory sections, note "Run /xgh-setup to enable memory" |
 | No Slack/Jira | Skip those sections silently |
 | No items in any section | Output "🐴🤖 All clear — no urgent items. Pick something from your backlog." |
 | >5 items in a section | Show top 5, add "…and N more" |

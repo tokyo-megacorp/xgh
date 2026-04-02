@@ -1,6 +1,6 @@
 ---
 name: xgh:calibrate
-description: "Use when running /xgh-calibrate or asking to tune the dedup threshold. Calibrates similarity threshold against real lossless-claude memory pairs, computes F1 scores at multiple thresholds, and offers to update analyzer.dedup_threshold in ingest.yaml."
+description: "Use when running /xgh-calibrate or asking to tune the dedup threshold. Calibrates similarity threshold against real MAGI memory pairs, computes F1 scores at multiple thresholds, and offers to update analyzer.dedup_threshold in ingest.yaml."
 ---
 
 # xgh:calibrate — Dedup Threshold Calibration
@@ -9,7 +9,7 @@ Modes: interactive (default), headless (`--auto`), comparison (`--compare`).
 
 ## Interactive mode (default)
 
-1. **Sample pairs**: Use [SEARCH] → call `lcm_search(query)` with diverse queries to gather N memories (configurable via `calibration.sample_size`, default 50). Form random pairs from the results.
+1. **Sample pairs**: Use [SEARCH] → call `magi_query(query)` with diverse queries to gather N memories (configurable via `calibration.sample_size`, default 50). Form random pairs from the results.
 
 2. **For each pair**, show side by side:
    ```

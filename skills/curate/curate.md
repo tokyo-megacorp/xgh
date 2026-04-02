@@ -109,12 +109,12 @@ the concept without reading the Raw Concept section.]
   fact: [Another factual statement]
 ```
 
-## Step 4: Store in lossless-claude
+## Step 4: Store in MAGI
 
-After writing the knowledge file to the context tree, also store it in lossless-claude for semantic search:
+After writing the knowledge file to the context tree, also store it in MAGI for semantic search:
 
-1. Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call lcm_store with the summary text and context-appropriate tags. Do not pass raw conversation content to lcm_store. Use tags: ["session"]
-2. This enables vector-similarity search alongside the context tree's BM25 search
+1. Extract key learnings as a concise summary (3-7 bullets), then [STORE] → call magi_store with the summary text and context-appropriate tags. Do not pass raw conversation content to magi_store. Use tags: "session"
+2. This enables full-text search alongside the context tree's BM25 search
 
 ## Step 5: Update Manifest
 
@@ -128,11 +128,11 @@ After creating or updating a knowledge file:
 
 Storing memory is worthless if it cannot be retrieved. After every store operation, verify the memory can be found. Do not assume success — prove it.
 
-### After lossless-claude Store Operations
+### After MAGI Store Operations
 
-After every `lcm_store` call:
+After every `magi_store` call:
 
-1. **Immediate Verify:** Run [SEARCH] → call `lcm_search(query)` with 2-3 different queries:
+1. **Immediate Verify:** Run [SEARCH] → call `magi_query(query)` with 2-3 different queries:
    - Query A: Use the exact title/topic of what you stored
    - Query B: Use a natural-language question that the stored knowledge should answer
    - Query C: Use a keyword from the stored content
@@ -143,7 +143,7 @@ After every `lcm_store` call:
 
 3. **Remediation if verification fails:**
    - Re-curate with better keywords, more specific title, or different tags
-   - Add more context to the content (lossless-claude needs enough text for good embeddings)
+   - Add more context to the content (MAGI needs enough text for good search)
    - If it still fails after 2 retries, store it ONLY in the context tree (BM25 search will find it)
 
 ### After Context Tree Write Operations
@@ -159,10 +159,10 @@ After writing a knowledge file to the context tree:
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Store succeeds but search finds nothing | Content too short for meaningful embedding | Add more context — at least 3-4 sentences |
+| Store succeeds but search finds nothing | Content too short for meaningful indexing | Add more context — at least 3-4 sentences |
 | Search finds it with exact title but not natural language | Keywords/tags too specific | Add broader tags and synonyms |
 | Context tree file exists but not in manifest | Manifest update was skipped | Manually add entry to `_manifest.json` |
-| lossless-claude returns stale version after update | Embedding not regenerated | Delete old entry, store as new |
+| MAGI returns stale version after update | Note not re-indexed | Store again with updated content |
 | Search returns too many irrelevant results | Tags/keywords too generic | Make tags more specific, add discriminating keywords |
 
 ### Minimum Verification Standard
@@ -237,5 +237,5 @@ Before considering curation complete:
 - [ ] Facts are one-sentence, factual, categorized
 - [ ] File is in the correct domain/topic path
 - [ ] Manifest is updated
-- [ ] lossless-claude memory is updated (via lcm_store)
-- [ ] Verification: [SEARCH] → call `lcm_search(query)` finds the new entry
+- [ ] MAGI memory is updated (via magi_store)
+- [ ] Verification: [SEARCH] → call `magi_query(query)` finds the new entry

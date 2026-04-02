@@ -1,11 +1,11 @@
 ---
 name: xgh:pr-context-bridge
-description: "This skill should be used when the user runs /xgh-pr-context-bridge, opens a PR, or asks to 'capture PR reasoning', 'document this PR', 'store PR context'. Auto-curates PR reasoning to lossless-claude workspace so reviewers get deep context — approaches considered, tradeoffs made, tricky parts flagged — without meetings."
+description: "This skill should be used when the user runs /xgh-pr-context-bridge, opens a PR, or asks to 'capture PR reasoning', 'document this PR', 'store PR context'. Auto-curates PR reasoning to MAGI workspace so reviewers get deep context — approaches considered, tradeoffs made, tricky parts flagged — without meetings."
 ---
 
 # xgh:pr-context-bridge — PR Context Bridge
 
-> Auto-curate PR reasoning to lossless-claude workspace so reviewers get deep context without meetings.
+> Auto-curate PR reasoning to MAGI workspace so reviewers get deep context without meetings.
 
 ## Iron Law
 
@@ -32,22 +32,19 @@ description: "This skill should be used when the user runs /xgh-pr-context-bridg
 
 ### Phase 1: Continuous Reasoning Capture (during development)
 
-As the author works on a feature branch, the following reasoning is auto-curated to lossless-claude workspace:
+As the author works on a feature branch, the following reasoning is auto-curated to MAGI workspace:
 
 **Step 1: Initialize PR thread**
 
-When work begins on a feature branch, create a lossless-claude thread:
+When work begins on a feature branch, create a MAGI note:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: "Starting work on [branch-name]: [ticket/description]"
-  metadata:
-    thread: PR-[branch-name]
-    type: context
-    scope: pr
-    status: in_progress
-    from_agent: claude-code
+  path: "pr-context/PR-[branch-name]/init.md"
+  title: "PR started: [branch-name]"
+  body: "Starting work on [branch-name]: [ticket/description]. Status: in_progress"
+  tags: "pr-context,reasoning"
 ```
 
 **Step 2: Capture decision points**
@@ -55,9 +52,11 @@ Parameters:
 Whenever a non-trivial decision is made (approach selection, tradeoff, architecture choice):
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pr-context/PR-[branch-name]/decision-[N].md"
+  title: "Decision: [what was decided]"
+  body: |
     Decision: [what was decided]
     Alternatives considered:
     - A: [approach A] — rejected because [reason]
@@ -65,11 +64,8 @@ Parameters:
     - C: [approach C] — rejected because [reason]
     Key tradeoff: [e.g., latency vs consistency]
     Confidence: [high/medium/low]
-  metadata:
-    thread: PR-[branch-name]
-    type: context
-    subtype: decision
-    files: [list of affected files]
+    Files: [list of affected files]
+  tags: "pr-context,reasoning,decision"
 ```
 
 **Step 3: Flag tricky parts**
@@ -77,19 +73,18 @@ Parameters:
 When implementation involves non-obvious logic, subtle edge cases, or workarounds:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pr-context/PR-[branch-name]/tricky-[N].md"
+  title: "Tricky part: [file:line or function name]"
+  body: |
     Tricky part: [file:line or function name]
     What's non-obvious: [explanation]
     Why it's done this way: [reasoning]
     What could go wrong: [edge cases, failure modes]
     Related: [links to docs, issues, past decisions]
-  metadata:
-    thread: PR-[branch-name]
-    type: context
-    subtype: tricky-part
-    files: [affected files]
+    Files: [affected files]
+  tags: "pr-context,reasoning,tricky-part"
 ```
 
 **Step 4: Capture related prior knowledge**
@@ -97,16 +92,15 @@ Parameters:
 When memory queries during development surface relevant past decisions:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pr-context/PR-[branch-name]/related-context.md"
+  title: "Related prior knowledge: [branch-name]"
+  body: |
     This PR relates to prior decision: [summary]
     How it connects: [explanation]
     Consistency check: [does this PR align or intentionally diverge?]
-  metadata:
-    thread: PR-[branch-name]
-    type: context
-    subtype: related-context
+  tags: "pr-context,reasoning"
 ```
 
 ### Phase 2: Pre-Push Summary
@@ -116,18 +110,20 @@ Before pushing (or when the author signals the PR is ready):
 **Step 5: Generate PR reasoning summary**
 
 ```
-Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
+Tool: magi_query(query)
 Parameters:
-  query: "thread:PR-[branch-name] reasoning decisions tradeoffs"
-  scope: workspace
+  query: "PR-[branch-name] reasoning decisions tradeoffs"
+  limit: 20
 ```
 
 Compile all thread entries into a structured summary and store:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pr-context/PR-[branch-name]/summary.md"
+  title: "PR Context Summary: [branch-name]"
+  body: |
     # PR Context Summary: [branch-name]
 
     ## What this PR does
@@ -147,11 +143,8 @@ Parameters:
 
     ## What I'd do differently
     [Hindsight notes, if any]
-  metadata:
-    thread: PR-[branch-name]
-    type: context
-    subtype: summary
-    status: ready_for_review
+    Status: ready_for_review
+  tags: "pr-context,reasoning,summary"
 ```
 
 ---
@@ -165,10 +158,10 @@ When a reviewer's Claude session detects PR review context (PR URL, `gh pr check
 **Step 1: Query for PR reasoning**
 
 ```
-Tool: lcm_search(query, { layers: ["semantic"], tags: ["workspace"] })
+Tool: magi_query(query)
 Parameters:
-  query: "thread:PR-[branch-name] context decisions tradeoffs tricky-parts summary"
-  scope: workspace
+  query: "PR-[branch-name] context decisions tradeoffs tricky-parts summary"
+  limit: 20
 ```
 
 **Step 2: Present context to reviewer**
@@ -204,19 +197,16 @@ Format the retrieved reasoning as a briefing:
 When the reviewer identifies issues, questions, or insights:
 
 ```
-Tool: lcm_store(text, ["reasoning"])
+Tool: magi_store(path, title, body, tags)
 Parameters:
-  content: |
+  path: "pr-context/PR-[branch-name]/review-feedback-[N].md"
+  title: "Review feedback: [what was found]"
+  body: |
     Review feedback: [what was found]
     Question: [if applicable]
     Suggestion: [if applicable]
     Applies to: [file:line]
-  metadata:
-    thread: PR-[branch-name]
-    type: feedback
-    subtype: review
-    from_agent: claude-code
-    for_agent: "*"
+  tags: "pr-context,review-feedback"
 ```
 
 **Step 4: Author reads review context**
@@ -229,9 +219,9 @@ When the author returns to address review comments, their Claude queries the thr
 
 | Tool | Usage |
 |---|---|
-| [STORE] → call `lcm_store(text, ["reasoning"])` | Store decisions, tricky parts, summaries, and review feedback to PR thread |
-| `lcm_search` | Query PR thread for reasoning context (reviewer side) |
-| Extract 3-7 bullet summary → [STORE] → call `lcm_store(text, ["workspace"])` | Extract reasoning from session for auto-curation |
+| [STORE] → call `magi_store(path, title, body, tags)` | Store decisions, tricky parts, summaries, and review feedback to PR thread |
+| `magi_query` | Query PR thread for reasoning context (reviewer side) |
+| Extract 3-7 bullet summary → [STORE] → call `magi_store(path, title, body, tags)` | Extract reasoning from session for auto-curation |
 
 ## Composability
 

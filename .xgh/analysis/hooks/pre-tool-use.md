@@ -90,7 +90,7 @@ When a skill invokes a tool like `gh pr create`, inject `additionalContext` that
 ```
 [xgh config snapshot]
 provider: github
-repo: extreme-go-horse/xgh
+repo: tokyo-megacorp/xgh
 merge_method: squash (branch override: main → merge)
 reviewer: copilot-pull-request-reviewer[bot]
 auto_merge: true

@@ -923,15 +923,15 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   if [ -f "$PLUGINS_JSON" ] && python3 -c "
 import json, sys
 d = json.load(open('${PLUGINS_JSON}'))
-sys.exit(0 if 'xgh@extreme-go-horse' in d.get('plugins', {}) else 1)
+sys.exit(0 if 'xgh@tokyo-megacorp' in d.get('plugins', {}) else 1)
 " 2>/dev/null; then
-    _check_pass "Plugin: xgh@extreme-go-horse registered"
+    _check_pass "Plugin: xgh@tokyo-megacorp registered"
   else
     _check_fail "Plugin not registered — re-run installer"
   fi
 
   # 3. Skills in cache
-  SKILL_COUNT=$(find "${HOME}/.claude/plugins/cache/extreme-go-horse/xgh/" -name "*.md" -path "*/skills/*" 2>/dev/null | wc -l | tr -d ' ')
+  SKILL_COUNT=$(find "${HOME}/.claude/plugins/cache/tokyo-megacorp/xgh/" -name "*.md" -path "*/skills/*" 2>/dev/null | wc -l | tr -d ' ')
   if [ "$SKILL_COUNT" -gt 0 ]; then
     _check_pass "Skills: ${SKILL_COUNT} skills in cache"
   else

@@ -1,4 +1,4 @@
-# xgh (extreme-go-horsebot) — Design Document
+# xgh (tokyo-megacorpbot) — Design Document
 
 > MCS tech pack for team-shared self-learning memory, inspired by ByteRover, powered by Cipher, disciplined by Superpowers methodology.
 
@@ -429,7 +429,7 @@ Since xgh is an MCS tech pack, hub items can be:
 ```yaml
 schemaVersion: 1
 identifier: xgh
-displayName: "xgh (extreme-go-horsebot)"
+displayName: "xgh (tokyo-megacorpbot)"
 description: "Self-learning memory layer with team sharing, inspired by ByteRover"
 author: "xgh-dev"
 
@@ -1174,9 +1174,9 @@ set -euo pipefail
 XGH_VERSION="${XGH_VERSION:-latest}"
 XGH_TEAM="${XGH_TEAM:-my-team}"
 XGH_CONTEXT_PATH="${XGH_CONTEXT_PATH:-.xgh/context-tree}"
-XGH_REPO="https://github.com/extreme-go-horse/xgh"
+XGH_REPO="https://github.com/tokyo-megacorp/xgh"
 
-echo "🐴 Installing xgh (extreme-go-horsebot) ${XGH_VERSION}..."
+echo "🐴 Installing xgh (tokyo-megacorpbot) ${XGH_VERSION}..."
 
 # ── 1. Dependencies ──────────────────────────────────────
 echo "→ Checking dependencies..."
@@ -1298,7 +1298,7 @@ if ! grep -q "mcs:begin xgh" "${PWD}/CLAUDE.local.md" 2>/dev/null; then
   cat >> "${PWD}/CLAUDE.local.md" <<CLAUDEEOF
 
 <!-- mcs:begin xgh.instructions -->
-# xgh (extreme-go-horsebot) — Self-Learning Memory
+# xgh (tokyo-megacorpbot) — Self-Learning Memory
 
 This project uses xgh for persistent team memory. Your hooks will
 automatically query memory before coding and curate learnings after.

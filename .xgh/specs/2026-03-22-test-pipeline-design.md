@@ -99,7 +99,7 @@ projects:
       - type: cli
       - type: plugin
     github:
-      - extreme-go-horse/xgh
+      - tokyo-megacorp/xgh
     # ... existing fields unchanged
 ```
 
@@ -363,4 +363,4 @@ This validates both the shell-based and framework-native paths.
 - `/xgh:index` execution mode as shared preamble pattern
 - `/xgh:architecture` scheduler integration
 - `/xgh:test-builder` CI integration (GitHub Actions workflow generation)
-- Codex skill dispatch improvement ([#32](https://github.com/extreme-go-horse/xgh/issues/32))
+- Codex skill dispatch improvement ([#32](https://github.com/tokyo-megacorp/xgh/issues/32))

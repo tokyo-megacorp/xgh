@@ -16,7 +16,7 @@
 
 ```
 src/site/
-  index.html                              # landing page (copied from extreme-go-horse.com)
+  index.html                              # landing page (copied from tokyo-megacorp.com)
   tui/
     engine.html                           # generic TUI template (CSS + JS engine, no data)
     build.sh                              # reads YAML → injects JSON → writes output
@@ -42,7 +42,7 @@ src/site/
 ### Task 1: Move website into xgh repo
 
 **Files:**
-- Create: `src/site/index.html` (copy from extreme-go-horse.com)
+- Create: `src/site/index.html` (copy from tokyo-megacorp.com)
 - Create: `src/site/tui/` (empty dir for now)
 
 This task just migrates the landing page. The TUI will be rebuilt from scratch in later tasks.
@@ -59,7 +59,7 @@ mkdir -p src/site/tui/commands
 - [ ] **Step 2: Copy landing page**
 
 ```bash
-cp /Users/pedro/Developer/extreme-go-horse.com/index.html src/site/index.html
+cp /Users/pedro/Developer/tokyo-megacorp.com/index.html src/site/index.html
 ```
 
 - [ ] **Step 3: Commit**
@@ -92,7 +92,7 @@ path:
 prompt: "›"
 
 titlebar:
-  text: "extreme-go-horse"
+  text: "tokyo-megacorp"
   detail: "— bun • claude --dangerously-skip-permissions — 102×31"
 
 models:
@@ -179,8 +179,8 @@ steps:
   - tool: Bash
     args: "git log --oneline -5"
     output:
-      - "ba6ccc1 chore: update all public-facing refs to extreme-go-horse org"
-      - "c056428 chore: move npm scope to @extreme-go-horse"
+      - "ba6ccc1 chore: update all public-facing refs to tokyo-megacorp org"
+      - "c056428 chore: move npm scope to @tokyo-megacorp"
       - "9269bcc fix: address Copilot review round-2 comments"
     delay: 500
 
@@ -195,7 +195,7 @@ steps:
       - { bold: "## Session Briefing" }
       - { dim: "─────────────────────────────────────" }
       - { icon: "✓", color: green, bold: "PR #20", dim: "open · awaiting Copilot re-review" }
-      - { icon: "✓", color: green, bold: "npm published", dim: "@extreme-go-horse/xgh@2.0.0" }
+      - { icon: "✓", color: green, bold: "npm published", dim: "@tokyo-megacorp/xgh@2.0.0" }
       - { icon: "→", color: yellow, bold: "5 commits", dim: "since last session" }
       - { dim: "─────────────────────────────────────" }
       - { dim: "Next: merge PR #20 once review is clean" }
@@ -304,7 +304,7 @@ response:
   - { bold: "Install xgh" }
   - ""
   - { dim: "1. Install the plugin:" }
-  - { blue: "   claude plugin install xgh@extreme-go-horse" }
+  - { blue: "   claude plugin install xgh@tokyo-megacorp" }
   - ""
   - { dim: "2. Run first-time setup:" }
   - { blue: "   /xgh-init" }
@@ -312,7 +312,7 @@ response:
   - { dim: "3. Start your session:" }
   - { blue: "   /xgh-brief" }
   - ""
-  - { dim: "Or via npm:", blue: " npm i @extreme-go-horse/xgh" }
+  - { dim: "Or via npm:", blue: " npm i @tokyo-megacorp/xgh" }
 ```
 
 - [ ] **Step 2: Create `about.yaml`**
@@ -333,7 +333,7 @@ response:
   - { icon: "✓", color: green, dim: "Automated Slack/Jira/GitHub retrieval" }
   - { icon: "✓", color: green, dim: "Superpowers workflow methodology" }
   - ""
-  - { dim: "github.com/extreme-go-horse/xgh" }
+  - { dim: "github.com/tokyo-megacorp/xgh" }
 ```
 
 - [ ] **Step 3: Create `color.yaml`**
@@ -920,7 +920,7 @@ git commit -m "feat(tui): build script + first generated output"
 Open both the old and new TUI side-by-side:
 
 ```bash
-open /Users/pedro/Developer/extreme-go-horse.com/claude-tui.html
+open /Users/pedro/Developer/tokyo-megacorp.com/claude-tui.html
 open src/site/tui/out/claude-tui.html
 ```
 

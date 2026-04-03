@@ -1,16 +1,16 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "extreme-go-horse",
+  "name": "tokyo-megacorp",
   "owner": {
-    "name": "extreme-go-horse",
-    "url": "https://github.com/extreme-go-horse"
+    "name": "tokyo-megacorp",
+    "url": "https://github.com/tokyo-megacorp"
   },
   "plugins": [
     {
       "name": "xgh",
       "source": {
         "source": "github",
-        "repo": "extreme-go-horse/xgh"
+        "repo": "tokyo-megacorp/xgh"
       },
       "description": "Declare your agent behavior in YAML. Converge every AI platform to match.",
       "version": "2.3.0",

@@ -26,7 +26,7 @@ xgh lets you declare AI agent behavior and converge every platform to match. It 
 Install via Claude Code plugin:
 
 ```bash
-claude plugin install xgh@extreme-go-horse
+claude plugin install xgh@tokyo-megacorp
 /xgh-init
 ```
 

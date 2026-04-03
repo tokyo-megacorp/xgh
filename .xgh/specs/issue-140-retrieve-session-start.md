@@ -54,4 +54,4 @@ So no additional guards are needed in the hook.
 
 ## Commit
 
-- `~/.claude` repo: `fix(hooks): trigger xgh retrieve on session start (extreme-go-horse/xgh#140)`
+- `~/.claude` repo: `fix(hooks): trigger xgh retrieve on session start (tokyo-megacorp/xgh#140)`

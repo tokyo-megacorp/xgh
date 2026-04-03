@@ -117,11 +117,11 @@ if [ "$XGH_DRY_RUN" -eq 0 ]; then
   if ! command -v lossless-claude &>/dev/null; then
     if command -v npm &>/dev/null; then
       info "Installing lossless-claude..."
-      npm install -g github:extreme-go-horse/lossless-claude &>/dev/null || {
-        warn "Could not install lossless-claude — install manually: npm install -g github:extreme-go-horse/lossless-claude"
+      npm install -g github:tokyo-megacorp/lossless-claude &>/dev/null || {
+        warn "Could not install lossless-claude — install manually: npm install -g github:tokyo-megacorp/lossless-claude"
       }
     else
-      warn "npm not found — install Node.js first, then: npm install -g github:extreme-go-horse/lossless-claude"
+      warn "npm not found — install Node.js first, then: npm install -g github:tokyo-megacorp/lossless-claude"
     fi
   else
     info "lossless-claude already installed: $(command -v lossless-claude)"

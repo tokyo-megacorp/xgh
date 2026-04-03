@@ -36,7 +36,7 @@
 
 | What you need | What does it | Installed by xgh |
 |---------------|-------------|------------------|
-| Persistent memory | [lossless-claude](https://github.com/extreme-go-horse/lossless-claude) | Automatic |
+| Persistent memory | [lossless-claude](https://github.com/tokyo-megacorp/lossless-claude) | Automatic |
 | Token compression | [RTK](https://github.com/rtk-ai/rtk) | Automatic |
 | Context efficiency | [context-mode](https://github.com/mksglu/context-mode) | Optional plugin |
 | Dev methodology | [superpowers](https://github.com/obra/superpowers) | Optional plugin |
@@ -84,11 +84,11 @@
 <summary><b>Claude Code</b> (recommended)</summary>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/xgh/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tokyo-megacorp/xgh/main/install.sh | bash
 ```
 
 That single line:
-1. Installs [lossless-claude](https://github.com/extreme-go-horse/lossless-claude) (memory) and [RTK](https://github.com/rtk-ai/rtk) (compression)
+1. Installs [lossless-claude](https://github.com/tokyo-megacorp/lossless-claude) (memory) and [RTK](https://github.com/rtk-ai/rtk) (compression)
 2. Offers [context-mode](https://github.com/mksglu/context-mode) and [superpowers](https://github.com/obra/superpowers) as optional plugins
 3. Registers 5 hooks (session-start, prompt-submit, pre-read, post-edit, post-ctx-call)
 4. Writes agent instructions for Claude Code, Cursor, Copilot, and Windsurf
@@ -101,10 +101,10 @@ That single line:
 
 ```bash
 # OpenAI (~$0.01/session)
-XGH_PRESET=openai curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/xgh/main/install.sh | bash
+XGH_PRESET=openai curl -fsSL https://raw.githubusercontent.com/tokyo-megacorp/xgh/main/install.sh | bash
 
 # Anthropic (~$0.01/session)
-XGH_PRESET=anthropic curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/xgh/main/install.sh | bash
+XGH_PRESET=anthropic curl -fsSL https://raw.githubusercontent.com/tokyo-megacorp/xgh/main/install.sh | bash
 ```
 
 #### Force a specific backend
@@ -150,7 +150,7 @@ XGH_BACKEND=remote XGH_REMOTE_URL=http://192.168.1.x:11434 bash install.sh
 <summary><b>Uninstall</b></summary>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/xgh/main/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tokyo-megacorp/xgh/main/uninstall.sh | bash
 ```
 
 </details>

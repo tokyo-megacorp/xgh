@@ -126,8 +126,8 @@ lane "Wiring up the memory layer 🧬"
 
 if ! command -v lossless-claude &>/dev/null; then
   info "Installing lossless-claude..."
-  npm install -g github:extreme-go-horse/lossless-claude || {
-    warn "Could not install lossless-claude — install manually: npm install -g github:extreme-go-horse/lossless-claude"
+  npm install -g github:tokyo-megacorp/lossless-claude || {
+    warn "Could not install lossless-claude — install manually: npm install -g github:tokyo-megacorp/lossless-claude"
   }
 else
   info "lossless-claude already installed: $(command -v lossless-claude)"

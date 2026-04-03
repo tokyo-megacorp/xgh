@@ -17,10 +17,10 @@
     "name": "Pedro Almeida",
     "email": "ipedro@users.noreply.github.com"
   },
-  "homepage": "https://github.com/extreme-go-horse/xgh",
+  "homepage": "https://github.com/tokyo-megacorp/xgh",
   "repository": {
     "type": "git",
-    "url": "https://github.com/extreme-go-horse/xgh.git"
+    "url": "https://github.com/tokyo-megacorp/xgh.git"
   },
   "license": "MIT",
   "files": [

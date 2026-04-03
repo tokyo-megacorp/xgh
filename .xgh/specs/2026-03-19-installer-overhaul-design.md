@@ -79,7 +79,7 @@ Single command that answers: "Is my memory stack working? If not, why, and can y
 
 | # | Check | Auto-fix | Failure message |
 |---|---|---|---|
-| 1 | Binary in PATH | — | `npm install -g @extreme-go-horse/lossless-claude` |
+| 1 | Binary in PATH | — | `npm install -g @tokyo-megacorp/lossless-claude` |
 | 2 | `--version` responds | — | Binary corrupted — reinstall |
 | 3 | `config.json` exists | Re-create with defaults | `Run: lossless-claude install` |
 | 4 | `cipher.yml` exists with valid config | — | `Run: lossless-claude install` |
@@ -340,7 +340,7 @@ Runs at end of install.sh. Validates full stack.
   ━━━ Post-install validation 🔍
 
   ✅ Memory stack (lossless-claude doctor: 19/19)
-  ✅ Plugin: xgh@extreme-go-horse v1.2.0
+  ✅ Plugin: xgh@tokyo-megacorp v1.2.0
   ✅ Skills: 23 skills in cache
   ✅ Hooks: xgh (5) + lossless-claude (2)
   ✅ Context tree: .xgh/context-tree/_manifest.json

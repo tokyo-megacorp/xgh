@@ -19,14 +19,14 @@ Three opening variants for comparison. Each covers: title, tagline, intro, probl
 ## One command. Full stack.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/xgh/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tokyo-megacorp/xgh/main/install.sh | bash
 ```
 
 That single line installs and wires together:
 
 | Tool | What it does | Without xgh |
 |------|-------------|-------------|
-| [**lossless-claude**](https://github.com/extreme-go-horse/lossless-claude) | Persistent memory across sessions | Manual setup, no cross-session recall |
+| [**lossless-claude**](https://github.com/tokyo-megacorp/lossless-claude) | Persistent memory across sessions | Manual setup, no cross-session recall |
 | [**RTK**](https://github.com/rtk-ai/rtk) | 60-90% token compression on CLI output | Full verbosity burns context |
 | [**context-mode**](https://github.com/mksglu/context-mode) | Sandboxed execution, ~98% context savings | Every tool call floods your window |
 | [**superpowers**](https://github.com/obra/superpowers) | TDD, brainstorming, plans, code review | Ad-hoc methodology, no guardrails |
@@ -98,7 +98,7 @@ xgh is the glue. It doesn't store your memories or compress your tokens — it w
 
 | Layer | Tool | Role |
 |-------|------|------|
-| Memory | [lossless-claude](https://github.com/extreme-go-horse/lossless-claude) | Persistent cross-session recall via MCP |
+| Memory | [lossless-claude](https://github.com/tokyo-megacorp/lossless-claude) | Persistent cross-session recall via MCP |
 | Compression | [RTK](https://github.com/rtk-ai/rtk) | 60-90% token savings on CLI output |
 | Efficiency | [context-mode](https://github.com/mksglu/context-mode) | Sandboxed execution, ~98% context reduction |
 | Methodology | [superpowers](https://github.com/obra/superpowers) | TDD, brainstorming, plans, code review |
@@ -106,7 +106,7 @@ xgh is the glue. It doesn't store your memories or compress your tokens — it w
 The installer auto-detects your platform, installs what's missing, registers hooks, and wires everything into your Claude Code settings. One command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/xgh/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tokyo-megacorp/xgh/main/install.sh | bash
 ```
 
 **Prerequisites:** macOS or Linux, Bash 5+, Git. Everything else is installed automatically.
@@ -136,18 +136,18 @@ xgh is not a memory system, a compressor, or a methodology. It's the **orchestra
 
 | What you need | What does it | Who maintains it |
 |---------------|-------------|------------------|
-| Persistent memory | [lossless-claude](https://github.com/extreme-go-horse/lossless-claude) | [@extreme-go-horse](https://github.com/extreme-go-horse) |
+| Persistent memory | [lossless-claude](https://github.com/tokyo-megacorp/lossless-claude) | [@tokyo-megacorp](https://github.com/tokyo-megacorp) |
 | Token compression | [RTK](https://github.com/rtk-ai/rtk) | [@rtk-ai](https://github.com/rtk-ai) |
 | Context efficiency | [context-mode](https://github.com/mksglu/context-mode) | [@mksglu](https://github.com/mksglu) |
 | Dev methodology | [superpowers](https://github.com/obra/superpowers) | [@obra](https://github.com/obra) |
-| **The glue** | **xgh** | [@extreme-go-horse](https://github.com/extreme-go-horse) |
+| **The glue** | **xgh** | [@tokyo-megacorp](https://github.com/tokyo-megacorp) |
 
 xgh installs them, configures their hooks, resolves their conflicts, and exposes 21 slash commands so you interact with one system, not four.
 
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/xgh/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tokyo-megacorp/xgh/main/install.sh | bash
 ```
 
 That single line:

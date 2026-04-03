@@ -10,7 +10,7 @@ xgh is a Bash/YAML/Markdown MCS tech pack — no compiled runtime. Work follows 
 
 ```bash
 # Install
-claude plugin install xgh@extreme-go-horse
+claude plugin install xgh@tokyo-megacorp
 /xgh-init
 
 # Run tests

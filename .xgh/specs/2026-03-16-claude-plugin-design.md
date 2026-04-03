@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-16
 **Status:** Approved
-**Goal:** Restructure xgh as a Claude plugin and publish to a self-hosted GitHub registry (`github:extreme-go-horse/xgh`).
+**Goal:** Restructure xgh as a Claude plugin and publish to a self-hosted GitHub registry (`github:tokyo-megacorp/xgh`).
 
 ---
 
@@ -93,10 +93,10 @@ xgh/
 `install.sh` writes to `~/.claude/plugins/installed_plugins.json`:
 
 ```json
-"xgh@extreme-go-horse": [
+"xgh@tokyo-megacorp": [
   {
     "scope": "user",
-    "installPath": "/Users/<user>/.claude/plugins/cache/extreme-go-horse/xgh/<version>",
+    "installPath": "/Users/<user>/.claude/plugins/cache/tokyo-megacorp/xgh/<version>",
     "version": "1.0.0",
     "installedAt": "<ISO8601>",
     "lastUpdated": "<ISO8601>",
@@ -105,7 +105,7 @@ xgh/
 ]
 ```
 
-Registry key format: `{plugin-name}@{registry-name}` (e.g., `xgh@extreme-go-horse`).
+Registry key format: `{plugin-name}@{registry-name}` (e.g., `xgh@tokyo-megacorp`).
 Install path: `~/.claude/plugins/cache/{registry}/{plugin}/{version}/`.
 
 ### `gemini-extension.json` format
@@ -125,12 +125,12 @@ Install path: `~/.claude/plugins/cache/{registry}/{plugin}/{version}/`.
 ### Full install (new users, infra not yet running)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/extreme-go-horse/xgh/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tokyo-megacorp/xgh/main/install.sh | bash
 ```
 
 Steps:
 1. Platform detection → install Qdrant, vllm-mlx / Ollama / remote backend, Node/Python deps
-2. Download/cache `plugin/` to `~/.claude/plugins/cache/extreme-go-horse/xgh/<version>/`
+2. Download/cache `plugin/` to `~/.claude/plugins/cache/tokyo-megacorp/xgh/<version>/`
 3. Write registration to `~/.claude/plugins/installed_plugins.json`
 4. Skills and commands available in all Claude Code sessions immediately
 
@@ -139,7 +139,7 @@ Steps:
 ### Lite install (infra already running)
 
 ```
-/plugin install github:extreme-go-horse/xgh
+/plugin install github:tokyo-megacorp/xgh
 ```
 
 Fetches `plugin/` from GitHub, caches it, registers it. No infra touched. Same end state as full install.
@@ -167,7 +167,7 @@ Run once inside a repo. See Section 3.
 **Response tiers:**
 - **Can auto-fix** → fix silently, report what was done
 - **Can guide** → clear instructions: _"Run `install.sh` to install Qdrant and the inference backend, or set `XGH_BACKEND=remote` and `XGH_REMOTE_URL=<url>` to use an existing endpoint"_
-- **Partial mode** (all checks fail) → scaffold anyway, tell Claude: _"xgh memory tools are not yet configured. Run `install.sh` or `/plugin install github:extreme-go-horse/xgh` to complete setup. Context tree is available but Cipher search will not work until backends are running."_
+- **Partial mode** (all checks fail) → scaffold anyway, tell Claude: _"xgh memory tools are not yet configured. Run `install.sh` or `/plugin install github:tokyo-megacorp/xgh` to complete setup. Context tree is available but Cipher search will not work until backends are running."_
 
 `/xgh-init` never hard-fails — it always makes progress and leaves a clear next step.
 
@@ -206,7 +206,7 @@ Skills and commands are **not** copied into the project.
 - `config/`, `lib/`, `templates/`, `docs/`
 
 ### Uninstall
-- `uninstall.sh` removes the `xgh@extreme-go-horse` entry from `~/.claude/plugins/installed_plugins.json` and deletes the cached plugin directory
+- `uninstall.sh` removes the `xgh@tokyo-megacorp` entry from `~/.claude/plugins/installed_plugins.json` and deletes the cached plugin directory
 
 ### No breaking changes to skill content
 Skill and command markdown files move but their content is unchanged. All slash commands work identically after migration.

@@ -1,4 +1,4 @@
-# Copilot Review Instructions — xgh (extreme-go-horse)
+# Copilot Review Instructions — xgh (tokyo-megacorp)
 
 This repo is a GitHub context ingestion pipeline: provider scripts pull data via `gh` CLI, transform it with `jq`, and store structured memory via MAGI. It also contains xgh skills and agent definitions.
 

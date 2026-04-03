@@ -22,7 +22,7 @@ description: |
     `--help` output, OpenAPI specs, or MCP tool listings — no static spec files required
 
 install: |
-  claude plugin install xgh@extreme-go-horse
+  claude plugin install xgh@tokyo-megacorp
   /xgh-init
 
 tech_stack:
@@ -122,6 +122,29 @@ preferences:
         required_approvals: 1
       develop:
         merge_method: squash
+
+# ── Profile overrides ────────────────────────────────────────────────────────
+# Optional: define named profiles that overlay the preferences above.
+# Activate a profile: write the profile name to ~/.xgh/active-profile
+# Deactivate: remove ~/.xgh/active-profile  (empty/missing = use project defaults)
+#
+# Each profile may override any subset of preferences. Precedence order:
+#   CLI override > profile override > branch override > project default
+#
+# profiles:
+#   work:
+#     description: "Work context — internal repos, strict scheduling"
+#     preferences:
+#       pr:
+#         repo: company/internal-repo
+#         merge_method: squash
+#       scheduling:
+#         retrieve_interval: "15m"
+#   personal:
+#     description: "Personal projects — open source, relaxed scheduling"
+#     preferences:
+#       scheduling:
+#         retrieve_interval: "60m"
 
 implementation_status:
   - plan: "Plan 1"

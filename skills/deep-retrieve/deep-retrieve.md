@@ -1,6 +1,5 @@
 ---
-name: xgh:deep-retrieve
-description: "Use when running /xgh-deep-retrieve or when invoked by the scheduler. Hourly deep scan for new Slack thread replies regardless of parent message age, including threads on previously-clean messages. Complements xgh:retrieve."
+description: "Internal pipeline skill — invoked by the scheduler hourly. Deep scan for new Slack thread replies regardless of parent message age, including threads on previously-clean messages. Complements xgh:retrieve. Not user-facing: use /xgh-deep-retrieve command instead."
 ---
 
 # xgh:deep-retrieve — Deep Thread Scan

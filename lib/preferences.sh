@@ -130,7 +130,26 @@ PYEOF
   echo "$val"
 }
 
-# Walk cascade: CLI > branch override > project default
+# Read the active profile name from ~/.xgh/active-profile.
+# Returns empty string when no profile is set.
+_pref_active_profile() {
+  local profile_file="${HOME}/.xgh/active-profile"
+  if [[ -f "$profile_file" ]]; then
+    local name
+    name=$(tr -d '[:space:]' < "$profile_file")
+    echo "$name"
+  else
+    echo ""
+  fi
+}
+
+# Read a profile override: profiles.<profile>.preferences.<domain>.<field>
+_pref_read_profile() {
+  local profile="$1" domain="$2" field="$3"
+  _pref_read_yaml "profiles.${profile}.preferences.${domain}.${field}"
+}
+
+# Walk cascade: CLI > profile override > branch override > project default
 # Level 4 (probe) is NOT handled here — callers decide if/how to probe.
 _pref_resolve() {
   local domain="$1" field="$2" cli_override="$3" branch="${4:-}"
@@ -138,14 +157,23 @@ _pref_resolve() {
   # Level 1: CLI override (always wins)
   [[ -n "$cli_override" ]] && echo "$cli_override" && return
 
-  # Level 2: Branch override (if branch provided)
+  # Level 2: Profile override (active profile sits above branch)
+  local active_profile
+  active_profile=$(_pref_active_profile)
+  if [[ -n "$active_profile" ]]; then
+    local profile_val
+    profile_val=$(_pref_read_profile "$active_profile" "$domain" "$field")
+    [[ -n "$profile_val" ]] && echo "$profile_val" && return
+  fi
+
+  # Level 3: Branch override (if branch provided)
   if [[ -n "$branch" ]]; then
     local branch_val
     branch_val=$(_pref_read_branch "$domain" "$branch" "$field")
     [[ -n "$branch_val" ]] && echo "$branch_val" && return
   fi
 
-  # Level 3: Project default
+  # Level 4: Project default
   local default_val
   default_val=$(_pref_read_yaml "preferences.${domain}.${field}")
   [[ -n "$default_val" ]] && echo "$default_val" && return

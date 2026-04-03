@@ -7,6 +7,20 @@
 # Thin wrapper: delegates PR preferences to lib/preferences.sh when available,
 # falls back to inline implementation for standalone use.
 
+# --- Active profile ---
+# Returns the name of the active profile, or empty string if none is set.
+# Active profile stored at ~/.xgh/active-profile (plain text, just the name).
+load_active_profile() {
+  local profile_file="${HOME}/.xgh/active-profile"
+  if [[ -f "$profile_file" ]]; then
+    local name
+    name=$(tr -d '[:space:]' < "$profile_file")
+    echo "$name"
+  else
+    echo ""
+  fi
+}
+
 xgh_config_get() {
   local key="$1"
   local default="${2:-}"

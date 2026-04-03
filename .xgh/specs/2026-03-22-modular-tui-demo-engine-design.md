@@ -10,13 +10,13 @@ Three layers:
 2. **Declarative descriptors** — YAML files that script demo choreography and command responses
 3. **Build pipeline** — a shell script that reads shell config + demos + commands → produces a single HTML file
 
-The website moves from the separate `extreme-go-horse.com` repo into `src/site/` in the xgh repo. The npm `package.json` `files` field already limits publishing to `.claude-plugin/`, so the site won't ship to npm.
+The website moves from the separate `tokyo-megacorp.com` repo into `src/site/` in the xgh repo. The npm `package.json` `files` field already limits publishing to `.claude-plugin/`, so the site won't ship to npm.
 
 ## File Structure
 
 ```
 src/site/
-  index.html                        # landing page (moved from extreme-go-horse.com)
+  index.html                        # landing page (moved from tokyo-megacorp.com)
   tui/
     engine.html                     # generic TUI renderer (CSS + scene player + command runner)
     build.sh                        # YAML → JSON → inject into engine → output HTML
@@ -105,8 +105,8 @@ steps:
   - tool: Bash
     args: "git log --oneline -5"
     output:
-      - "ba6ccc1 chore: update all public-facing refs to extreme-go-horse org"
-      - "c056428 chore: move npm scope to @extreme-go-horse"
+      - "ba6ccc1 chore: update all public-facing refs to tokyo-megacorp org"
+      - "c056428 chore: move npm scope to @tokyo-megacorp"
       - "9269bcc fix: address Copilot review round-2 comments"
     delay: 500
 
@@ -121,7 +121,7 @@ steps:
       - { bold: "## Session Briefing" }
       - { dim: "─────────────────────────────────────" }
       - { icon: "✓", color: green, bold: "PR #20", dim: "open · awaiting Copilot re-review" }
-      - { icon: "✓", color: green, bold: "npm published", dim: "@extreme-go-horse/xgh@2.0.0" }
+      - { icon: "✓", color: green, bold: "npm published", dim: "@tokyo-megacorp/xgh@2.0.0" }
       - { icon: "→", color: yellow, bold: "5 commits", dim: "since last session" }
       - { dim: "─────────────────────────────────────" }
       - { dim: "Next: merge PR #20 once review is clean" }
@@ -164,7 +164,7 @@ response:
   - { bold: "Install xgh" }
   - ""
   - { dim: "1. Install the plugin:" }
-  - { blue: "   claude plugin install xgh@extreme-go-horse" }
+  - { blue: "   claude plugin install xgh@tokyo-megacorp" }
   - ""
   - { dim: "2. Run first-time setup:" }
   - { blue: "   /xgh-init" }
@@ -172,7 +172,7 @@ response:
   - { dim: "3. Start your session:" }
   - { blue: "   /xgh-brief" }
   - ""
-  - { dim: "Or via npm:", blue: "npm i @extreme-go-horse/xgh" }
+  - { dim: "Or via npm:", blue: "npm i @tokyo-megacorp/xgh" }
 ```
 
 Commands with special behavior use a `handler` field instead of `response`:
@@ -251,12 +251,12 @@ This is the automation layer. The initial implementation works without it — wr
 
 ## Migration
 
-Move content from `extreme-go-horse.com` repo:
+Move content from `tokyo-megacorp.com` repo:
 
 1. Copy `index.html` → `src/site/index.html`
 2. The current `claude-tui.html` is replaced by the generated `out/claude-tui.html`
 3. Update any deploy config to point at `src/site/`
-4. Archive or deprecate the `extreme-go-horse.com` repo
+4. Archive or deprecate the `tokyo-megacorp.com` repo
 
 ## Future Extensions
 

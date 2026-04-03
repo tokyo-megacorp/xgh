@@ -74,6 +74,83 @@ assert_equals "Boolean field: review_on_push" "true" "$result"
 result=$(load_pr_pref "nonexistent_field" "" "")
 assert_equals "Unset field returns empty" "" "$result"
 
+# --- Profile tests ---
+# load_active_profile: returns empty when file does not exist
+PROFILE_FILE="${HOME}/.xgh/active-profile"
+PROFILE_BACKUP=""
+if [[ -f "$PROFILE_FILE" ]]; then
+  PROFILE_BACKUP=$(cat "$PROFILE_FILE")
+  rm -f "$PROFILE_FILE"
+fi
+
+result=$(load_active_profile)
+assert_equals "load_active_profile: empty when no file" "" "$result"
+
+# load_active_profile: returns profile name when file exists
+mkdir -p "${HOME}/.xgh"
+printf 'work' > "$PROFILE_FILE"
+result=$(load_active_profile)
+assert_equals "load_active_profile: returns profile name" "work" "$result"
+
+# load_active_profile: trims whitespace/newlines
+printf 'personal\n' > "$PROFILE_FILE"
+result=$(load_active_profile)
+assert_equals "load_active_profile: trims newline" "personal" "$result"
+
+# Profile override: when a profile is active and config/project.yaml has profiles: section,
+# profile override wins over project default.
+# We use a temp project.yaml with a work profile that overrides pr.merge_method.
+ORIG_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
+TMP_PROFILE_REPO=$(mktemp -d)
+trap 'rm -rf "$TMP_PROFILE_REPO"' EXIT
+mkdir -p "$TMP_PROFILE_REPO/config"
+cat > "$TMP_PROFILE_REPO/config/project.yaml" << 'YAMLEOF'
+name: test-profile
+preferences:
+  pr:
+    provider: github
+    repo: test/repo
+    merge_method: squash
+profiles:
+  work:
+    description: "Work context"
+    preferences:
+      pr:
+        merge_method: merge
+YAMLEOF
+
+# Initialize a git repo in the temp dir so _pref_project_yaml can locate project.yaml
+git -C "$TMP_PROFILE_REPO" init -q
+git -C "$TMP_PROFILE_REPO" config user.email "test@test.com"
+git -C "$TMP_PROFILE_REPO" config user.name "Test"
+
+printf 'work' > "$PROFILE_FILE"
+
+# Resolve preferences.sh absolute path from the repo root (tests/ is a sibling of lib/)
+_REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+_PREFS_SH="${_REPO_ROOT}/lib/preferences.sh"
+
+# Source preferences.sh directly with the temp repo as the working directory so
+# _pref_project_yaml resolves to the temp project.yaml.
+result=$(cd "$TMP_PROFILE_REPO" && source "$_PREFS_SH" && load_pr_pref "merge_method" "" "")
+assert_equals "Profile override: work profile overrides merge_method" "merge" "$result"
+
+# Without profile active, should fall back to project default (squash)
+rm -f "$PROFILE_FILE"
+result=$(cd "$TMP_PROFILE_REPO" && source "$_PREFS_SH" && load_pr_pref "merge_method" "" "")
+assert_equals "No profile: project default merge_method=squash" "squash" "$result"
+
+# CLI override beats profile override
+printf 'work' > "$PROFILE_FILE"
+result=$(cd "$TMP_PROFILE_REPO" && source "$_PREFS_SH" && load_pr_pref "merge_method" "rebase" "")
+assert_equals "CLI beats profile override" "rebase" "$result"
+
+# Restore original active-profile state
+rm -f "$PROFILE_FILE"
+if [[ -n "$PROFILE_BACKUP" ]]; then
+  printf '%s' "$PROFILE_BACKUP" > "$PROFILE_FILE"
+fi
+
 echo ""
 echo "Config reader test: $PASS passed, $FAIL failed"
 [[ "$FAIL" -eq 0 ]] || exit 1

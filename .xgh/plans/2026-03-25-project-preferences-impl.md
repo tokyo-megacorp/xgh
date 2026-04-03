@@ -53,7 +53,7 @@ Add to `tests/test-config.sh` after the existing `preferences:` assertions (line
 # --- preferences.pr section ---
 assert_contains "config/project.yaml" "pr:"
 assert_contains "config/project.yaml" "provider: github"
-assert_contains "config/project.yaml" "repo: extreme-go-horse/xgh"
+assert_contains "config/project.yaml" "repo: tokyo-megacorp/xgh"
 assert_contains "config/project.yaml" "copilot-pull-request-reviewer\[bot\]"
 assert_contains "config/project.yaml" "reviewer_comment_author: Copilot"
 assert_contains "config/project.yaml" "merge_method: squash"
@@ -74,7 +74,7 @@ Insert after the existing `preferences:` block (after `agents:` section, before 
 ```yaml
   pr:
     provider: github
-    repo: extreme-go-horse/xgh
+    repo: tokyo-megacorp/xgh
     reviewer: copilot-pull-request-reviewer[bot]
     reviewer_comment_author: Copilot
     review_on_push: true
@@ -155,7 +155,7 @@ result=$(load_pr_pref "provider" "" "")
 assert_equals "Project default: provider" "github" "$result"
 
 result=$(load_pr_pref "repo" "" "")
-assert_equals "Project default: repo" "extreme-go-horse/xgh" "$result"
+assert_equals "Project default: repo" "tokyo-megacorp/xgh" "$result"
 
 result=$(load_pr_pref "reviewer" "" "")
 assert_equals "Project default: reviewer" "copilot-pull-request-reviewer[bot]" "$result"

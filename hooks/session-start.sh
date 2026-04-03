@@ -4,6 +4,9 @@
 # Output: Structured JSON with contextFiles, decisionTable, briefingTrigger
 set -euo pipefail
 
+# Cross-platform timeout wrapper (macOS lacks GNU timeout by default)
+_run_timeout() { local secs=$1; shift; if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; elif command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; else "$@"; fi; }
+
 CONTEXT_TREE="${XGH_CONTEXT_TREE:-${XGH_CONTEXT_TREE_PATH:-}}"
 
 # Walk up to find .xgh/context-tree if not set via env
@@ -40,7 +43,7 @@ if [ -x "$DETECT_SCRIPT" ]; then
 fi
 export XGH_PROJECT XGH_PROJECT_SCOPE
 
-python3 << 'PYEOF'
+output=$(_run_timeout 15 python3 - <<'PYEOF'
 import json, os, sys, re, glob as _glob
 from pathlib import Path
 
@@ -48,6 +51,15 @@ context_tree = os.environ.get("XGH_CONTEXT_TREE", os.environ.get("XGH_CONTEXT_TR
 max_files = 5
 xgh_project = os.environ.get("XGH_PROJECT", "")
 xgh_scope = os.environ.get("XGH_PROJECT_SCOPE", "")
+
+# Read active profile from ~/.xgh/active-profile
+active_profile = ""
+profile_path = Path.home() / ".xgh" / "active-profile"
+if profile_path.exists():
+    try:
+        active_profile = profile_path.read_text().strip()
+    except Exception:
+        pass
 
 # Detect dispatch file from command center
 dispatch_context = None
@@ -136,7 +148,9 @@ if scheduler_trigger == "on" and custom_jobs:
 
 # No context tree found
 if not context_tree or not os.path.isdir(context_tree):
+    profile_suffix = f" profile={active_profile}." if active_profile else ""
     output = {
+        "additionalContext": f"xgh: session-start loaded 0 context files. scheduler={scheduler_trigger}. briefing={briefing_trigger}.{profile_suffix}",
         "result": "xgh: session-start loaded 0 context files",
         "contextFiles": [],
         "briefingTrigger": briefing_trigger,
@@ -146,6 +160,7 @@ if not context_tree or not os.path.isdir(context_tree):
         "dispatchContext": dispatch_context,
         "projectName": xgh_project,
         "projectScope": xgh_scope,
+        "activeProfile": active_profile,
     }
     print(json.dumps(output))
     sys.exit(0)
@@ -222,7 +237,17 @@ for e in top:
         "excerpt": e["excerpt"]
     })
 
+context_summary = f"xgh: session-start loaded {len(context_files)} context files. scheduler={scheduler_trigger}. briefing={briefing_trigger}."
+if context_files:
+    titles = ", ".join(e["title"] for e in context_files[:3])
+    context_summary += f" Top files: {titles}."
+if active_profile:
+    context_summary += f" profile={active_profile}."
+if dispatch_context:
+    context_summary += f" {dispatch_context}"
+
 output = {
+    "additionalContext": context_summary,
     "result": f"xgh: session-start loaded {len(context_files)} context files",
     "contextFiles": context_files,
     "briefingTrigger": briefing_trigger,
@@ -232,8 +257,11 @@ output = {
     "dispatchContext": dispatch_context,
     "projectName": xgh_project,
     "projectScope": xgh_scope,
+    "activeProfile": active_profile,
 }
 
 print(json.dumps(output))
 PYEOF
+) || output='{"additionalContext": "", "result": "xgh: session-start timeout", "contextFiles": [], "briefingTrigger": "full", "schedulerTrigger": "on", "schedulerInstructions": null}'
+echo "$output"
 exit 0

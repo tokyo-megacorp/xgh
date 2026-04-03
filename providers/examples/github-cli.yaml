@@ -12,7 +12,8 @@ cursor_strategy: iso8601
 #   pull_requests  → gh pr list --search "updated:>CURSOR"
 #   issues         → gh issue list --search "updated:>CURSOR"
 #   actions        → gh run list --created ">CURSOR"
-#   security_alerts→ gh api /repos/O/R/dependabot/alerts
+#   security_alerts→ gh api /repos/O/R/dependabot/alerts (per-alert data, filtered by updated_at)
+#   dependabot     → gh api /repos/O/R/vulnerability-alerts (enabled/disabled status check)
 #   discussions    → gh api graphql (discussions query)
 #   releases       → gh release list
 #   mentions       → gh search issues --mention @me
@@ -20,7 +21,7 @@ cursor_strategy: iso8601
 
 repos:
   # PRIMARY PROJECT
-  - owner: extreme-go-horse
+  - owner: tokyo-megacorp
     repo: xgh
     sources: [pull_requests, issues, discussions, actions, security_alerts, releases]
     watch_prs:

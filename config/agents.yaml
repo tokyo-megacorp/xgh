@@ -102,6 +102,68 @@ agents:
       exec_approval: null  # non-interactive mode auto-approves all permissions
       review_mode: "prompt-only"  # no dedicated read-only flag; enforced via prompt
 
+  cursor:
+    type: secondary
+    description: "Cursor IDE — AI-assisted code editor that reads .cursor/rules/ for project context"
+    capabilities:
+      - implementation
+      - code-review
+      - inline-completion
+    integration: ide-rules
+    invocation:
+      method: ide
+      notes: "Cursor reads .cursor/rules/*.md automatically. No CLI invocation — context is injected at editor startup. Install: https://cursor.sh"
+      tested_version: null  # not yet recorded
+      skill_dir: null
+      rules_file: ".cursor/rules/xgh.md"
+      auto_detect: .cursor
+      dir_flag: null
+      output_flag: null
+      exec_approval: null
+      review_mode: null
+
+  aider:
+    type: secondary
+    description: "Aider CLI — AI pair programming in the terminal that reads .aider/prompts/ for context"
+    capabilities:
+      - fast-implementation
+      - code-review
+      - pair-programming
+    integration: bash-invocation
+    invocation:
+      method: bash
+      exec: "aider --message \"<prompt>\" [passthrough flags]"
+      review: "aider --message \"Code review: <prompt>. Do not modify files.\" --no-auto-commits [passthrough flags]"
+      notes: "Aider reads .aider/prompts/*.md for system-level context. Working dir is cwd. Requires: pip install aider-chat"
+      tested_version: null  # not yet recorded
+      skill_dir: null
+      rules_file: ".aider/prompts/xgh.md"
+      auto_detect: aider
+      dir_flag: null
+      output_flag: null
+      exec_approval: "--yes"
+      review_mode: "prompt-only"
+
+  continue:
+    type: secondary
+    description: "Continue VS Code/JetBrains extension — reads .continue/rules/ for project-level AI context"
+    capabilities:
+      - inline-completion
+      - code-review
+      - implementation
+    integration: ide-rules
+    invocation:
+      method: ide
+      notes: "Continue reads .continue/rules/*.md automatically when the extension is active. No CLI invocation — context is injected by the extension. Install: https://continue.dev"
+      tested_version: null  # not yet recorded
+      skill_dir: null
+      rules_file: ".continue/rules/xgh.md"
+      auto_detect: .continue
+      dir_flag: null
+      output_flag: null
+      exec_approval: null
+      review_mode: null
+
 local_agents:
   code-reviewer:
     type: agent

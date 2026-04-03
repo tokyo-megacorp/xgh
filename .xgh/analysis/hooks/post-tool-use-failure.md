@@ -69,7 +69,7 @@ When `probe_pr_field("repo")` falls back to `gh repo view`, it reads the remote 
 
 ```
 [xgh] Command targeted `fork-owner/xgh` but project.yaml declares
-      `extreme-go-horse/xgh`. You may be running from a fork.
+      `tokyo-megacorp/xgh`. You may be running from a fork.
       Override with XGH_REPO or update config/project.yaml.
 ```
 

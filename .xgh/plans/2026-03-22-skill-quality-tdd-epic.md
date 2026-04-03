@@ -10,7 +10,7 @@
 
 **Spec:** `.xgh/specs/2026-03-22-skill-audit.md`
 
-**Tracking:** [GitHub Project: Skill Quality TDD Epic](https://github.com/orgs/extreme-go-horse/projects/1)
+**Tracking:** [GitHub Project: Skill Quality TDD Epic](https://github.com/orgs/tokyo-megacorp/projects/1)
 
 ---
 

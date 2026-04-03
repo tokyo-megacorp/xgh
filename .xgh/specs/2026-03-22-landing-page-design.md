@@ -12,7 +12,7 @@ Extends the existing TUI build pipeline. `build.sh` gains a second output: `out/
 
 - Tagline: hardcoded in `template.html` — "Your AI rides faster." (not in shell config, since it's page copy not shell identity)
 - The TUI window, embedded inline, autoplay demos running
-- Install command in TUI header styled as a clickable badge — click copies `claude plugin install xgh@extreme-go-horse` to clipboard with a "Copied!" flash
+- Install command in TUI header styled as a clickable badge — click copies `claude plugin install xgh@tokyo-megacorp` to clipboard with a "Copied!" flash
 - Subtle scroll indicator below the TUI
 
 No subtitle, no logos, no social proof. Just the TUI selling itself.
@@ -27,11 +27,11 @@ Each card: icon, headline, one-liner description. No bullet points, no code.
 
 Anchored at `#install`. Three styled steps reusing data from `commands/install.yaml`:
 
-1. Install the plugin: `claude plugin install xgh@extreme-go-horse`
+1. Install the plugin: `claude plugin install xgh@tokyo-megacorp`
 2. Run first-time setup: `/xgh-init`
 3. Start your session: `/xgh-brief`
 
-Plus the npm alternative: `npm i @extreme-go-horse/xgh`
+Plus the npm alternative: `npm i @tokyo-megacorp/xgh`
 
 ### 4. Footer
 
@@ -83,7 +83,7 @@ Fields:
 
 The TUI path element (`cc-path`) becomes a clickable copy-to-clipboard button:
 
-- Default state: shows `claude plugin install xgh@extreme-go-horse` styled as a subtle badge
+- Default state: shows `claude plugin install xgh@tokyo-megacorp` styled as a subtle badge
 - On click: copies install command to clipboard, flashes "Copied!" for 1.5s, then reverts
 - Keeps the `#install` href as fallback for right-click → open in new tab
 

@@ -6,8 +6,8 @@
     "name": "Pedro Almeida",
     "email": "pedro.almeida@users.noreply.github.com"
   },
-  "homepage": "https://github.com/extreme-go-horse/xgh",
-  "repository": "https://github.com/extreme-go-horse/xgh",
+  "homepage": "https://github.com/tokyo-megacorp/xgh",
+  "repository": "https://github.com/tokyo-megacorp/xgh",
   "license": "MIT",
   "keywords": [
     "memory",
@@ -44,6 +44,28 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-use.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use-preferences.sh\""
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/post-compact-preferences.sh\""
           }
         ]
       }

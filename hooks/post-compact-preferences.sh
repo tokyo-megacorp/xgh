@@ -10,6 +10,9 @@
 # Output: JSON with `additionalContext` key containing the preference index.
 set -euo pipefail
 
+# Cross-platform timeout wrapper (macOS lacks GNU timeout by default)
+_run_timeout() { local secs=$1; shift; if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; elif command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; else "$@"; fi; }
+
 # Consume stdin (PostCompact sends JSON on stdin, we discard it)
 cat >/dev/null 2>&1 || true
 
@@ -58,7 +61,7 @@ _yaml_is_valid "$PROJ_YAML"
 yaml_status=$?
 if [[ $yaml_status -eq 1 ]]; then
   warning="[xgh] WARNING: config/project.yaml has syntax errors — preferences disabled after compaction. Run 'yq . config/project.yaml' to diagnose."
-  python3 -c "import json,sys; print(json.dumps({'additionalContext': sys.argv[1]}))" "$warning"
+  _run_timeout 10 python3 -c "import json,sys; print(json.dumps({'additionalContext': sys.argv[1]}))" "$warning" || true
   exit 0
 fi
 
@@ -71,5 +74,5 @@ fi
 source "$BUILDER"
 
 if _build_pref_index "$PROJECT_ROOT"; then
-  python3 -c "import json,sys; print(json.dumps({'additionalContext': sys.argv[1]}))" "$PREF_INDEX_CONTEXT"
+  _run_timeout 10 python3 -c "import json,sys; print(json.dumps({'additionalContext': sys.argv[1]}))" "$PREF_INDEX_CONTEXT" || true
 fi

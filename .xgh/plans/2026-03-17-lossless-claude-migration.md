@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace all Cipher MCP tool references across xgh with `@extreme-go-horse/lossless-claude` MCP tools, preserving memory semantics via a complete Cipher → lossless-claude mapping.
+**Goal:** Replace all Cipher MCP tool references across xgh with `@tokyo-megacorp/lossless-claude` MCP tools, preserving memory semantics via a complete Cipher → lossless-claude mapping.
 
 **Architecture:** Three-phase migration — Phase 1 updates config and the CLAUDE.local.md template (root of truth), Phase 2 updates all 21 command files, Phase 3 updates all 22 skill files. Each phase ends with a grep-based verification. Phase 1 includes a sentinel tool-name check before Phase 2 begins.
 
-**Tech Stack:** `@extreme-go-horse/lossless-claude` MCP server (stdio), lossless-claude daemon (HTTP :3737), SQLite episodic layer + Qdrant semantic layer. No new code — all changes are prose substitutions in Markdown instruction files.
+**Tech Stack:** `@tokyo-megacorp/lossless-claude` MCP server (stdio), lossless-claude daemon (HTTP :3737), SQLite episodic layer + Qdrant semantic layer. No new code — all changes are prose substitutions in Markdown instruction files.
 
 **Spec:** `.xgh/specs/2026-03-17-lossless-claude-migration-design.md`
 
@@ -985,7 +985,7 @@ git add -A
 git status  # confirm nothing unexpected is staged
 git commit -m "feat: complete lossless-claude migration — all Cipher references replaced
 
-Replaces @byterover/cipher with @extreme-go-horse/lossless-claude across:
+Replaces @byterover/cipher with @tokyo-megacorp/lossless-claude across:
 - .claude/mcp.json, techpack.yaml, templates/instructions.md
 - 21 plugin/commands/ files
 - 22 plugin/skills/ files (including 3 nested team skills)

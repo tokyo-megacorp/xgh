@@ -44,7 +44,7 @@ Argument: $ARGUMENTS (default: patch)
     - Group changes under `## Highlights` (features worth calling out with 2-3 sentence explanations) and `## Changes` (bulleted list, conventional-commit style)
     - Use active voice, present tense ("Adds", "Fixes", not "Added", "Fixed")
     - Skip internal chores unless they affect users (CI, test-only, docs-only changes are noise)
-    - End with `**Full Changelog**: https://github.com/extreme-go-horse/xgh/compare/v<previous_version>...v<new_version>`
+    - End with `**Full Changelog**: https://github.com/tokyo-megacorp/xgh/compare/v<previous_version>...v<new_version>`
     - Tone: confident, concise, no filler. Think Apple release notes meets open-source changelog.
 
 ## Rules

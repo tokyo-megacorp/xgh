@@ -351,8 +351,8 @@ The template uses `/* %%CSS_VARS%% */` for CSS (same as engine.html) and HTML co
 <footer class="footer">
   <span>xgh: Claude on the fastlane.</span>
   <div class="footer-links">
-    <a href="https://github.com/extreme-go-horse/xgh" target="_blank">GitHub</a>
-    <a href="https://www.npmjs.com/package/@extreme-go-horse/xgh" target="_blank">npm</a>
+    <a href="https://github.com/tokyo-megacorp/xgh" target="_blank">GitHub</a>
+    <a href="https://www.npmjs.com/package/@tokyo-megacorp/xgh" target="_blank">npm</a>
   </div>
 </footer>
 

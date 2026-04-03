@@ -95,7 +95,7 @@ result=$(load_pr_pref "provider" "" "")
 assert_equals "pr: project default provider" "github" "$result"
 
 result=$(load_pr_pref "repo" "" "")
-assert_equals "pr: project default repo" "extreme-go-horse/xgh" "$result"
+assert_equals "pr: project default repo" "tokyo-megacorp/xgh" "$result"
 
 result=$(load_pr_pref "merge_method" "" "")
 assert_equals "pr: project default merge_method" "squash" "$result"
@@ -134,7 +134,7 @@ assert_equals "dispatch: exec_effort default" "high" "$result"
 
 # repo delegates to load_pr_pref
 result=$(load_dispatch_pref "repo" "")
-assert_equals "dispatch: repo delegates to pr" "extreme-go-horse/xgh" "$result"
+assert_equals "dispatch: repo delegates to pr" "tokyo-megacorp/xgh" "$result"
 
 result=$(load_dispatch_pref "repo" "my-org/my-repo")
 assert_equals "dispatch: repo CLI override" "my-org/my-repo" "$result"

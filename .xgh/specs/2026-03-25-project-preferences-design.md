@@ -31,7 +31,7 @@ Users must pass `--repo`, `--reviewer`, `--merge-method` on every call, or rely 
 preferences:
   pr:
     provider: github                      # github | gitlab | bitbucket | azure-devops
-    repo: extreme-go-horse/xgh
+    repo: tokyo-megacorp/xgh
     reviewer: copilot-pull-request-reviewer[bot]
     reviewer_comment_author: Copilot
     review_on_push: true

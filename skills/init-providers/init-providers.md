@@ -1,6 +1,5 @@
 ---
-name: xgh:init-providers
-description: "This skill should be used when the user runs /xgh-init-providers, asks to 'regenerate providers', 'fix empty providers', 'providers directory is empty', or after manually editing ingest.yaml without running /xgh-track. Reads ingest.yaml and generates provider scripts in ~/.xgh/user_providers/ for all projects with github access."
+description: "Internal repair-path skill — invoked when the user runs /xgh-init-providers, asks to 'regenerate providers', 'fix empty providers', 'providers directory is empty', or after manually editing ingest.yaml without running /xgh-track. Reads ingest.yaml and generates provider scripts in ~/.xgh/user_providers/ for all projects with github access. Not user-facing: use /xgh-init-providers command instead."
 ---
 
 # xgh:init-providers — Generate Provider Scripts from ingest.yaml
@@ -28,7 +27,7 @@ github_repos = {}  # project_name -> {repos: [], sources: []}
 for project_name, project in projects.items():
     if project.get('providers', {}).get('github'):
         repos = project.get('github', [])
-        sources = project.get('github_sources', ['issues', 'pull_requests', 'releases'])
+        sources = project.get('github_sources', ['issues', 'pull_requests', 'releases', 'security_alerts', 'dependabot'])
         if repos:
             github_repos[project_name] = {'repos': repos, 'sources': sources}
 ```
@@ -60,12 +59,12 @@ command -v gh && gh auth status
 service: github
 mode: cli
 cursor_strategy: timestamp
-description: Fetches GitHub issues, pull requests, and releases for all tracked repos using gh CLI
+description: Fetches GitHub issues, pull requests, releases, security alerts, and Dependabot alerts for all tracked repos using gh CLI
 
 sources:
   - project: <project_name>
     repo: <github_repo>
-    types: <github_sources filtered to [issues, pull_requests, releases]>
+    types: <github_sources filtered to [issues, pull_requests, releases, security_alerts, dependabot]>
   # ... one entry per project with github repos
 ```
 
@@ -74,16 +73,20 @@ sources:
 The script must:
 1. Read `CURSOR_FILE` env var for incremental pagination (ISO timestamp)
 2. Default to 24h ago if no cursor exists
-3. For each repo in the provider, run `gh issue list`, `gh pr list`, `gh release list`
-   with `--json` and filter by `updatedAt > SINCE`
+3. For each repo in the provider, based on the configured `types`, run:
+   - `issues` → `gh issue list --json` filtered by `updatedAt > SINCE`
+   - `pull_requests` → `gh pr list --json` filtered by `updatedAt > SINCE`
+   - `releases` → `gh release list --json` filtered by `createdAt > SINCE`
+   - `security_alerts` → `gh api /repos/$OWNER/$REPO/dependabot/alerts --jq '.[] | select(.updated_at > $SINCE)'`
+   - `dependabot` → `gh api /repos/$OWNER/$REPO/vulnerability-alerts` (returns enabled/disabled status; for per-alert data use `security_alerts`)
 4. Write each result to `$INBOX_DIR/<timestamp>_github_<repo_slug>_<type><number>.md`
    with frontmatter:
    ```
    ---
    type: inbox_item
-   source_type: github_<issue|pr|release>
+   source_type: github_<issue|pr|release|security_alert|dependabot>
    source_repo: <owner/repo>
-   source_ts: <updatedAt>
+   source_ts: <updatedAt or updated_at>
    project: <project_name>
    urgency_score: 50
    processed: false

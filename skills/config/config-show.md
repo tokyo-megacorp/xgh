@@ -155,7 +155,7 @@ No pending preferences.
 | Field | Value | Source |
 |-------|-------|--------|
 | provider | github | project default |
-| repo | extreme-go-horse/xgh | project default |
+| repo | tokyo-megacorp/xgh | project default |
 | reviewer | copilot-pull-request-reviewer[bot] | project default |
 | reviewer_comment_author | Copilot | project default |
 | review_on_push | true | project default |

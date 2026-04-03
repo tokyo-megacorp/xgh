@@ -364,7 +364,7 @@ Expected: FAIL
 
 ```markdown
 <!-- templates/instructions.md -->
-# xgh (extreme-go-horsebot) — Self-Learning Memory
+# xgh (tokyo-megacorpbot) — Self-Learning Memory
 
 This project uses xgh for persistent team memory powered by Cipher.
 Your hooks automatically query memory before coding and curate learnings after.
@@ -534,7 +534,7 @@ XGH_CONTEXT_PATH="${XGH_CONTEXT_PATH:-.xgh/context-tree}"
 XGH_PRESET="${XGH_PRESET:-local}"
 XGH_DRY_RUN="${XGH_DRY_RUN:-0}"
 XGH_LOCAL_PACK="${XGH_LOCAL_PACK:-}"
-XGH_REPO="https://github.com/extreme-go-horse/xgh"
+XGH_REPO="https://github.com/tokyo-megacorp/xgh"
 
 # ── Colors ────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -547,7 +547,7 @@ warn()  { echo -e "${YELLOW}⚠${NC} $*"; }
 error() { echo -e "${RED}✗${NC} $*" >&2; }
 
 echo ""
-echo "🐴 xgh (extreme-go-horsebot) installer"
+echo "🐴 xgh (tokyo-megacorpbot) installer"
 echo "   Team: ${XGH_TEAM} | Preset: ${XGH_PRESET}"
 echo ""
 
@@ -760,7 +760,7 @@ if ! grep -q "mcs:begin xgh" "$CLAUDE_MD" 2>/dev/null; then
     cat >> "$CLAUDE_MD" <<CLAUDEEOF
 
 <!-- mcs:begin xgh.instructions -->
-# xgh (extreme-go-horsebot) — Self-Learning Memory
+# xgh (tokyo-megacorpbot) — Self-Learning Memory
 Team: ${XGH_TEAM} | Context Tree: ${XGH_CONTEXT_PATH}/
 <!-- mcs:end xgh.instructions -->
 CLAUDEEOF
@@ -1025,7 +1025,7 @@ Expected: FAIL
 # techpack.yaml
 schemaVersion: 1
 identifier: xgh
-displayName: "xgh (extreme-go-horsebot)"
+displayName: "xgh (tokyo-megacorpbot)"
 description: "Self-learning memory layer with team sharing — bring your own providers"
 author: "xgh-dev"
 minMCSVersion: "0.5.0"

@@ -150,7 +150,7 @@ The only expensive operations are the **network probes** (e.g., `gh api repos/$R
 preferences:
   pr:
     provider: github
-    repo: extreme-go-horse/xgh
+    repo: tokyo-megacorp/xgh
     reviewer: copilot-pull-request-reviewer[bot]
 ```
 

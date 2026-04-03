@@ -300,7 +300,7 @@ Compact preference index (~50-120 tokens depending on configured domains; only d
 
 ```
 [xgh preferences] branch=develop
-pr: repo=extreme-go-horse/xgh provider=github reviewer=copilot-pull-request-reviewer[bot] merge_method=squash
+pr: repo=tokyo-megacorp/xgh provider=github reviewer=copilot-pull-request-reviewer[bot] merge_method=squash
 dispatch: default_agent=claude exec_effort=normal
 vcs: commit_format=<type>: <description>
 Pending preferences: 0

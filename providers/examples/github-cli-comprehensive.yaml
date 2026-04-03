@@ -26,7 +26,7 @@ cursor_strategy: iso8601
 
 repos:
   # Flagship project — all sources, watch important PRs
-  - owner: extreme-go-horse
+  - owner: tokyo-megacorp
     repo: xgh
     sources: [issues, pull_requests, discussions, actions, security_alerts, releases]
     watch_prs:
@@ -63,7 +63,7 @@ repos:
 # state_filter: "open"                    # "open", "closed", "all" (default: "all")
 # labels_include: ["urgent", "team"]      # Match any label (OR logic)
 # labels_exclude: ["wontfix"]             # Skip issues with these labels (AND logic)
-# assignee_filter: ["extreme-go-horse", "pedro"]    # Match any assignee (OR logic)
+# assignee_filter: ["tokyo-megacorp", "pedro"]    # Match any assignee (OR logic)
 
 # ── Advanced: Notifications (Global) ────────────────────────────────────
 # Unlike repo-specific sources, notifications span your entire GitHub account:

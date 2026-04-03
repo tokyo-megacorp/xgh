@@ -1,7 +1,7 @@
 project:
   name: xgh
   path: .
-  repo: extreme-go-horse/xgh
+  repo: tokyo-megacorp/xgh
 
 budget:
   max_experiments_per_session: 8

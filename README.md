@@ -97,7 +97,7 @@ The hard problem — as always — is **drift**. Platform skill files go stale, 
 ## Install
 
 ```bash
-claude plugin install xgh@extreme-go-horse
+claude plugin install xgh@tokyo-megacorp
 /xgh-init
 ```
 

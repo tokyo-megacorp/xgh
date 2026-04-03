@@ -209,7 +209,7 @@ Available in all `message:`, `run:`, `args:`, `title:`, `body:` fields:
 | `{item.author}` | Item author | "alice" |
 | `{item.timestamp}` | ISO timestamp | "2026-03-20T14:30:00Z" |
 | `{item.urgency_score}` | Urgency score (0-100) | "92" |
-| `{item.repo}` | GitHub repo (if applicable) | "extreme-go-horse/xgh" |
+| `{item.repo}` | GitHub repo (if applicable) | "tokyo-megacorp/xgh" |
 | `{item.number}` | Issue/PR number | "42" |
 | `{item.key}` | Jira key (if applicable) | "MOBILE-1234" |
 | `{item.description}` | Item body/description | "Users report..." |

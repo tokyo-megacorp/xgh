@@ -21,7 +21,7 @@ cursor_strategy: iso8601
 
 repos:
   # PRIMARY PROJECT
-  - owner: extreme-go-horse
+  - owner: tokyo-megacorp
     repo: xgh
     sources: [pull_requests, issues, discussions, actions, security_alerts, releases]
     watch_prs:

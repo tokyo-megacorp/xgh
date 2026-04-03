@@ -17,7 +17,7 @@ Bash/YAML/Markdown MCS tech pack. No compiled artifacts. No npm/cargo/maven.
 ## Install
 
 ```bash
-claude plugin install xgh@extreme-go-horse
+claude plugin install xgh@tokyo-megacorp
 /xgh-init
 ```
 

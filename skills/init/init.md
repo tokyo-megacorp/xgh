@@ -215,7 +215,7 @@ If any `xgh-*` entries are found:
    rm -f .claude/hooks/continuous-learning-activator.sh 2>/dev/null || true
    ```
 
-2. Report: "Removed legacy per-project skill copies. Skills now load from the user-level plugin at `~/.claude/plugins/cache/extreme-go-horse/xgh/`."
+2. Report: "Removed legacy per-project skill copies. Skills now load from the user-level plugin at `~/.claude/plugins/cache/tokyo-megacorp/xgh/`."
 
 If none found → continue silently.
 

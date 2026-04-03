@@ -33,7 +33,7 @@ Neither layer has been bootstrapped for claudinho or any other project. The `/xg
 
 The following issues were filed based on this dogfood session:
 
-1. **Providers not generated**: `extreme-go-horse/xgh#145` — `/xgh-track` must generate provider scripts; manual ingest.yaml edits leave the retrieve pipeline broken. Consider adding a `/xgh-doctor` check for empty providers.
+1. **Providers not generated**: `tokyo-megacorp/xgh#145` — `/xgh-track` must generate provider scripts; manual ingest.yaml edits leave the retrieve pipeline broken. Consider adding a `/xgh-doctor` check for empty providers.
 
 ## claudinho ingest.yaml entry (for reference)
 

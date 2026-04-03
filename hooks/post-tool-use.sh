@@ -9,6 +9,9 @@
 
 set -euo pipefail
 
+# Cross-platform timeout wrapper (macOS lacks GNU timeout by default)
+_run_timeout() { local secs=$1; shift; if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; elif command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; else "$@"; fi; }
+
 TRIGGER_DIR="${HOME}/.xgh/triggers"
 INBOX_DIR="${HOME}/.xgh/inbox"
 
@@ -25,15 +28,15 @@ HOOK_JSON=$(cat 2>/dev/null || echo "{}")
 [ -n "$HOOK_JSON" ] || exit 0
 
 # Only process Bash tool calls
-TOOL_NAME=$(echo "$HOOK_JSON" | python3 -c \
+TOOL_NAME=$(echo "$HOOK_JSON" | _run_timeout 10 python3 -c \
   "import sys,json; d=json.load(sys.stdin); print(d.get('tool_name',''))" 2>/dev/null || echo "")
 [ "$TOOL_NAME" = "Bash" ] || exit 0
 
 # Extract command and exit code
-COMMAND=$(echo "$HOOK_JSON" | python3 -c \
+COMMAND=$(echo "$HOOK_JSON" | _run_timeout 10 python3 -c \
   "import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('command',''))" \
   2>/dev/null || echo "")
-EXIT_CODE=$(echo "$HOOK_JSON" | python3 -c \
+EXIT_CODE=$(echo "$HOOK_JSON" | _run_timeout 10 python3 -c \
   "import sys,json; d=json.load(sys.stdin); print(d.get('tool_response',{}).get('exit_code',0))" \
   2>/dev/null || echo "0")
 
@@ -66,8 +69,8 @@ SAFE_CMD=$(echo "$COMMAND" | tr ' /()[]{}' '_' | head -c 40)
 INBOX_FILE="$INBOX_DIR/${TIMESTAMP}_local_command_${SAFE_CMD}.md"
 
 # Escape for YAML (handle quotes and special chars)
-YAML_COMMAND=$(python3 -c "import sys,json; print(json.dumps(sys.argv[1]))" "$COMMAND" 2>/dev/null || echo "\"$COMMAND\"")
-YAML_TITLE=$(python3 -c "import sys,json; print(json.dumps(sys.argv[1][:80]))" "$COMMAND" 2>/dev/null || echo "\"$COMMAND\"" | head -c 80)
+YAML_COMMAND=$(_run_timeout 10 python3 -c "import sys,json; print(json.dumps(sys.argv[1]))" "$COMMAND" 2>/dev/null || echo "\"$COMMAND\"")
+YAML_TITLE=$(_run_timeout 10 python3 -c "import sys,json; print(json.dumps(sys.argv[1][:80]))" "$COMMAND" 2>/dev/null || echo "\"$COMMAND\"" | head -c 80)
 
 cat > "$INBOX_FILE" << YAML
 ---

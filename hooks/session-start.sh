@@ -4,6 +4,9 @@
 # Output: Structured JSON with contextFiles, decisionTable, briefingTrigger
 set -euo pipefail
 
+# Cross-platform timeout wrapper (macOS lacks GNU timeout by default)
+_run_timeout() { local secs=$1; shift; if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; elif command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; else "$@"; fi; }
+
 CONTEXT_TREE="${XGH_CONTEXT_TREE:-${XGH_CONTEXT_TREE_PATH:-}}"
 
 # Walk up to find .xgh/context-tree if not set via env
@@ -40,7 +43,7 @@ if [ -x "$DETECT_SCRIPT" ]; then
 fi
 export XGH_PROJECT XGH_PROJECT_SCOPE
 
-python3 << 'PYEOF'
+output=$(_run_timeout 15 python3 - <<'PYEOF'
 import json, os, sys, re, glob as _glob
 from pathlib import Path
 
@@ -137,6 +140,7 @@ if scheduler_trigger == "on" and custom_jobs:
 # No context tree found
 if not context_tree or not os.path.isdir(context_tree):
     output = {
+        "additionalContext": f"xgh: session-start loaded 0 context files. scheduler={scheduler_trigger}. briefing={briefing_trigger}.",
         "result": "xgh: session-start loaded 0 context files",
         "contextFiles": [],
         "briefingTrigger": briefing_trigger,
@@ -222,7 +226,15 @@ for e in top:
         "excerpt": e["excerpt"]
     })
 
+context_summary = f"xgh: session-start loaded {len(context_files)} context files. scheduler={scheduler_trigger}. briefing={briefing_trigger}."
+if context_files:
+    titles = ", ".join(e["title"] for e in context_files[:3])
+    context_summary += f" Top files: {titles}."
+if dispatch_context:
+    context_summary += f" {dispatch_context}"
+
 output = {
+    "additionalContext": context_summary,
     "result": f"xgh: session-start loaded {len(context_files)} context files",
     "contextFiles": context_files,
     "briefingTrigger": briefing_trigger,
@@ -236,4 +248,6 @@ output = {
 
 print(json.dumps(output))
 PYEOF
+) || output='{"additionalContext": "", "result": "xgh: session-start timeout", "contextFiles": [], "briefingTrigger": "full", "schedulerTrigger": "on", "schedulerInstructions": null}'
+echo "$output"
 exit 0

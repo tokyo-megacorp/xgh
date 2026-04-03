@@ -9,6 +9,9 @@
 # Any failure = silent pass-through (exit 0, no output).
 set -euo pipefail
 
+# Cross-platform timeout wrapper (macOS lacks GNU timeout by default)
+_run_timeout() { local secs=$1; shift; if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; elif command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; else "$@"; fi; }
+
 # ── Read stdin ──────────────────────────────────────────────────────────
 INPUT=$(cat 2>/dev/null) || exit 0
 [ -n "$INPUT" ] || exit 0
@@ -110,7 +113,7 @@ if echo "$COMMAND" | grep -qE 'git push.*(--force|-f)'; then
 
   # Check if branch is protected in project.yaml
   if [ -f "$PROJECT_YAML" ] && command -v python3 >/dev/null 2>&1; then
-    IS_PROTECTED=$(python3 -c "
+    IS_PROTECTED=$(_run_timeout 10 python3 -c "
 import yaml, sys
 branch = sys.argv[1]
 with open(sys.argv[2]) as f:

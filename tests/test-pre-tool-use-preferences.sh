@@ -101,21 +101,41 @@ echo "--- Merge method mismatch tests ---"
 
 # Without a resolvable PR number or open head-branch PR, TARGET_BRANCH stays empty
 # and the hook exits silently (fail-open contract; no false positives — see #223).
+#
+# These tests stub gh early so they do not depend on the live test runner's
+# checked-out branch (which could otherwise match an open PR and skew results).
+
+EARLY_STUB=$(mktemp -d)
+trap 'rm -rf "$EARLY_STUB"' EXIT
+cat > "$EARLY_STUB/gh" << 'EARLYSTUB'
+#!/usr/bin/env bash
+# Return empty for any pr view / pr list — keeps TARGET_BRANCH empty.
+if [[ "$*" == *"pr view"* ]] || [[ "$*" == *"pr list"* ]]; then
+  exit 0
+fi
+exec $(command -v gh) "$@"
+EARLYSTUB
+chmod +x "$EARLY_STUB/gh"
+
+run_hook_empty_gh() {
+  local input="$1"
+  echo "$input" | PATH="$EARLY_STUB:$PATH" bash "$HOOK" 2>/dev/null || true
+}
 
 # Test: --merge with no PR number — TARGET_BRANCH unresolvable → silent pass-through
-OUT=$(run_hook '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge --merge"}}')
+OUT=$(run_hook_empty_gh '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge --merge"}}')
 assert_empty "No PR number --merge exits silently (no false positive)" "$OUT"
 
 # Test: --squash with no PR number — also silent
-OUT=$(run_hook '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge --squash"}}')
+OUT=$(run_hook_empty_gh '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge --squash"}}')
 assert_empty "No PR number --squash exits silently" "$OUT"
 
 # Test: PR number that gh cannot resolve — TARGET_BRANCH empty → silent pass-through
-OUT=$(run_hook '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 42 --rebase"}}')
+OUT=$(run_hook_empty_gh '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 42 --rebase"}}')
 assert_empty "Unresolvable PR number exits silently (no false positive)" "$OUT"
 
 # Test: no merge flag specified (should pass through regardless)
-OUT=$(run_hook '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 42"}}')
+OUT=$(run_hook_empty_gh '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 42"}}')
 assert_empty "No merge flag passes silently" "$OUT"
 
 echo ""
@@ -145,7 +165,7 @@ echo ""
 echo "--- Branch-override + output format tests (mock gh) ---"
 
 MOCK_BIN=$(mktemp -d)
-trap 'rm -rf "$MOCK_BIN"' EXIT
+trap 'rm -rf "$EARLY_STUB" "$MOCK_BIN"' EXIT
 
 # Helper: write a gh stub that returns a fixed baseRefName for `gh pr view`
 # and an empty list for `gh pr list`.
@@ -189,6 +209,37 @@ assert_contains "mocked main --squash: includes branch name" "$OUT" "main"
 OUT=$(run_hook_mocked "develop" '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 10 --rebase"}}')
 assert_valid_json "mocked develop --rebase: warning is valid JSON" "$OUT"
 assert_contains "mocked develop --rebase: warns about mismatch" "$OUT" "mismatch"
+
+# ── Misbinding guard (codex review #227): explicit PR number must not fall back ──
+# If `gh pr view <N>` fails, we must NOT infer target from `gh pr list --head
+# <current-branch>` — doing so could bind the command to a different PR open on
+# the current branch. Explicit PR number → trust pr view only → bail silently.
+write_gh_view_fail_stub() {
+  local list_base_ref="$1"
+  cat > "$MOCK_BIN/gh" << STUB
+#!/usr/bin/env bash
+if [[ "\$*" == *"pr view"* ]]; then
+  # Simulate a failure (e.g. closed/missing PR, auth issue)
+  exit 1
+fi
+if [[ "\$*" == *"pr list"* ]]; then
+  # A DIFFERENT PR is open on the current branch targeting \${list_base_ref}.
+  # If the hook wrongly falls back to this, the test will observe a warning
+  # driven by the wrong branch's merge_method.
+  echo "${list_base_ref}"
+  exit 0
+fi
+exec \$(command -v gh) "\$@"
+STUB
+  chmod +x "$MOCK_BIN/gh"
+}
+
+# Setup: pr view fails for explicit PR 999, but pr list would return "develop".
+# If the fallback fires, the develop branch override (squash) would trigger a
+# mismatch warning against the --merge flag. Correct behavior: silent bail.
+write_gh_view_fail_stub "develop"
+OUT=$(echo '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 999 --merge"}}' | PATH="$MOCK_BIN:$PATH" bash "$HOOK" 2>/dev/null || true)
+assert_empty "explicit PR number with failed pr view bails silently (no misbinding)" "$OUT"
 
 # ── Output format: warning has correct JSON shape ────────────────────────
 OUT=$(run_hook_mocked "develop" '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 10 --merge"}}')

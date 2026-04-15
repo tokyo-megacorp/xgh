@@ -50,13 +50,15 @@ if echo "$COMMAND" | grep -q 'gh pr merge'; then
   # Determine target branch
   TARGET_BRANCH=""
   if [ -n "$PR_NUMBER" ]; then
+    # Explicit PR number: trust gh pr view only. Do NOT fall back to
+    # `gh pr list --head <current-branch>` — that could bind the command
+    # to a different PR open on the current branch (codex review #227).
     TARGET_BRANCH=$(gh pr view "$PR_NUMBER" --json baseRefName -q .baseRefName 2>/dev/null || true)
-  fi
-  # Fallback: if gh pr view failed (closed/missing PR, auth issue, etc.),
-  # try to find an open PR whose head matches the current branch.
-  # This covers the common case of `gh pr merge <N>` run from the feature branch
-  # after the PR has already been merged/closed in the same session.
-  if [ -z "$TARGET_BRANCH" ]; then
+  else
+    # No PR number in the command (e.g. `gh pr merge --squash` run from the
+    # feature branch). Infer target from the open PR whose head matches the
+    # current branch — safe here because the command itself relies on that
+    # same current-branch → PR mapping.
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
     if [ -n "$CURRENT_BRANCH" ]; then
       TARGET_BRANCH=$(gh pr list --head "$CURRENT_BRANCH" --json baseRefName -q '.[0].baseRefName' 2>/dev/null || true)

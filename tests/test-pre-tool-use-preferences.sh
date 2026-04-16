@@ -349,5 +349,106 @@ else
 fi
 
 echo ""
+
+# ── Regression #228: embedded `gh pr merge` must NOT trigger Check 1 ────
+# Proof methodology: we install a sentinel `gh` stub that writes a marker to
+# a side-file whenever it is invoked.  The false-positive tests then assert
+# both that hook output is empty AND that the side-file remained empty,
+# proving the trigger function itself did not call gh — not just that the
+# hook happened to return nothing via fail-open.
+
+echo "--- Regression #228: semantic trigger (sentinel gh stub) ---"
+
+SENTINEL_BIN=$(mktemp -d)
+SENTINEL_FILE=$(mktemp)
+trap 'rm -rf "$EARLY_STUB" "$FP_BIN" "$MOCK_BIN" "$SENTINEL_BIN"; rm -f "$SENTINEL_FILE"' EXIT
+
+cat > "$SENTINEL_BIN/gh" << SENTINELSTUB
+#!/usr/bin/env bash
+# Sentinel: record every invocation so tests can detect spurious gh calls.
+echo "CALLED: \$*" >> "$SENTINEL_FILE"
+# For pr view / pr list return empty so fail-open still works if trigger
+# somehow fires; this makes the sentinel test stricter (tests the trigger,
+# not just the downstream bail-out).
+exit 0
+SENTINELSTUB
+chmod +x "$SENTINEL_BIN/gh"
+
+assert_gh_not_called() {
+  local desc="$1"
+  if [ -s "$SENTINEL_FILE" ]; then
+    FAIL=$((FAIL + 1))
+    echo "  FAIL: $desc — sentinel gh was called: $(cat "$SENTINEL_FILE")"
+  else
+    PASS=$((PASS + 1))
+    echo "  PASS: $desc (trigger correctly skipped — gh never called)"
+  fi
+  # Reset for next test
+  > "$SENTINEL_FILE"
+}
+
+run_hook_sentinel() {
+  local input="$1"
+  > "$SENTINEL_FILE"
+  echo "$input" | PATH="$SENTINEL_BIN:$PATH" bash "$HOOK" 2>/dev/null || true
+}
+
+# git commit whose -m value contains 'gh pr merge 123 --merge' in a heredoc-style
+# quoted string — the actual command is `git commit`, NOT `gh pr merge`.
+OUT=$(run_hook_sentinel '{"tool_name": "Bash", "tool_input": {"command": "git commit -m \"$(cat <<EOF\ngh pr merge 123 --merge\nEOF\n)\""}}')
+assert_empty "#228: gh pr merge inside heredoc body — output must be empty" "$OUT"
+assert_gh_not_called "#228: gh pr merge inside heredoc body — trigger must NOT call gh"
+
+# git commit with literal text in a simple quoted -m arg
+OUT=$(run_hook_sentinel '{"tool_name": "Bash", "tool_input": {"command": "git commit -m \"gh pr merge 123 --merge\""}}')
+assert_empty "#228: gh pr merge inside quoted -m — output must be empty" "$OUT"
+assert_gh_not_called "#228: gh pr merge inside quoted -m — trigger must NOT call gh"
+
+# gh issue create whose body contains a URL with pull/999
+OUT=$(run_hook_sentinel '{"tool_name": "Bash", "tool_input": {"command": "gh issue create --body \"see https://github.com/owner/repo/pull/999 and gh pr merge 999 --squash\""}}')
+assert_empty "#228: gh pr merge URL inside --body — output must be empty" "$OUT"
+assert_gh_not_called "#228: gh pr merge URL inside --body — trigger must NOT call gh"
+
+# ── True positives: trigger must fire for real invocations ─────────────
+
+# Real `gh pr merge 42 --squash` at start of command — must enter Check 1
+# (sentinel fires, output empty only because gh returns empty base ref).
+OUT=$(run_hook_sentinel '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 42 --squash"}}')
+if [ -s "$SENTINEL_FILE" ]; then
+  PASS=$((PASS + 1))
+  echo "  PASS: #228 positive: gh pr merge at start — trigger correctly entered (gh called)"
+else
+  FAIL=$((FAIL + 1))
+  echo "  FAIL: #228 positive: gh pr merge at start — trigger did NOT enter (gh never called)"
+fi
+> "$SENTINEL_FILE"
+
+# Real `gh pr merge 42 --squash` after `&&` separator — must also enter Check 1
+OUT=$(run_hook_sentinel '{"tool_name": "Bash", "tool_input": {"command": "git fetch && gh pr merge 42 --squash"}}')
+if [ -s "$SENTINEL_FILE" ]; then
+  PASS=$((PASS + 1))
+  echo "  PASS: #228 positive: gh pr merge after && — trigger correctly entered (gh called)"
+else
+  FAIL=$((FAIL + 1))
+  echo "  FAIL: #228 positive: gh pr merge after && — trigger did NOT enter (gh never called)"
+fi
+> "$SENTINEL_FILE"
+
+# Mocked gh confirms true-positive output for real invocations
+OUT=$(run_hook_mocked "main" '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 42 --squash"}}')
+assert_contains "#228 positive: gh pr merge at start — warns for main (prefers merge)" "$OUT" "mismatch"
+
+OUT=$(run_hook_mocked "main" '{"tool_name": "Bash", "tool_input": {"command": "git fetch && gh pr merge 42 --squash"}}')
+assert_contains "#228 positive: gh pr merge after && separator — warns for main" "$OUT" "mismatch"
+
+# ── Regression: env-prefix KEY=VAR before gh pr merge must trigger correctly ──
+# `GH_TOKEN=abc gh pr merge 42 --squash` — first token is KEY=VAR, which awk
+# correctly skips to find `gh` as the real command.  The previous grep anchor
+# `'^(\\)?gh pr merge'` ran against the raw segment starting with `GH_TOKEN=…`
+# and rejected it, causing a false-negative (enforcement gap).
+OUT=$(run_hook_mocked "main" '{"tool_name": "Bash", "tool_input": {"command": "GH_TOKEN=abc gh pr merge 42 --squash"}}')
+assert_contains "#228 env-prefix: GH_TOKEN=abc gh pr merge 42 --squash — must warn (true positive)" "$OUT" "mismatch"
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 [ "$FAIL" -eq 0 ] && exit 0 || exit 1

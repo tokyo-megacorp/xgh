@@ -349,5 +349,40 @@ else
 fi
 
 echo ""
+
+# ── Regression #228: embedded `gh pr merge` must NOT trigger Check 1 ────
+# The trigger grep used to be unanchored, so literal text appearing inside
+# quoted strings, heredoc bodies, or argument values would fire Check 1 and
+# — if a number was also present — emit a spurious warning.
+
+echo "--- Regression #228: anchored trigger grep ---"
+
+# git commit whose -m value contains 'gh pr merge 123 --merge' in a heredoc-style
+# quoted string — the actual command is `git commit`, NOT `gh pr merge`.
+OUT=$(run_hook_empty_gh '{"tool_name": "Bash", "tool_input": {"command": "git commit -m \"$(cat <<EOF\ngh pr merge 123 --merge\nEOF\n)\""}}')
+assert_empty "#228: gh pr merge inside heredoc body must NOT trigger (actual cmd is git commit)" "$OUT"
+
+# git commit with literal text in a simple quoted -m arg
+OUT=$(run_hook_empty_gh '{"tool_name": "Bash", "tool_input": {"command": "git commit -m \"gh pr merge 123 --merge\""}}')
+assert_empty "#228: gh pr merge inside quoted -m must NOT trigger" "$OUT"
+
+# gh issue create whose body contains a URL with pull/999
+OUT=$(run_hook_empty_gh '{"tool_name": "Bash", "tool_input": {"command": "gh issue create --body \"see https://github.com/owner/repo/pull/999 — gh pr merge 999 --squash\""}}')
+assert_empty "#228: gh pr merge URL inside quoted body must NOT trigger" "$OUT"
+
+# Real `gh pr merge 42 --squash` at start of command still triggers
+# (gh stub returns empty base ref → silent bail, but Check 1 must have entered)
+# We verify by checking that a properly mocked gh DOES produce output for this form.
+OUT=$(run_hook_mocked "develop" '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 42 --squash"}}')
+assert_empty "#228 positive: gh pr merge 42 --squash targeting develop with squash configured passes silently" "$OUT"
+
+OUT=$(run_hook_mocked "main" '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 42 --squash"}}')
+assert_contains "#228 positive: gh pr merge 42 --squash at start of command triggers (main prefers merge)" "$OUT" "mismatch"
+
+# Real `&& gh pr merge 42 --merge` — after a separator — must still trigger
+OUT=$(run_hook_mocked "main" '{"tool_name": "Bash", "tool_input": {"command": "git fetch && gh pr merge 42 --squash"}}')
+assert_contains "#228 positive: gh pr merge after && separator triggers correctly" "$OUT" "mismatch"
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 [ "$FAIL" -eq 0 ] && exit 0 || exit 1

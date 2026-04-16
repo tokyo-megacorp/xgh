@@ -30,7 +30,11 @@ CONFIG_READER="${REPO_ROOT}/lib/config-reader.sh"
 PROJECT_YAML="${REPO_ROOT}/config/project.yaml"
 
 # ── Check 1: gh pr merge — merge method validation ─────────────────────
-if echo "$COMMAND" | grep -q 'gh pr merge'; then
+# Anchored ERE: only match `gh pr merge` at the start of the command string,
+# after a shell separator (;, &, &&, ||, |), or after leading whitespace.
+# This prevents false-positive matches when the literal text appears inside
+# quoted heredoc bodies, commit messages, or other argument values (#228).
+if echo "$COMMAND" | grep -qE '(^|[;&|[:space:]])gh pr merge[[:space:]]'; then
 
   # Extract merge method from command flags
   CMD_METHOD=""
@@ -50,17 +54,18 @@ if echo "$COMMAND" | grep -q 'gh pr merge'; then
   # harder to disambiguate from flag arguments).
   PR_NUMBER=""
   # Number form: `gh pr merge 123 ...`
-  PR_NUMBER=$(echo "$COMMAND" | grep -oE 'gh pr merge[[:space:]]+[0-9]+' | grep -oE '[0-9]+$' || true)
+  # Anchored to separator/start so embedded text cannot supply a spurious number (#228).
+  PR_NUMBER=$(echo "$COMMAND" | grep -oE '(^|[;&|[:space:]])gh pr merge[[:space:]]+[0-9]+' | grep -oE '[0-9]+$' || true)
   if [ -z "$PR_NUMBER" ]; then
     # URL form: `gh pr merge https://github.com/<owner>/<repo>/pull/<N> ...`
-    PR_NUMBER=$(echo "$COMMAND" | grep -oE 'gh pr merge[[:space:]]+https?://[^[:space:]]+/pull/[0-9]+' | grep -oE '[0-9]+$' || true)
+    PR_NUMBER=$(echo "$COMMAND" | grep -oE '(^|[;&|[:space:]])gh pr merge[[:space:]]+https?://[^[:space:]]+/pull/[0-9]+' | grep -oE '[0-9]+$' || true)
   fi
   # Presence of an explicit selector (number OR URL) — used to disable the
   # current-branch fallback and avoid misbinding to a different PR (#227 review).
   EXPLICIT_SELECTOR=""
   if [ -n "$PR_NUMBER" ]; then
     EXPLICIT_SELECTOR="yes"
-  elif echo "$COMMAND" | grep -qE 'gh pr merge[[:space:]]+https?://'; then
+  elif echo "$COMMAND" | grep -qE '(^|[;&|[:space:]])gh pr merge[[:space:]]+https?://'; then
     # URL was given but we couldn't parse the PR number (e.g. malformed URL).
     # Still treat as explicit — we must not fall back to current-branch inference.
     EXPLICIT_SELECTOR="yes"

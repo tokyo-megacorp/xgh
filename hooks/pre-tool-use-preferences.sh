@@ -72,7 +72,7 @@ if echo "$COMMAND" | grep -q 'gh pr merge'; then
     # Explicit selector (number or URL): trust gh pr view only. Do NOT fall
     # back to `gh pr list --head <current-branch>` — that could bind the
     # command to a different PR open on the current branch (codex review #227).
-    TARGET_BRANCH=$(gh pr view "$PR_NUMBER" --json baseRefName -q .baseRefName 2>/dev/null || true)
+    TARGET_BRANCH=$(_run_timeout 10 gh pr view "$PR_NUMBER" --json baseRefName -q .baseRefName 2>/dev/null || true)
   elif [ -z "$EXPLICIT_SELECTOR" ]; then
     # No explicit selector at all (e.g. `gh pr merge --squash` run from the
     # feature branch). Infer target from the open PR whose head matches the
@@ -80,7 +80,7 @@ if echo "$COMMAND" | grep -q 'gh pr merge'; then
     # same current-branch → PR mapping.
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
     if [ -n "$CURRENT_BRANCH" ]; then
-      TARGET_BRANCH=$(gh pr list --head "$CURRENT_BRANCH" --json baseRefName -q '.[0].baseRefName' 2>/dev/null || true)
+      TARGET_BRANCH=$(_run_timeout 10 gh pr list --head "$CURRENT_BRANCH" --json baseRefName -q '.[0].baseRefName' 2>/dev/null || true)
     fi
   fi
   # If we still can't determine the target branch, bail out silently.

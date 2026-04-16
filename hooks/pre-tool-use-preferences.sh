@@ -122,21 +122,55 @@ if echo "$COMMAND" | grep -q 'gh pr merge'; then
 fi
 
 # ── Check 2: git push --force on protected branches ────────────────────
-if echo "$COMMAND" | grep -qE 'git push.*(--force|-f)'; then
+# Issue #229: match only bare --force (not --force-with-lease / --no-force)
+# and short -f flag (standalone or combined, e.g. -fu, -uf).
+# --force-with-lease is the safe alternative — must NOT warn for it.
+# --no-force is a negating flag — must NOT warn for it.
+_is_force_push() {
+  local cmd="$1"
+  echo "$cmd" | grep -q 'git push' || return 1
+  # (a) bare --force: matches --force not followed by - (excludes --force-with-lease)
+  #     and not preceded by --no (excludes --no-force); two-pass POSIX ERE.
+  if echo "$cmd" | grep -qE -- '--force([^-]|$)' && \
+     ! echo "$cmd" | grep -qE -- '(--no-force|--force-with-lease)'; then
+    return 0
+  fi
+  # (b) short flag cluster containing f: -f, -fu, -uf, etc.
+  if echo "$cmd" | grep -qE -- ' -[a-zA-Z]*f[a-zA-Z]*( |$)'; then
+    return 0
+  fi
+  return 1
+}
+if _is_force_push "$COMMAND"; then
 
   # Extract target branch from push command
   # Patterns: git push origin main --force, git push -f origin main, git push --force
   PUSH_BRANCH=""
 
-  # Try to extract remote and branch from the command
-  # Remove flags to find positional args: git push [remote] [refspec]
-  PUSH_ARGS=$(echo "$COMMAND" | sed 's/git push//' | sed 's/--force-with-lease//g' | sed 's/--force//g' | sed 's/-f//g' | sed 's/--no-verify//g' | xargs)
+  # Try to extract remote and branch from the command.
+  # Issue #230: strip combined short-flag clusters that include f (e.g. -fu, -uf)
+  # using a pattern that matches the entire cluster rather than just the letter f.
+  # Issue #231: for refspecs like HEAD:main, use the remote (right) side.
+  PUSH_ARGS=$(echo "$COMMAND" \
+    | sed 's/git push//' \
+    | sed 's/--force-with-lease//g' \
+    | sed 's/--no-force//g' \
+    | sed 's/--force//g' \
+    | sed 's/--no-verify//g' \
+    | sed 's/--set-upstream//g' \
+    | sed 's/ -u / /g; s/ -u$/ /g' \
+    | sed 's/ -[a-zA-Z]*f[a-zA-Z]*/ /g' \
+    | xargs)
 
   if [ -n "$PUSH_ARGS" ]; then
     # Second positional arg is typically the branch (first is remote)
-    PUSH_BRANCH=$(echo "$PUSH_ARGS" | awk '{print $2}')
-    # Handle refspec like main:main
-    PUSH_BRANCH=$(echo "$PUSH_BRANCH" | sed 's/:.*//')
+    RAW_REF=$(echo "$PUSH_ARGS" | awk '{print $2}')
+    # Issue #231: refspec like HEAD:main — use the remote (right) side
+    if echo "$RAW_REF" | grep -q ':'; then
+      PUSH_BRANCH=$(echo "$RAW_REF" | cut -d: -f2)
+    else
+      PUSH_BRANCH="$RAW_REF"
+    fi
   fi
 
   # If no branch specified, try current branch

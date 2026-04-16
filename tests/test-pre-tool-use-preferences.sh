@@ -158,6 +158,65 @@ assert_empty "Non-force push to main passes silently" "$OUT"
 
 echo ""
 
+# ── Regression #229: --no-force and --force-with-lease must NOT warn ────
+# These use mock-python3 to force IS_PROTECTED=true for 'main' so that, if the
+# trigger fires, the warning would be emitted.  The test verifies no warning is
+# emitted — confirming the trigger correctly skips safe flags.
+
+echo "--- Regression #229: false-positive protection ---"
+
+FP_BIN=$(mktemp -d)
+trap 'rm -rf "$FP_BIN"' EXIT
+
+# python3 stub: always returns "true" (branch is protected).
+# If the trigger fires for a false-positive flag, the warning would appear.
+cat > "$FP_BIN/python3" << 'PYSTUB'
+#!/usr/bin/env bash
+# Stub: pretend every branch is protected
+echo "true"
+PYSTUB
+chmod +x "$FP_BIN/python3"
+
+run_hook_protected() {
+  local input="$1"
+  echo "$input" | PATH="$FP_BIN:$PATH" bash "$HOOK" 2>/dev/null || true
+}
+
+OUT=$(run_hook_protected '{"tool_name": "Bash", "tool_input": {"command": "git push --force-with-lease origin main"}}')
+assert_empty "#229: --force-with-lease must NOT warn (not a destructive force-push)" "$OUT"
+
+OUT=$(run_hook_protected '{"tool_name": "Bash", "tool_input": {"command": "git push --no-force origin main"}}')
+assert_empty "#229: --no-force must NOT warn (negating flag)" "$OUT"
+
+# True positives: --force and -f to a protected branch SHOULD warn
+OUT=$(run_hook_protected '{"tool_name": "Bash", "tool_input": {"command": "git push --force origin main"}}')
+assert_contains "#229: --force to protected branch SHOULD warn" "$OUT" "WARNING"
+
+OUT=$(run_hook_protected '{"tool_name": "Bash", "tool_input": {"command": "git push -f origin main"}}')
+assert_contains "#229: -f to protected branch SHOULD warn" "$OUT" "WARNING"
+
+echo ""
+
+# ── Regression #230: combined short flags must resolve branch correctly ──
+echo "--- Regression #230: combined short flags ---"
+
+OUT=$(run_hook_protected '{"tool_name": "Bash", "tool_input": {"command": "git push -fu origin main"}}')
+assert_contains "#230: -fu origin main — warning should mention 'main' not 'u' or 'origin'" "$OUT" "main"
+
+OUT=$(run_hook_protected '{"tool_name": "Bash", "tool_input": {"command": "git push -uf origin main"}}')
+assert_contains "#230: -uf origin main — warning should mention 'main' not 'u' or 'origin'" "$OUT" "main"
+
+echo ""
+
+# ── Regression #231: HEAD:main refspec resolves to remote branch ─────────
+echo "--- Regression #231: HEAD:main refspec ---"
+
+OUT=$(run_hook_protected '{"tool_name": "Bash", "tool_input": {"command": "git push --force origin HEAD:main"}}')
+assert_contains "#231: HEAD:main refspec — warning should mention 'main' not 'HEAD'" "$OUT" "main"
+assert_not_contains "#231: HEAD:main refspec — warning should NOT mention 'HEAD'" "$OUT" "'HEAD'"
+
+echo ""
+
 # ── Branch-override and output format tests (mock gh) ──────────────────
 # These tests stub `gh` on PATH so we can control what baseRefName is returned
 # without relying on live PRs.  The stub is created in a temp dir and cleaned up.

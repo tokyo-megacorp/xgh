@@ -48,13 +48,49 @@ PROJECT_YAML="${REPO_ROOT}/config/project.yaml"
 #      outer command (e.g. `git commit -m "gh pr merge …"`), so after
 #      splitting, the segment's first token is `git`, not `gh` — no match.
 #
+# _mask_quoted_regions: replace the *content* inside "..." and '...' with
+# spaces so that shell operators (&&, ||, |, ;) and heredoc markers (<<)
+# that appear inside quoted strings become invisible to downstream parsers.
+# The original string length is preserved character-for-character.
+#
+# Rules: double-quoted region from first unescaped " to next unescaped ";
+# single-quoted region from ' to next ' (no escape inside '...' in shell).
+# Fail-open: odd quote count (unclosed) → emit original unchanged.
+#
+# Implementation note: the awk script is passed via -v SQ="\047" to avoid
+# embedding a literal single-quote character inside the awk '...' context.
+_mask_quoted_regions() {
+  awk -v SQ="'" '{
+    line=$0; out=""; in_dq=0; in_sq=0; dq_c=0; sq_c=0; tmp=line
+    while (length(tmp)>0) {
+      c=substr(tmp,1,1); tmp=substr(tmp,2)
+      if (c=="\"") dq_c++; else if (c==SQ) sq_c++
+    }
+    if (dq_c%2!=0 || sq_c%2!=0) { print line; next }
+    for (i=1; i<=length(line); i++) {
+      c=substr(line,i,1); prev=(i>1)?substr(line,i-1,1):""
+      if (!in_dq && !in_sq && c=="\"" && prev!="\\") { in_dq=1; out=out c; continue }
+      if ( in_dq             && c=="\"" && prev!="\\") { in_dq=0; out=out c; continue }
+      if (!in_dq && !in_sq && c==SQ)                   { in_sq=1; out=out c; continue }
+      if ( in_sq             && c==SQ)                  { in_sq=0; out=out c; continue }
+      out=out ((in_dq||in_sq) ? " " : c)
+    }
+    print out
+  }'
+}
+
 # _strip_heredocs: remove heredoc bodies from a multi-line command string.
 # Works by walking line by line in bash (avoids gawk-only match() syntax):
 # once a `<<[-]WORD` or `<<'WORD'` or `<<"WORD"` marker is seen on a line,
 # subsequent lines are suppressed until the bare terminator word appears
 # alone on a line (with leading tabs stripped for <<- form).
+#
+# Fix (AR Finding 3): before testing whether a line contains `<<`, mask its
+# quoted regions via _mask_quoted_regions.  This prevents `printf "<<EOF"` —
+# where `<<EOF` is inside a double-quoted string — from triggering heredoc
+# suppression and accidentally dropping the command that follows it.
 _strip_heredocs() {
-  local in_heredoc=0 terminator="" line stripped
+  local in_heredoc=0 terminator="" line stripped masked
   while IFS= read -r line; do
     if [ "$in_heredoc" -eq 1 ]; then
       # Strip leading tabs (<<- form allows indented terminators)
@@ -65,9 +101,12 @@ _strip_heredocs() {
       # Suppress heredoc body line (including terminator)
       continue
     fi
-    # Detect <<[-]['"]?WORD['"]? and extract the bare WORD
-    if printf '%s\n' "$line" | grep -qE '<<-?[[:space:]]*'"'"'?["]?[A-Za-z_][A-Za-z0-9_]*'"'"'?["]?'; then
-      # Extract the terminator word: strip <<, optional -, optional quotes
+    # Mask quoted regions before testing for `<<` so that `printf "<<EOF"`
+    # does not start heredoc suppression (AR Finding 3).
+    masked=$(printf '%s\n' "$line" | _mask_quoted_regions)
+    # Detect <<[-]['"]?WORD['"]? and extract the bare WORD (from masked line)
+    if printf '%s\n' "$masked" | grep -qE '<<-?[[:space:]]*'"'"'?["]?[A-Za-z_][A-Za-z0-9_]*'"'"'?["]?'; then
+      # Extract the terminator word from the ORIGINAL line so quotes are right
       terminator=$(printf '%s\n' "$line" \
         | grep -oE '<<-?[[:space:]]*'"'"'?"?[A-Za-z_][A-Za-z0-9_]*'"'"'?"?' \
         | sed "s/<<-\?[[:space:]]*//; s/['\"]//g" \
@@ -82,21 +121,80 @@ _strip_heredocs() {
 
 # _command_segments: emit one segment per line after heredoc-stripping and
 # separator-splitting.  Each output line is the trimmed text of a segment.
+#
+# Fix (AR Finding 1): splitting must not break on separators that appear
+# inside quoted strings (e.g. `--body "note; gh pr merge 999 --squash"`).
+# Strategy: mask quoted regions in a copy of each line (same byte length),
+# mark separator positions in the masked copy, then cut the ORIGINAL line at
+# those exact positions.  Both strings remain byte-aligned throughout.
+#
+# The awk script uses -v SQ="'" to avoid embedding a literal single-quote
+# inside the awk '...' shell context.
 _command_segments() {
   local cmd="$1"
   printf '%s\n' "$cmd" \
     | _strip_heredocs \
-    | sed 's/&&/\n/g; s/||/\n/g; s/|/\n/g; s/;/\n/g' \
-    | sed 's/^[[:space:]]*//'
+    | awk -v SQ="'" '
+      function quote_mask(s,    out,c,prev,in_dq,in_sq,i,dq_c,sq_c,tmp) {
+        in_dq=0; in_sq=0; out=""; dq_c=0; sq_c=0; tmp=s
+        while (length(tmp)>0) {
+          c=substr(tmp,1,1); tmp=substr(tmp,2)
+          if (c=="\"") dq_c++; else if (c==SQ) sq_c++
+        }
+        if (dq_c%2!=0 || sq_c%2!=0) return s
+        for (i=1; i<=length(s); i++) {
+          c=substr(s,i,1); prev=(i>1)?substr(s,i-1,1):""
+          if (!in_dq && !in_sq && c=="\"" && prev!="\\") { in_dq=1; out=out c; continue }
+          if ( in_dq             && c=="\"" && prev!="\\") { in_dq=0; out=out c; continue }
+          if (!in_dq && !in_sq && c==SQ)                   { in_sq=1; out=out c; continue }
+          if ( in_sq             && c==SQ)                  { in_sq=0; out=out c; continue }
+          out=out ((in_dq||in_sq) ? " " : c)
+        }
+        return out
+      }
+      # mark_seps: replace separator sequences in-place with \001 (same byte
+      # length) so orig and marked remain byte-aligned.
+      # Two-char ops (&&, ||) → \001\001; one-char ops (|, ;) → \001.
+      function mark_seps(s,    out,i,c,c2,n2) {
+        out=""; i=1; n2=length(s)
+        while (i<=n2) {
+          c=substr(s,i,1); c2=(i<n2)?substr(s,i,2):""
+          if (c2=="&&"||c2=="||") { out=out "\001\001"; i+=2; continue }
+          if (c=="|"||c==";")     { out=out "\001";     i++;  continue }
+          out=out c; i++
+        }
+        return out
+      }
+      {
+        orig=  $0
+        marked=mark_seps(quote_mask($0))
+        out_seg=""
+        for (i=1; i<=length(marked); i++) {
+          if (substr(marked,i,1)=="\001") {
+            sub(/^[[:space:]]+/,"",out_seg)
+            if (out_seg!="") print out_seg
+            out_seg=""
+          } else {
+            out_seg=out_seg substr(orig,i,1)
+          }
+        }
+        sub(/^[[:space:]]+/,"",out_seg)
+        if (out_seg!="") print out_seg
+      }
+    '
 }
 
 # _strip_env_prefix: given a segment string, remove all leading KEY=VAR
 # tokens (e.g. `GH_TOKEN=abc GH_HOST=x gh pr merge`) so the remaining
 # string starts with the actual command word.  Portable awk (no gawk).
+#
+# Fix (AR Finding 2): accept lowercase variable names (shell allows them).
+# Old pattern: /^[A-Z_][A-Z0-9_]*=/  (uppercase only)
+# New pattern: /^[a-zA-Z_][a-zA-Z0-9_]*=/ (any valid shell identifier)
 _strip_env_prefix() {
   printf '%s\n' "$1" | awk '{
     i = 1
-    while (i <= NF && $i ~ /^[A-Z_][A-Z0-9_]*=/) i++
+    while (i <= NF && $i ~ /^[a-zA-Z_][a-zA-Z0-9_]*=/) i++
     out = ""
     for (; i <= NF; i++) out = (out == "" ? $i : out " " $i)
     print out

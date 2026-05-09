@@ -32,6 +32,18 @@ claude plugin install xgh@tokyo-megacorp
 
 ---
 
+## Documentation Hierarchy
+
+Three surfaces — never collapsed:
+
+- **README.md** — public pitch and install
+- **AGENTS.md** (this file) — agent-facing runtime contract; auto-generated from `config/` YAML via `scripts/gen-agents-md.sh`. Do not edit directly.
+- **docs/** — narrative: architecture, usage, command reference, calibration
+
+CLAUDE.md, GEMINI.md, and platform-specific files (`.claude/CLAUDE.md`, `.copilot/instructions.md`) are one-line pointers to this file.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -50,15 +62,8 @@ claude plugin install xgh@tokyo-megacorp
 
 | Agent | Model | Capabilities |
 |-------|-------|-------------|
-| code-reviewer | sonnet | `code-review`, `architecture`, `conventions` |
-| collaboration-dispatcher | sonnet | `dispatch`, `routing`, `coordination` |
 | context-curator | haiku | `context-tree`, `curation`, `indexing` |
-| investigation-lead | opus | `debugging`, `investigation`, `root-cause` |
-| onboarding-guide | sonnet | `onboarding`, `documentation`, `guidance` |
-| opencode-driver | sonnet | `opencode`, `dispatch`, `execution` |
 | pipeline-doctor | sonnet | `health-check`, `diagnostics`, `pipeline` |
-| pr-poller | haiku | `pr-polling`, `review-management`, `merge-automation` |
-| pr-reviewer | sonnet | `pr-review`, `code-review`, `github` |
 | retrieval-auditor | haiku | `retrieval`, `audit`, `memory` |
 
 ---
@@ -207,6 +212,16 @@ Instructions for Codex CLI when working on this repository.
 | Skill Quality — Skill Quality Epic — TDD audit, 25 issues (#34–#61), style + content improvements | ✅ Complete |
 | Memory Abstraction — Memory backend abstraction — backend-agnostic [SEARCH]/[STORE]/[FORGET] intent labels | ✅ Complete |
 | Dynamic Dispatch — Dynamic model routing — /xgh-dispatch router with per-archetype performance profiles | ✅ Complete |
+
+---
+
+## AGENTS File Index
+
+- `/AGENTS.md` (this file, auto-generated — edit `scripts/gen-agents-md.sh` instead)
+- [`/agents/AGENTS.md`](agents/AGENTS.md) — `agents/`
+- [`/hooks/AGENTS.md`](hooks/AGENTS.md) — `hooks/`
+- [`/skills/AGENTS.md`](skills/AGENTS.md) — `skills/`
+- [`/tests/AGENTS.md`](tests/AGENTS.md) — `tests/`
 
 ---
 

@@ -125,6 +125,20 @@ out.append("")
 out.append("---")
 out.append("")
 
+# Documentation Hierarchy
+out.append("## Documentation Hierarchy")
+out.append("")
+out.append("Three surfaces — never collapsed:")
+out.append("")
+out.append("- **README.md** — public pitch and install")
+out.append("- **AGENTS.md** (this file) — agent-facing runtime contract; auto-generated from `config/` YAML via `scripts/gen-agents-md.sh`. Do not edit directly.")
+out.append("- **docs/** — narrative: architecture, usage, command reference, calibration")
+out.append("")
+out.append("CLAUDE.md, GEMINI.md, and platform-specific files (`.claude/CLAUDE.md`, `.copilot/instructions.md`) are one-line pointers to this file.")
+out.append("")
+out.append("---")
+out.append("")
+
 # Tech Stack
 out.append("## Tech Stack")
 out.append("")
@@ -275,6 +289,29 @@ for s in proj.get('implementation_status', []):
 out.append("")
 out.append("---")
 out.append("")
+
+# AGENTS File Index — auto-discovered
+agents_index = []
+for path in sorted(glob.glob(os.path.join(ROOT, "**", "AGENTS.md"), recursive=True)):
+    rel = os.path.relpath(path, ROOT)
+    # Skip root (this file), hidden dirs, and worktrees
+    parts = rel.split(os.sep)
+    if len(parts) == 1:
+        continue
+    if any(p.startswith('.') for p in parts):
+        continue
+    dirlink = "/".join(parts[:-1])
+    agents_index.append(f"- [`/{rel}`]({rel}) — `{dirlink}/`")
+
+if agents_index:
+    out.append("## AGENTS File Index")
+    out.append("")
+    out.append("- `/AGENTS.md` (this file, auto-generated — edit `scripts/gen-agents-md.sh` instead)")
+    for entry in agents_index:
+        out.append(entry)
+    out.append("")
+    out.append("---")
+    out.append("")
 
 with open(os.path.join(ROOT, "AGENTS.md"), "w") as f:
     f.write("\n".join(out))

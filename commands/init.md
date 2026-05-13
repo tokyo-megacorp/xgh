@@ -21,7 +21,7 @@ No arguments. The skill walks you through everything interactively.
 
 ## What It Does
 
-1. **Verify MCP connections** — checks MAGI, Slack, Atlassian, Figma, GitHub CLI
+1. **Verify MCP connections** — checks memory, Slack, Atlassian, Figma, GitHub CLI
 2. **Profile setup** — name, role, squad, platforms
 3. **Add first project** — invokes `/xgh-track` for full project onboarding
 4. **Initial retrieval** — backfills recent Slack messages and linked resources
@@ -32,7 +32,7 @@ No arguments. The skill walks you through everything interactively.
 ## Prerequisites
 
 - xgh must be installed (`~/.xgh/ingest.yaml` must exist — created by `/xgh-init`)
-- MAGI and Slack MCPs must be configured (run `/xgh-setup` if not)
+- Memory and Slack integrations should be configured for the full experience (run `/xgh-setup` if not)
 
 ## Related Skills
 

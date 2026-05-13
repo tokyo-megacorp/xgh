@@ -64,7 +64,7 @@ with `$XGH_PROJECT_SCOPE`.
 
 Before calling any Cipher tools:
 
-1. Test `cipher_memory_search` availability by checking the current tool list
+1. Test memory search availability by checking the current tool list for a configured/native memory mechanism
 2. If Cipher is not available:
    - Log: `echo "⚠️ Cipher MCP not configured — dedup will be skipped (searches will store raw)"`
    - Set `CIPHER_AVAILABLE=0`

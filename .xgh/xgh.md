@@ -1,11 +1,12 @@
 # xgh — Static Agent Instructions
 
+Source: loaded by `CLAUDE.local.md` via `@` reference.
+
 > Loaded via `@` reference in CLAUDE.md. Zero runtime cost.
-> Source: loaded by `CLAUDE.local.md` via `@` reference. Do not confuse with `templates/xgh-instructions.md`.
 
 ## Memory Protocol
 
-Use lossless-claude (`lcm_*` tools) for persistent memory across sessions.
+Use the available/native memory mechanism for persistent memory across sessions. Active instructions should use backend-neutral intents (`[SEARCH]`, `[STORE]`, `[FORGET]`) so each agent can choose its tool of choice.
 
 ### When to Search
 
@@ -13,7 +14,7 @@ Use lossless-claude (`lcm_*` tools) for persistent memory across sessions.
 
 | Answer | Action |
 |--------|--------|
-| **YES** — need to understand/modify codebase | `lcm_search` FIRST |
+| **YES** — need to understand/modify codebase | `[SEARCH]` memory FIRST |
 | **NO** — general knowledge, meta tasks, follow-up | Skip search |
 
 Search when: writing/editing code, understanding how something works, debugging, finding where something is, architectural decisions.
@@ -28,10 +29,10 @@ Each distinct code task = new search, even in long conversations.
 
 | Answer | Action |
 |--------|--------|
-| **YES** — wrote code, found patterns, made decisions | Extract 3-7 bullet summary → `lcm_store(summary, ["session"])` |
+| **YES** — wrote code, found patterns, made decisions | Extract 3-7 bullet summary → `[STORE]` with `session` tags when supported |
 | **NO** — just answered a question, no new insights | Skip |
 
-For complex reasoning/debugging → `lcm_store(text, ["reasoning"])`.
+For complex reasoning/debugging → `[STORE]` with tags including `reasoning` when supported.
 
 ### Quick Reference
 
@@ -46,7 +47,7 @@ For complex reasoning/debugging → `lcm_store(text, ["reasoning"])`.
 ### Workflow
 
 ```
-Code task → lcm_search FIRST → Work → lcm_store (summary) → Done
+Code task → [SEARCH] memory FIRST → Work → [STORE] summary → Done
 Non-code task → Just respond normally
 ```
 

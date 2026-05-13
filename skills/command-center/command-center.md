@@ -94,7 +94,7 @@ For each active project, run `xgh:briefing` logic in parallel using background A
 
 Gather from every project:
 - GitHub: `gh pr list --state open`, `gh issue list --assignee @me --state open`, `gh pr list --review-requested @me --state open`
-- MAGI: [SEARCH] → call `magi_query("in progress OR blocked OR needs review", { limit: 3 })`
+- Memory: `[SEARCH] "in progress OR blocked OR needs review" limit=3` through the available/native memory mechanism
 
 Output format adds a **project label** to every item:
 
@@ -102,7 +102,7 @@ Output format adds a **project label** to every item:
 ## 🐴🤖 xgh command center — [date] [time]
 
 ### NEEDS YOU NOW
-- [project-name] Issue #143: ctx_batch_execute passes commands as string — urgency 60
+- [project-name] Issue #143: command parser passes arguments as one string — urgency 60
 - [project-name] PR review requested on #18
 
 ### IN PROGRESS
@@ -112,7 +112,7 @@ Output format adds a **project label** to every item:
 - [project-name] Release 2.1.0 scheduled Friday
 
 ### TEAM PULSE
-- [project-name] Convention change: use ctx_execute_file for large outputs
+- [project-name] Convention change: write large outputs to files before handing them off
 ```
 
 Hard cap: **5 items per section** across all projects. Sort by urgency within each section.
@@ -167,7 +167,7 @@ claude --session-name "<project>: implement <ref>"
 Session naming uses `command_center.session_name_template` from config, defaulting to `"{project}: {action} {ref}"`.
 
 Examples:
-- `"context-mode: implement #143"`
+- `"sample-project: implement #143"`
 - `"xgh: investigate PR #18"`
 
 ---
@@ -201,7 +201,7 @@ If neither is active:
 Compact output — one line per project, counts only:
 
 ```
-🐴🤖 pulse — context-mode: 2 new · xgh: quiet · inspector: quiet · MAGI: quiet
+🐴🤖 pulse — sample-project: 2 new · xgh: quiet · inspector: quiet · memory: quiet
 ```
 
 For each project, fetch only the count of new/open items from GitHub (unread PRs + assigned issues). Skip memory and Slack for pulse. Output on a single line.
@@ -227,7 +227,7 @@ Display:
 
 | Ref | Project | Action | Status |
 |-----|---------|--------|--------|
-| #143 | context-mode | investigate | ✅ complete |
+| #143 | sample-project | investigate | ✅ complete |
 | #18 | xgh | triage | ⏳ running |
 ```
 

@@ -2,23 +2,22 @@
 
 ## Detection Protocol
 
-Before starting any skill, auto-detect which MCP servers are available. Skills adapt based on what is configured — no hard dependencies.
+Before starting any skill, auto-detect which integrations are available. Skills adapt based on what is configured — no hard dependencies.
 
 **How to detect** (method depends on integration type — see table below):
-- **MCP integrations:** Check whether the named tool function is present in the current tool list.
+- **MCP integrations:** Check whether a suitable tool function is present in the current tool list.
 - **CLI integrations (e.g. GitHub):** Check binary availability via `command -v gh` or a lightweight help command. These have no MCP server — the table row's "Detection signal" column specifies the CLI check.
 Available integrations are discovered automatically on first invocation. Run `/xgh-setup` to configure any missing MCP integrations.
 
 ## Common Tool Signatures by Integration
 
-MCP tool names follow the pattern `mcp__<server-slug>__<tool-name>`. The exact prefix varies by how the MCP server is registered — use the tool name suffix as a fallback if the full prefixed name isn't found.
+MCP tool names follow the pattern `mcp__<server-slug>__<tool-name>`. The exact prefix varies by how the MCP server is registered — use capability names as a fallback if the full prefixed name isn't found.
 
-See [`memory-backend.md`](memory-backend.md) for canonical memory ops — use `[SEARCH]`/`[STORE]`/`[FORGET]` intent labels regardless of which backend is detected here.
+See [`memory-backend.md`](memory-backend.md) for canonical memory ops — use `[SEARCH]`/`[STORE]`/`[FORGET]` intent labels regardless of which memory mechanism is detected here.
 
 | Integration | Detection signal | Capability |
 |-------------|-----------------|------------|
-| MAGI | `mcp__magi__magi_query` tool available | xgh memory, session state, conventions |
-| cipher (legacy) | `cipher_memory_search` tool available | xgh memory (legacy backend) |
+| Memory | Any configured/native memory search capability | xgh memory, session state, conventions |
 | Slack MCP | `mcp__claude_ai_Slack__slack_read_thread` tool available | Thread reading, message search |
 | Atlassian/Jira | `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJQL` tool available | Ticket history, task management |
 | GitHub | `gh pr list` / `gh issue list` available (CLI detection; no standard MCP server for GitHub) | PRs, issues, Actions |
@@ -30,17 +29,16 @@ See [`memory-backend.md`](memory-backend.md) for canonical memory ops — use `[
 After detection, surface which integrations are available so the user understands what is active:
 
 ```
-✓ MAGI — memory and conventions available
+✓ memory — memory and conventions available
 ✓ Slack — thread reading and search available
 ✓ Atlassian — Jira ticket access available
 ✗ Figma — not configured (will ask for manual input if needed)
 ```
 
-Or with legacy backend:
+Or without memory:
 
 ```
-✓ cipher (legacy) — memory available
-✗ MAGI — not configured
+✗ memory — not configured; will use local context only
 ```
 
 ## Graceful Degradation Principle

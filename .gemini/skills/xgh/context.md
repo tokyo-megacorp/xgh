@@ -8,7 +8,7 @@ xgh (eXtreme Go Horse) is a Claude Code plugin that gives AI agents persistent m
 
 - **Pure plugin architecture**: The source repo IS the plugin package. No `install.sh`, no per-project file copies. Skills load from `~/.claude/plugins/cache/tokyo-megacorp/xgh/`.
 - **`/xgh-init` replaces install.sh**: Handles first-run setup — creates `~/.xgh/` dirs, copies static instructions, configures MCP. Also removes legacy stale `.claude/skills/xgh-*` entries.
-- **MAGI over lossless-claude**: Unified knowledge system replacing lossless-claude. MAGI uses SQLite + Obsidian vault with full-text search. Works out of the box.
+- **Backend-neutral memory**: xgh uses whichever memory backend or native agent memory is configured. Active instructions should say “search memory” or “store in memory,” not require a specific tool.
 - **Memory tags convention**: `["workspace", "index"]` for codebase memories, `["session"]` for session context, `["reasoning"]` for architectural decisions.
 - **Provider modes**: Skills support `mode: cli`, `mode: api`, and `mode: mcp` for retrieval — controlled via `retrieve-all.sh` / `fetch.sh`.
 - **AGENTS.md is canonical**: CLAUDE.md and CLAUDE.local.md are untracked. AGENTS.md is the source of truth for all AI agents.
@@ -21,7 +21,7 @@ xgh (eXtreme Go Horse) is a Claude Code plugin that gives AI agents persistent m
 - **Source layout**: `skills/`, `commands/`, `agents/`, `config/`, `hooks/`, `templates/`
 - **Static instructions**: `templates/xgh-instructions.md` → copied to `.xgh/xgh.md` → loaded via `@.xgh/xgh.md` in `CLAUDE.local.md`
 - **Context tree**: `.xgh/context-tree/` — decisions, architecture, conventions knowledge base
-- **Memory tools**: `magi_store`, `magi_query`, `magi_navigate`, `magi_status` (MAGI MCP)
+- **Memory protocol**: use backend-neutral `[SEARCH]`, `[STORE]`, and `[FORGET]` intents; let the host agent choose its available/native memory mechanism.
 - **Plugin cache**: `~/.claude/plugins/cache/tokyo-megacorp/xgh/<version>/`
 - **Seeded tool dirs**: `.gemini/skills/xgh/` (Gemini CLI), `.agents/skills/xgh/` (Agents)
 
@@ -32,7 +32,7 @@ xgh (eXtreme Go Horse) is a Claude Code plugin that gives AI agents persistent m
 - Skill triggering tests live in `tests/skill-triggering/`
 - All generated artifacts go to `.xgh/` (plans, specs, architecture decisions)
 - Skill files live in `skills/<name>/<name>.md`; commands in `commands/<name>.md`
-- Any file still referencing "Cipher" or "lossless-claude" is stale — replace with MAGI equivalents
+- Any active instruction surface that hardcodes a memory backend or external context tool is stale — replace it with backend-neutral memory intent language.
 
 ## Active Branch
 

@@ -20,7 +20,7 @@ Invoke the `xgh:command-center` skill.
 
 - Loads all `status: active` projects from `~/.xgh/ingest.yaml` — no project scoping
 - Runs `xgh:briefing` logic across **all** projects simultaneously
-- Labels every item with its project: `[context-mode] Issue #143 — urgency 60`
+- Labels every item with its project: `[sample-project] Issue #143 — urgency 60`
 - Triages NEEDS-YOU-NOW items via in-session background Agents
 - Dispatches implement work to named `claude` sessions in the right project directory
 - Sets up pulse (every 15 min) and morning briefing (8am weekdays) cron jobs
@@ -38,7 +38,7 @@ Configure in `~/.xgh/ingest.yaml` under `command_center.dispatch_mode`.
 ## Session naming
 
 Launched sessions are named using `command_center.session_name_template` (default: `"{project}: {action} {ref}"`):
-- `"context-mode: implement #143"`
+- `"sample-project: implement #143"`
 - `"xgh: investigate PR #18"`
 
 ## Context handoff
@@ -49,7 +49,7 @@ When launching a new session, writes `~/.xgh/inbox/.dispatch.md` with action, re
 
 ```
 /xgh-command-center           → full briefing across all 4 projects + triage
-/xgh-command-center pulse     → 🐴🤖 pulse — context-mode: 2 new · xgh: quiet
+/xgh-command-center pulse     → 🐴🤖 pulse — sample-project: 2 new · xgh: quiet
 /xgh-command-center morning   → full briefing then await-commands loop
 /xgh-command-center dispatch  → table of in-flight background agents
 ```

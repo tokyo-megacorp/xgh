@@ -18,7 +18,7 @@ conventions:
 
   skills:
     - "Commands are thin wrappers — all logic lives in `skills/`"
-    - "No context-mode references in xgh skill files (context-mode handles its own enforcement)"
+    - "No backend-specific memory or context-tool references in xgh skill files; use backend-neutral intent labels such as [SEARCH], [STORE], and [FORGET]."
     - "Skill frontmatter must include `name` and `description`. For the trigger key, both `trigger` (singular string) and `triggers` (list) are valid — use whichever fits."
     - "Skills MUST read runtime defaults from `config/project.yaml` under `preferences:`. Never hardcode reviewer logins, repo names, merge methods, or provider-specific values in skill files."
 
@@ -32,7 +32,7 @@ conventions:
     - "**Use xgh to build xgh**: run `/xgh-brief` at session start, `/xgh-retrieve` before researching, `/xgh-analyze` after significant findings — xgh improves by exercising its own tools"
     - "**If you call it, test it**: whenever a skill is invoked during a session and no AI unit test exists for it, add a prompt to `tests/skill-triggering/prompts/` before the session ends"
     - "**Capture every gap**: when a skill fails, misfires, or is not triggered by the right prompt, immediately add or update the prompt test that would have caught it"
-    - "**magi_store session learnings**: after any significant work, extract 3-7 bullets and store via `magi_store` — the next session starts smarter"
+    - "**Store session learnings**: after any significant work, extract 3-7 bullets and store them in memory using the available/native memory mechanism — the next session starts smarter"
 
 iron_laws:
   - title: "Never skip the test"
@@ -51,8 +51,8 @@ iron_laws:
 pitfalls:
   - title: "plugin.json has no skills/commands arrays"
     body: "Skills and commands are auto-discovered from filesystem — never add them to plugin.json"
-  - title: "context-mode in skill files"
-    body: "xgh skills must not reference ctx_execute or ctx_batch_execute — context-mode handles its own enforcement via CLAUDE.md injection"
+  - title: "backend-specific tool contracts in skill files"
+    body: "xgh skills must not hardcode provider-specific memory or context execution tools; use repo-local commands and backend-neutral intent labels instead."
   - title: "assert_yaml_key helper does not exist"
     body: "Use assert_contains for all YAML assertions in test-config.sh"
   - title: "gen-agents-md requires pyyaml"

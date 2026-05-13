@@ -183,5 +183,37 @@ assert_contains "docs/MIGRATION_GATE.md" "xgh has had no major architectural cha
 assert_contains "docs/MIGRATION_GATE.md" "xgh:transfer-repo skill is built and tested"
 assert_contains "docs/MIGRATION_GATE.md" "Merge = migration begins"
 
+
+# ── Self-contained active instruction surfaces ─────────────────
+python3 - <<'PY'
+import re
+import subprocess
+import sys
+
+forbidden = re.compile(r"cipher|lossless|lcm_|context-mode|ctx_execute|ctx_batch|ctx_fetch|ctx_search|ctx_|magi_query|magi_store|magi_", re.I)
+allow_prefixes = (
+    "skills/_shared/references/memory-backend.md",
+    "skills/_shared/references/mcp-auto-detection.md",
+    "tests/",
+)
+paths = [
+    "AGENTS.md", "README.md", ".github/copilot-instructions.md", ".xgh/xgh.md",
+    "config", "hooks", "skills", "commands", "agents", ".agents", ".gemini", "templates",
+]
+cmd = ["git", "grep", "-n", "-I", "-E", forbidden.pattern, "--", *paths]
+proc = subprocess.run(cmd, capture_output=True, text=True)
+violations = []
+for line in proc.stdout.splitlines():
+    path = line.split(":", 1)[0]
+    if path.startswith(allow_prefixes):
+        continue
+    violations.append(line)
+if violations:
+    print("FAIL: active instruction surfaces require external/backend-specific tool names:")
+    print("\n".join(violations[:80]))
+    sys.exit(1)
+PY
+if [ $? -eq 0 ]; then PASS=$((PASS+1)); else FAIL=$((FAIL+1)); fi
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

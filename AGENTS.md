@@ -101,7 +101,7 @@ Triggers, workflows, and agents — the full 'what fires when' picture.
 - Markdown skills: one directory per skill, markdown file matches directory name
 - Slash commands: markdown files in `commands/`, filename is the command name
 - Commands are thin wrappers — all logic lives in `skills/`
-- No context-mode references in xgh skill files (context-mode handles its own enforcement)
+- No backend-specific memory or context-tool references in xgh skill files; use backend-neutral intent labels such as [SEARCH], [STORE], and [FORGET].
 - Skill frontmatter must include `name` and `description`. For the trigger key, both `trigger` (singular string) and `triggers` (list) are valid — use whichever fits.
 - Skills MUST read runtime defaults from `config/project.yaml` under `preferences:`. Never hardcode reviewer logins, repo names, merge methods, or provider-specific values in skill files.
 
@@ -166,10 +166,10 @@ Instructions for Codex CLI when working on this repository.
 
 | Situation | Action |
 |-----------|--------|
-| Starting a task | Search context tree + MAGI memories |
+| Starting a task | Search context tree + available memory |
 | Making an architectural decision | Check .xgh/context-tree/ and .xgh/specs/ first |
 | Choosing between approaches | Use rationalization table pattern; document in spec |
-| Completing significant work | Capture learnings in context tree + magi_store |
+| Completing significant work | Capture learnings in context tree + store them in memory |
 | Deviating from a plan | Document the reason explicitly in plan file |
 | Writing new code | Check existing patterns in codebase first |
 
@@ -187,7 +187,7 @@ Instructions for Codex CLI when working on this repository.
 ## Common Pitfalls
 
 - **plugin.json has no skills/commands arrays**: Skills and commands are auto-discovered from filesystem — never add them to plugin.json
-- **context-mode in skill files**: xgh skills must not reference ctx_execute or ctx_batch_execute — context-mode handles its own enforcement via CLAUDE.md injection
+- **backend-specific tool contracts in skill files**: xgh skills must not hardcode provider-specific memory or context execution tools; use repo-local commands and backend-neutral intent labels instead.
 - **assert_yaml_key helper does not exist**: Use assert_contains for all YAML assertions in test-config.sh
 - **gen-agents-md requires pyyaml**: Run `pip3 install pyyaml` before running scripts/gen-agents-md.sh; the script checks for it and exits with a clear error if missing
 - **Hardcoded PR workflow values in skills**: Skills must use `load_pr_pref` from `lib/config-reader.sh` to read reviewer, repo, merge method from `config/project.yaml`. Never hardcode `copilot-pull-request-reviewer` or repo slugs in skill markdown.

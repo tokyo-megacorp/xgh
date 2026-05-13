@@ -1,6 +1,6 @@
 ---
 name: xgh:doctor
-description: "This skill should be used when the user runs /xgh-doctor or asks to 'check health', 'run diagnostics', 'validate pipeline', 'check ingest', 'is the pipeline running'. Validates config completeness, Slack/Jira/MAGI connectivity, scheduler freshness, workspace stats, and codebase index status — outputs a structured pass/fail report with fix suggestions."
+description: "This skill should be used when the user runs /xgh-doctor or asks to 'check health', 'run diagnostics', 'validate pipeline', 'check ingest', 'is the pipeline running'. Validates config completeness, Slack/Jira/memory connectivity, scheduler freshness, workspace stats, and codebase index status — outputs a structured pass/fail report with fix suggestions."
 ---
 
 # xgh:doctor — Pipeline Health Check
@@ -12,7 +12,7 @@ Run all checks and output a structured report. Use `✓` for pass, `✗` for fai
 - `~/.xgh/ingest.yaml` exists and parses: `python3 -c "import yaml; yaml.safe_load(open('...'))" 2>&1`
 - Required fields present: `profile.name`, `profile.slack_id`, `profile.platforms`
 - At least one active project under `projects:`
-- MAGI is configured (check `.claude/.mcp.json` has `magi` entry)
+- A memory backend is configured when memory-dependent features are enabled
 
 ## Check 2 — Connectivity
 
@@ -41,11 +41,11 @@ curl -sf --max-time 5 "${XGH_REMOTE_URL}/v1/models"
 
 Memory backend availability (see `_shared/references/memory-backend.md` for detection priority):
 
-For MAGI (current reference backend): check if `magi_query` is present in the available tool list:
-- Tool absent → MAGI MCP not registered. Fix: add magi entry to `.claude/.mcp.json`
-- Tool present but call returns error → MAGI server not running. Fix: start the MAGI MCP server
+Check whether a configured/native memory search mechanism is present in the available tool list:
+- Tool absent → memory backend not registered. Fix: run `/xgh-setup` or configure a native memory mechanism.
+- Tool present but call returns error → memory backend is unavailable. Fix: start or reconfigure the selected backend.
 
-**Important:** MAGI availability is determined by whether `magi_query` appears in the tool list, NOT by file presence on disk.
+**Important:** memory availability is determined by a read-only search probe, NOT by file presence on disk.
 
 
 ### Qdrant Vector Store
@@ -59,17 +59,16 @@ curl -sf http://localhost:6333/healthz
 - ✗ connection refused: Qdrant not running (run: `launchctl start com.qdrant.server`)
 - ✗ Embedding service offline: Qdrant running but WAL locks or load failures (run `/xgh-doctor fix` for WAL cleanup)
 
-### Cipher MCP
+### Memory search probe
 
-Test Cipher availability:
+Test memory availability with a read-only search:
 ```
-Tool: mcp__cipher__cipher_memory_search
 Query: "xgh health check"
 ```
 
-- ✓ tool available + responds: Cipher configured and ready
-- ✗ tool unavailable: Cipher MCP not registered (run `/xgh-init` or `claude mcp add -s user cipher`)
-- ⚠️ tool available but embedding fails: Qdrant unhealthy (see Qdrant section above)
+- ✓ search responds: memory configured and ready
+- ✗ no memory search tool: run `/xgh-setup` or use the host agent's native memory mechanism
+- ⚠️ search fails: inspect the selected backend and any vector store it depends on
 
 
 ## Check 3 — Pipeline freshness
@@ -430,13 +429,13 @@ Connectivity
   ✓ Slack: #channel-1 accessible
   ✗ Slack: #channel-missing — not found (check channel name in ingest.yaml)
   ✓ Jira: PTECH-31204 exists (23 open issues)
-  ✓ MAGI: connected (tool available)
+  ✓ Memory: connected (search available)
   # Remote inference (when XGH_BACKEND=remote):
   ✓ Remote inference server: http://macmini.local:11434 — reachable, 2 models available
   # OR if unreachable:
   ✗ Remote inference server: http://192.168.1.100:11434 — unreachable (timeout)
     Fix: ensure the server is running and port 11434 is accessible from this machine
-  ✗ MAGI: not in tool list — add to .claude/.mcp.json (command: magi, args: [mcp])
+  ✗ Memory: not in tool list — run /xgh-setup or use native memory
 
 Pipeline
   ✓ Retriever: last run 3 min ago (healthy)

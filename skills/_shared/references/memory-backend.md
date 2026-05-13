@@ -1,75 +1,82 @@
 # Memory Backend Reference
-# memory-backend: v2
+# memory-backend: v3
 
 xgh's memory layer is backend-agnostic. Skills declare *intent* (search, store, forget)
-and this reference resolves each intent to the concrete tool call for whichever backend
-is configured. Do not call `lcm_*`, `magi_*`, or any backend-specific tool directly in skills —
-express intent and let this reference govern the resolution.
+and the host agent resolves each intent to the available tool of choice, native memory,
+or no-op fallback. Do not call backend-specific memory tools directly in skills — express
+intent and let the current runtime choose the implementation.
 
-This abstraction exists to keep skills stable as the memory backend evolves.
-MAGI (magi) is the current reference implementation.
+This abstraction keeps skills stable as memory backends and native agent capabilities evolve.
 
 ---
 
-## Step 1 — Detect the backend (once per skill, before any memory operation)
+## Step 1 — Detect memory availability (once per skill, before any memory operation)
 
-1. If MCP tool `magi_query` is available → **backend: magi**
-2. *(future backends will be listed here)*
-3. Otherwise → **backend: none** — skip all memory operations; note the limitation in output
+1. If the host agent exposes native memory, use that.
+2. Otherwise, if an MCP or CLI memory backend exposes search/store capabilities, use that.
+3. Otherwise → **memory: none** — skip all memory operations; note the limitation in output.
 
-Surface detection status alongside other MCP integrations:
+Surface detection status alongside other integrations:
 ```
-✓ memory — MAGI
+✓ memory — available
 ```
 or
 ```
-✗ memory — not configured (run /xgh-setup to enable)
+✗ memory — not configured; using local context only
 ```
 
 ---
 
-## Step 2 — Resolve intent to tool call
+## Step 2 — Resolve intent through the current runtime
 
-Skills name an **intent**. Look up the intent below and call the corresponding tool
-for the detected backend. After referencing the intent in skill prose, always restate
-the concrete call in parentheses so there is no ambiguity at runtime.
+Skills name an **intent**. The current agent/runtime resolves it to the available/native memory mechanism.
+If no memory mechanism is available, skip the operation and continue.
 
-Example: `[SEARCH] "past auth decisions"  → call magi_query("past auth decisions")`
+Example: `[SEARCH] "past auth decisions"` means “search whichever memory system is available for past auth decisions.”
 
 ### Intent: SEARCH
 
 Search memory for relevant context.
 
-| Backend | Concrete call |
-|---------|--------------|
-| magi | `magi_query(query)` or `magi_query(query, { limit: N })` |
+Required input:
+- query text
+
+Optional inputs:
+- limit
+- project/scope
+- tags
 
 ### Intent: STORE
 
 Persist a learning or decision. Always extract a concise summary (3–7 bullets) first —
-never pass raw conversation content. **Tags are required** — untagged memories become
-unsearchable. Common tags: `"session"`, `"architecture"`, `"convention"`, `"reasoning"`.
+never pass raw conversation content. Use tags when the selected memory mechanism supports
+them. Common tags: `session`, `architecture`, `convention`, `reasoning`.
 
-| Backend | Concrete call |
-|---------|--------------|
-| magi | `magi_store(path, title, body, tags)` — tags is a comma-separated string |
+Required input:
+- title or path/key
+- concise body/summary
+
+Optional inputs:
+- tags
+- project/scope
+- stable identifier for future updates
 
 ### Intent: FORGET
 
-Evict a stale or incorrect memory. Use when a convention has changed or a past decision
-has been superseded.
+Evict or supersede a stale/incorrect memory when the selected memory mechanism supports it.
+If unsupported, log the intent in the output and continue.
 
-| Backend | Concrete call |
-|---------|--------------|
-| magi | *not yet supported — log the intent, skip silently* |
+Required input:
+- stable identifier, path/key, or exact memory text
+- reason for removal/supersession
 
 ---
 
-## Degradation (backend: none)
+## Degradation (memory: none)
 
 - Skip every memory operation
 - Do not abort the skill — continue with available context
-- Emit one note: `⚠️ No memory backend — run /xgh-setup to configure`
+- Emit one note: `⚠️ No memory backend — using local context only`
 - Each skill documents the *impact* of missing memory in its own degradation section
 
 ---
@@ -79,17 +86,15 @@ has been superseded.
 ### Detection line (add to MCP auto-detection section)
 
 ```
-Detect memory backend per `_shared/references/memory-backend.md`.
+Detect memory availability per `_shared/references/memory-backend.md`.
 ```
 
-### Intent + resolution pattern (in skill body)
+### Intent pattern (in skill body)
 
 ```
 [SEARCH] "past decisions on rate limiting"
-  → call magi_query("past decisions on rate limiting")
 
 [STORE] key learnings, tags: "session,architecture"
-  → call magi_store("decisions/rate-limiting.md", "Rate limiting decisions", summary, "session,architecture")
 ```
 
 ### Degradation line (in skill degradation section)
@@ -102,8 +107,7 @@ No memory backend → skip Steps X and Y. [Describe the impact for this skill.]
 
 ## Adding a new backend (for contributors)
 
-1. Add detection to Step 1 above (numbered, in priority order)
-2. Add a row to each intent table with the backend name and concrete call
-3. Bump the version comment at the top: `memory-backend: v3`
-4. Skills referencing v2 continue to work — detection falls through to the new backend
-   only when it is present
+1. Add detection guidance to Step 1 if the backend needs special handling.
+2. Ensure skills continue to use only `[SEARCH]`, `[STORE]`, and `[FORGET]`.
+3. Bump the version comment at the top.
+4. Existing skills continue to work because runtimes resolve the same intent labels.

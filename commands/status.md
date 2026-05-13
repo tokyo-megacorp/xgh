@@ -44,13 +44,13 @@ From the manifest, calculate:
 | Orphaned entries | Entries in manifest whose files do not exist on disk |
 | Domains | Count unique domains |
 
-### Step 3: Test MAGI Connectivity
+### Step 3: Test Memory Connectivity
 
-Check if `mcp__magi__magi_query` is present in the available tool list:
-- Tool absent → MAGI MCP not registered. Fix: add magi entry to `.claude/.mcp.json`
-- Tool present but call returns error → MAGI server not running. Fix: `magi start`
+Check whether a configured/native memory search tool is present in the available tool list:
+- Tool absent → memory backend not registered. Fix: run `/xgh-setup` or use the host agent's native memory mechanism
+- Tool present but call returns error → selected memory backend is unavailable. Fix: start or reconfigure that backend
 
-Run `magi_query` with query `"xgh health check"` to verify connectivity.
+Run a read-only memory search for `"xgh health check"` to verify connectivity.
 
 ### Step 4: Display Status
 
@@ -76,7 +76,7 @@ Team: **<team-name>** · Context tree: `<path>`
 | Avg recency | <N> | ✅/⚠️/❌ |
 | Stale entries | <N>/<total> (<percent>%) | ✅/⚠️/❌ |
 | Orphaned | <N> | ✅/⚠️/❌ |
-| MAGI | Connected/Disconnected | ✅/❌ |
+| Memory | Connected/Disconnected | ✅/❌ |
 
 ### Domains
 

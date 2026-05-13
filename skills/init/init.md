@@ -128,16 +128,14 @@ fi
 
 ### 0e. Check dependencies
 
-**MAGI:**
+**Memory:**
 
-Check if MAGI MCP is registered:
+Check if a memory backend is registered:
 
-```bash
-claude mcp list 2>/dev/null | grep -i magi
-```
+Check the current agent tool list or MCP registry for any read-only memory search capability.
 
 - **Found** → continue
-- **Not found** → register it (see Step 0i).
+- **Not found** → continue without memory and note that memory features can be enabled later with `/xgh-setup`.
 
 **RTK (optional):**
 
@@ -179,18 +177,12 @@ if [ -n "$DETECT_SCRIPT" ]; then
 fi
 ```
 
-### 0i. Verify MAGI MCP registration
+### 0i. Verify memory backend registration
 
-```bash
-claude mcp list 2>/dev/null | grep -i magi
-```
+Check the current agent tool list or MCP registry for any read-only memory search capability.
 
 - **Found** → continue
-- **Not found** → register it:
-  ```bash
-  claude mcp add magi -- magi mcp
-  ```
-  Report: "Registered MAGI MCP server."
+- **Not found** → do not force a backend. Report: "No memory backend detected; xgh will use native memory if available and skip memory-specific steps otherwise."
 
 ---
 
@@ -346,7 +338,7 @@ If projects already exist and the user kept them, check if any are missing `depe
 
 ```
 Project "xgh" has no dependencies set.
-Other tracked projects: magi, context-mode, rtk, inspector
+Other tracked projects: memory, automation, rtk, inspector
 
 Does "xgh" depend on any of these? (comma-separated, or skip)
 ```
@@ -412,7 +404,7 @@ If **no** (or user skips): Continue to Step 6.
 Ask:
 
 ```
-Want to index your codebase into MAGI memory?
+Want to index your codebase into memory?
 This makes your code searchable for future tasks and investigations.
 You can skip this and do it later with /xgh-index.
 
@@ -567,13 +559,13 @@ xgh setup complete!
     - Run /xgh-setup to add any missing MCP integrations
 ```
 
-#### Store in MAGI
+#### Store in memory
 
-If MAGI is available, store the onboarding completion:
+If memory is available, store the onboarding completion:
 
 ```
-Extract key learnings as a concise summary (3-7 bullets), then call magi_store with the
-summary text and context-appropriate tags. Do not pass raw conversation content to magi_store.
+Extract key learnings as a concise summary (3-7 bullets), then store the
+summary in memory with context-appropriate tags when supported. Do not pass raw conversation content to memory.
 Use tags: "session"
 Content: "xgh init completed for <name> (<role>, <squad>). Project: <project>. Team profiles: <yes/no>. Codebase indexed: <yes/no>."
 ```

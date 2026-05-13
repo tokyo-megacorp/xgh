@@ -1,26 +1,44 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016
 set -euo pipefail
 
 # ── Automation OS Decision Ledger PRD Validation ─────────────────────────────
-# Validates the decision-ledger PRD contract when the OMX plan artifact is
-# present. The artifact is runtime-scoped and normally git-ignored, so CI without
-# the plan exits successfully with an explicit skip.
+# Validates the decision-ledger PRD/test-spec contract when the OMX plan
+# artifacts are present. The artifacts are runtime-scoped and normally
+# git-ignored, so CI without the plans exits successfully with an explicit skip.
 # ─────────────────────────────────────────────────────────────────────────────
 
 PASS=0
 FAIL=0
 
-find_prd() {
-  if [ -n "${PRD_PATH:-}" ]; then
-    printf '%s\n' "$PRD_PATH"
+main_repo_root() {
+  local common_dir
+  common_dir="$(git rev-parse --git-common-dir 2>/dev/null || true)"
+  if [ -n "$common_dir" ]; then
+    (cd "$(dirname "$common_dir")" 2>/dev/null && pwd) || true
+  fi
+}
+
+find_file() {
+  local env_path="$1"
+  local filename="$2"
+
+  if [ -n "$env_path" ]; then
+    printf '%s\n' "$env_path"
     return 0
   fi
 
+  local root
+  root="$(main_repo_root)"
+
   local candidates=(
-    ".omx/plans/prd-automation-os-decision-ledger.md"
-    "../../../../../.omx/plans/prd-automation-os-decision-ledger.md"
-    "/Users/pedro/Developer/xgh/.omx/plans/prd-automation-os-decision-ledger.md"
+    ".omx/plans/$filename"
+    "../../../../../.omx/plans/$filename"
   )
+
+  if [ -n "$root" ]; then
+    candidates+=("$root/.omx/plans/$filename")
+  fi
 
   local candidate
   for candidate in "${candidates[@]}"; do
@@ -41,7 +59,7 @@ assert_contains() {
   if grep -qF "$expected" "$file"; then
     PASS=$((PASS + 1))
   else
-    echo "FAIL: $label — expected PRD to contain: $expected"
+    echo "FAIL: $label — expected artifact to contain: $expected"
     FAIL=$((FAIL + 1))
   fi
 }
@@ -82,7 +100,7 @@ assert_exact_recommendation_options() {
   fi
 }
 
-PRD="$(find_prd || true)"
+PRD="$(find_file "${PRD_PATH:-}" "prd-automation-os-decision-ledger.md" || true)"
 
 if [ -z "$PRD" ]; then
   echo "SKIP: .omx/plans/prd-automation-os-decision-ledger.md not present"
@@ -139,17 +157,40 @@ assert_all_contains "decision boundary" "$PRD" \
   '`docs/MIGRATION_GATE.md` must be reviewed before any future migration path.'
 
 # Coverage must include all major live surface families named by the PRD.
-assert_all_contains "required audit coverage" "$PRD" \
+assert_all_contains "required audit coverage families" "$PRD" \
   '`README.md`' \
-  '`docs/`, especially `docs/MIGRATION_GATE.md`' \
-  'Commands: `analyze`, `brief`, `briefing`, `calibrate`, `command-center`, `config`, `doctor`, `help`, `init-providers`, `init`, `retrieve`, `schedule`, `seed`, `status`, `token-window`, `track`, `trigger`.' \
-  'Skills: `analyze`, `briefing`, `calibrate`, `command-center`, `config`, `deep-retrieve`, `doctor`, `init-providers`, `init`, `retrieve`, `schedule`, `seed`, `token-window`, `track`, `trigger`.' \
-  'Generated/config surfaces: `.github/*`, `agents/*`, `config/*`, `hooks/*`, `templates/*`.' \
-  'Tests under `tests/`.' \
-  '`.xgh/context-tree/`.' \
-  '`.xgh/specs/`.' \
-  '`.xgh/plans/`, proposals, roadmap, issue specs, and issue context.' \
-  'Any orphaned or duplicate public references discovered during audit.'
+  '`docs/MIGRATION_GATE.md`' \
+  '`commands/*.md`' \
+  '`skills/`' \
+  '`.github/`' \
+  '`agents/`' \
+  '`config/`' \
+  '`hooks/`' \
+  '`templates/`' \
+  '`tests/`' \
+  '`.xgh/context-tree/`' \
+  '`.xgh/specs/`' \
+  '`.xgh/plans/`' \
+  'orphaned or duplicate public references'
+
+assert_all_contains "required command coverage" "$PRD" \
+  '`analyze`' \
+  '`brief`' \
+  '`briefing`' \
+  '`calibrate`' \
+  '`command-center`' \
+  '`config`' \
+  '`doctor`' \
+  '`help`' \
+  '`init-providers`' \
+  '`init`' \
+  '`retrieve`' \
+  '`schedule`' \
+  '`seed`' \
+  '`status`' \
+  '`token-window`' \
+  '`track`' \
+  '`trigger`'
 
 # Acceptance criteria should keep the deliverable evidence-backed and reversible.
 assert_all_contains "acceptance criteria" "$PRD" \
@@ -159,6 +200,27 @@ assert_all_contains "acceptance criteria" "$PRD" \
   'Deprecated/removal candidates explicitly include generic dispatch, manual curation, and token/window utilities where applicable.' \
   'Retirement option is evaluated honestly.' \
   'Final output recommends exactly one: `refocus`, `retire`, or `defer with blocking evidence gaps`.'
+
+# If the companion test spec is present, validate the PRD still satisfies its
+# explicit validation axes. Absence is non-fatal because the assigned artifact is
+# the PRD and OMX plan files are runtime-local.
+TEST_SPEC="$(find_file "${TEST_SPEC_PATH:-}" "test-spec-automation-os-decision-ledger.md" || true)"
+if [ -n "$TEST_SPEC" ]; then
+  assert_heading "test spec required checks" "Required Checks" "$TEST_SPEC"
+  assert_all_contains "test spec check headings" "$TEST_SPEC" \
+    '### 1. Schema Completeness' \
+    '### 2. Live Coverage Completeness' \
+    '### 3. Evidence Quality' \
+    '### 4. Declarative Convergence Check' \
+    '### 5. Non-goal Enforcement Check' \
+    '### 6. Automation Config Centrality Check' \
+    '### 7. Self-Referential Roadmap Check' \
+    '### 8. Retirement Honesty and Safety Check' \
+    '### 9. Recommendation Validity Check'
+  assert_all_contains "test spec stop conditions" "$TEST_SPEC" \
+    'Do not proceed to cleanup, archive, migration, or public deprecation in the same execution lane.' \
+    'Output states separate user approval is required for irreversible actions.'
+fi
 
 echo
 echo "Automation OS decision ledger PRD test: $PASS passed, $FAIL failed"

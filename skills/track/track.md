@@ -32,7 +32,7 @@ Ask each question below separately. Validate before moving to the next.
 
 5. **Jira project key** (optional) — e.g. `PTECH-31204`. If provided, call `getJiraIssue` with a search to verify. Show count of open issues if found.
 
-6. **Confluence links** (optional) — paste RFC/spec/wiki URLs one per line. For each, call `getConfluencePage` to verify access, then extract key learnings as a concise summary (3-7 bullets), [STORE] → call magi_store with the summary text and context-appropriate tags. Do not pass raw conversation content to magi_store. Use tags: "session".
+6. **Confluence links** (optional) — paste RFC/spec/wiki URLs one per line. For each, call `getConfluencePage` to verify access, then extract key learnings as a concise summary (3-7 bullets), [STORE] the summary with context-appropriate tags. Do not pass raw conversation content to memory. Use tags: `session` when supported.
 
 7. **Figma links** (optional) — store as plain refs (no indexing in v1).
 
@@ -47,8 +47,8 @@ Ask each question below separately. Validate before moving to the next.
 
 10. **Project dependencies** (optional) — other tracked projects this project depends on.
     Show a list of existing project names from `ingest.yaml` and let the user pick.
-    Example: "xgh depends on: magi, context-mode"
-    Store as `dependencies: [magi, context-mode]`.
+    Example: "xgh depends on: memory, automation"
+    Store as `dependencies: [memory, automation]`.
     Default: empty list. These are used by retrieval and briefing to scope data gathering
     — when working in this project, data from its dependencies is also included.
 
@@ -73,8 +73,8 @@ projects:
     my_role: ios-lead
     my_intent: "Own iOS implementation, delegate QA to platform team, coordinate backend API changes"
     dependencies:            # from Q10 — other tracked projects
-      - magi
-      - context-mode
+      - memory
+      - automation
     providers:
       slack:      { access: read }
       jira:       { access: read }
@@ -296,20 +296,20 @@ Sub-command that implements the processo 100% requirement: captures decisions an
 
 ### Step 2 — Check for duplicates (idempotency)
 
-Search MAGI for existing decisions with the same decision text (using magi_query or exact text matching in decisions stored previously). If found:
-- Show: "Decision already tracked: {magi_path} → {issue_url}"
+Search memory for existing decisions with the same decision text (using the available/native memory search or exact text matching in decisions stored previously). If found:
+- Show: "Decision already tracked: {memory_path} → {issue_url}"
 - Exit with code 0 (success, no-op)
 
-### Step 3 — Create MAGI entry
+### Step 3 — Create memory entry
 
-Call `magi_store` with:
+Call [STORE] with:
 - `path`: `decisions/<slug>.md`
 - `title`: decision text (first 80 chars)
 - `body`: full decision text
 - `tags`: `"category:decision,owner:{owner},sp:{sp},priority:{priority},source:xgh-track-decision"`
 - `scope`: `project`
 
-Capture returned `path` as the MAGI reference.
+Capture returned `path` as the memory reference.
 
 ### Step 4 — Create GitHub Issue
 
@@ -339,8 +339,8 @@ gh issue create \
 ## Confidence Score
 {score}
 
-## MAGI Reference
-{magi_path}
+## Memory Reference
+{memory_path}
 
 ---
 
@@ -373,7 +373,7 @@ Capture returned `project_item_id`.
 If `--dry-run`:
 ```
 [DRY RUN] Would create:
-  MAGI entry: {magi_path}
+  Memory entry: {memory_path}
   GitHub issue: {org}/{repo}#{number} "{title}"
   Project item: {project_name} / {column}
 ```
@@ -382,7 +382,7 @@ If actually created:
 ```
 ✅ Decision tracked successfully!
 
-  MAGI: {magi_path}
+  Memory: {memory_path}
   Issue: {issue_url}
   Project: {project_name} / {column}
 ```
@@ -390,7 +390,7 @@ If actually created:
 Return structured JSON (for programmatic use):
 ```json
 {
-  "magi_path": "{magi_path}",
+  "memory_path": "{memory_path}",
   "issue_url": "{issue_url}",
   "issue_number": {number},
   "project_item_id": "{project_item_id}",
@@ -405,7 +405,7 @@ Return structured JSON (for programmatic use):
 | No GitHub repo in ingest.yaml | Fail with message, suggest `--repo manual/override` |
 | GitHub auth failed | Check `gh auth status`, suggest login |
 | Duplicate decision (by text hash) | Return early with "already tracked" message |
-| MAGI unavailable | Warn and continue (create issue only) |
+| Memory unavailable | Warn and continue (create issue only) |
 | Issue creation failed | Fail with gh error, suggest manual creation |
 
 ---

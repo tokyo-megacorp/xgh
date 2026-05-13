@@ -22,17 +22,53 @@ assert_contains() {
   fi
 }
 
-assert_file_exists "commands/ask.md"
-assert_file_exists "commands/curate.md"
-assert_file_exists "commands/status.md"
-assert_file_exists "commands/opencode.md"
-assert_file_exists "commands/seed.md"
+assert_not_contains() {
+  if grep -qi "$2" "$1" 2>/dev/null; then
+    echo "FAIL: $1 contains stale '$2'"
+    FAIL=$((FAIL + 1))
+  else
+    PASS=$((PASS + 1))
+  fi
+}
 
-assert_contains "commands/ask.md" "/xgh-ask"
-assert_contains "commands/curate.md" "/xgh-curate"
-assert_contains "commands/status.md" "/xgh-status"
-assert_contains "commands/opencode.md" "xgh:opencode"
+commands=(
+  analyze
+  brief
+  briefing
+  calibrate
+  command-center
+  config
+  doctor
+  help
+  init
+  init-providers
+  retrieve
+  schedule
+  seed
+  status
+  token-window
+  track
+  trigger
+)
+
+for command in "${commands[@]}"; do
+  assert_file_exists "commands/${command}.md"
+  assert_contains "commands/${command}.md" "/xgh-${command}"
+done
+
 assert_contains "commands/seed.md" "xgh:seed"
+assert_contains "commands/status.md" "Memory"
+
+# Active command references should list only currently shipped command wrappers, not legacy stubs.
+stale_command_refs=$(grep -RniE '/xgh-(ask|curate|opencode|implement|investigate|design|index|profile|setup|collab|dispatch|codex|gemini|glm|watch-prs|ship-prs)' README.md commands 2>/dev/null || true)
+if [[ -z "$stale_command_refs" ]]; then
+  PASS=$((PASS + 1))
+else
+  echo "FAIL: active docs reference unshipped command wrappers"
+  echo "$stale_command_refs"
+  FAIL=$((FAIL + 1))
+fi
+
 
 echo ""
 echo "Commands test: $PASS passed, $FAIL failed"

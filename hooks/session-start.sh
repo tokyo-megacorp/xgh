@@ -143,7 +143,7 @@ if scheduler_trigger == "on" and custom_jobs:
                 f"prompt='{skill}', recurring=true "
             )
 
-# Context-mode enforcement delegated to context-mode plugin's own hooks.
+# Provider-specific context enforcement is delegated to the owning tool or plugin hooks.
 # No tracking state or decision table needed here.
 
 # No context tree found

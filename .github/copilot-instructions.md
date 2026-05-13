@@ -1,6 +1,6 @@
 # Copilot Review Instructions — xgh (tokyo-megacorp)
 
-This repo is a GitHub context ingestion pipeline: provider scripts pull data via `gh` CLI, transform it with `jq`, and store structured memory via MAGI. It also contains xgh skills and agent definitions.
+This repo is a GitHub context ingestion pipeline: provider scripts pull data via `gh` CLI, transform it with `jq`, and store structured memory through the configured/native memory mechanism. It also contains xgh skills and agent definitions.
 
 ## Primary concerns
 
@@ -24,9 +24,9 @@ This repo is a GitHub context ingestion pipeline: provider scripts pull data via
 - No tab characters in YAML (use spaces).
 - Markdown frontmatter must be valid YAML — flag unquoted colons in values.
 
-### MAGI tagging conventions
-- All `magi_store` calls must include tags following this pattern: `project:name,type:solution|gotcha|decision,sprint:spN`.
-- Flag magi_store calls missing the `type:` or `project:` tags.
+### Memory tagging conventions
+- Any memory records created during review should include tags following this pattern when the chosen memory mechanism supports tags: `project:name,type:solution|gotcha|decision,sprint:spN`.
+- Flag memory records missing `type:` or `project:` tags when tags are supported.
 - `sprint:` tag must match the current sprint identifier format `spN` (e.g., `sp2`).
 
 ### ingest.yaml cron safety

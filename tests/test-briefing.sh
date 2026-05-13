@@ -14,15 +14,12 @@ assert_executable() {
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-# === mcp-detect.sh ===
-assert_file_exists "${REPO_ROOT}/scripts/mcp-detect.sh"
-assert_executable "${REPO_ROOT}/scripts/mcp-detect.sh"
-assert_contains "${REPO_ROOT}/scripts/mcp-detect.sh" "detect_mcp"
-assert_contains "${REPO_ROOT}/scripts/mcp-detect.sh" "slack"
-assert_contains "${REPO_ROOT}/scripts/mcp-detect.sh" "figma"
-assert_contains "${REPO_ROOT}/scripts/mcp-detect.sh" "atlassian"
-assert_contains "${REPO_ROOT}/scripts/mcp-detect.sh" "xgh_has_magi"
-assert_contains "${REPO_ROOT}/scripts/mcp-detect.sh" "XGH_AVAILABLE_MCPS"
+# === shared MCP detection references ===
+assert_file_exists "${REPO_ROOT}/skills/_shared/references/mcp-auto-detection.md"
+assert_file_exists "${REPO_ROOT}/skills/_shared/references/memory-backend.md"
+assert_contains "${REPO_ROOT}/skills/_shared/references/mcp-auto-detection.md" "Memory"
+assert_contains "${REPO_ROOT}/skills/_shared/references/memory-backend.md" "[SEARCH]"
+assert_contains "${REPO_ROOT}/skills/_shared/references/memory-backend.md" "[STORE]"
 
 # === briefing skill ===
 assert_file_exists "${REPO_ROOT}/skills/briefing/briefing.md"
@@ -33,8 +30,8 @@ assert_contains "${REPO_ROOT}/skills/briefing/briefing.md" "TEAM PULSE"
 assert_contains "${REPO_ROOT}/skills/briefing/briefing.md" "SUGGESTED FOCUS"
 assert_contains "${REPO_ROOT}/skills/briefing/briefing.md" "🐴🤖"
 assert_contains "${REPO_ROOT}/skills/briefing/briefing.md" "XGH_BRIEFING"
-assert_contains "${REPO_ROOT}/skills/briefing/briefing.md" "magi_query"
-assert_contains "${REPO_ROOT}/skills/briefing/briefing.md" "mcp-setup"
+assert_contains "${REPO_ROOT}/skills/briefing/briefing.md" "[SEARCH]"
+assert_contains "${REPO_ROOT}/skills/briefing/briefing.md" "xgh-setup"
 
 # === briefing command ===
 assert_file_exists "${REPO_ROOT}/commands/briefing.md"

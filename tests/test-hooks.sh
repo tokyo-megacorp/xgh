@@ -70,7 +70,7 @@ assert_output_contains() {
 
 
 # ── Obsolete hook surfaces (#237) ──────────────────────────
-# xgh delegates memory routing to MAGI and context-mode enforcement to context-mode.
+# xgh delegates memory routing and provider-specific context enforcement to the configured/native backends.
 # It must not ship duplicate UserPromptSubmit/pre-read hooks with dead tool names.
 assert_file_not_exists ".claude/hooks/xgh-prompt-submit.sh"
 assert_not_contains ".claude-plugin/plugin.json" "UserPromptSubmit"

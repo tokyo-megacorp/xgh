@@ -19,7 +19,7 @@
 | `xgh:schedule` | `schedule/` | Manages cron-based retrieval scheduling |
 | `xgh:seed` | `seed/` | Seeds the context tree with initial knowledge |
 | `xgh:token-window` | `token-window/` | Token budget management and window allocation |
-| `xgh:track` | `track/` | Tracks decisions and findings to MAGI vault |
+| `xgh:track` | `track/` | Tracks decisions and findings to memory |
 | `xgh:trigger` | `trigger/` | Evaluates and fires triggers based on inbox items |
 
 ## SKILL.md Format

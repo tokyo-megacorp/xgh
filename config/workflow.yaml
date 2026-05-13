@@ -30,7 +30,7 @@ phases:
     steps:
       - "Run /xgh-brief to load session context"
       - "Run /xgh-retrieve to pull latest project activity"
-      - "Search MAGI memory for related past work"
+      - "Search available memory for related past work"
       - "Read spec and context tree"
       - "Propose 2-3 approaches, recommend one"
       - "If preferences.pair_programming.enabled + 'design' in phases: pair with preferences.pair_programming.tool at preferences.pair_programming.effort — catch schema mismatches and blocking issues before writing the plan"
@@ -80,13 +80,13 @@ codex_agent_instructions:
 
 superpowers_table:
   - situation: "Starting a task"
-    action: "Search context tree + MAGI memories"
+    action: "Search context tree + available memory"
   - situation: "Making an architectural decision"
     action: "Check .xgh/context-tree/ and .xgh/specs/ first"
   - situation: "Choosing between approaches"
     action: "Use rationalization table pattern; document in spec"
   - situation: "Completing significant work"
-    action: "Capture learnings in context tree + magi_store"
+    action: "Capture learnings in context tree + store them in memory"
   - situation: "Deviating from a plan"
     action: "Document the reason explicitly in plan file"
   - situation: "Writing new code"

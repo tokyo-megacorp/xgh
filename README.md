@@ -56,12 +56,11 @@ The hard problem — as always — is **drift**. Platform skill files go stale, 
 
 | Command | What it does |
 |---------|-------------|
-| `/xgh-init` | First-run setup — verify connections, seed config, generate AGENTS.md |
+| `/xgh-init` | First-run setup — verify integrations, seed config, generate AGENTS.md |
 | `/xgh-seed` | Push project context to all detected AI platforms |
-| `/xgh-brief` | Session briefing — Slack, Jira, GitHub, what needs attention now |
-| `/xgh-ask` | Search memory and context tree |
-| `/xgh-implement` | Ticket to working code — full context gathering first |
-| `/xgh-investigate` | Systematic debugging from a bug report |
+| `/xgh-brief` | Quick session briefing |
+| `/xgh-briefing` | Full session briefing — Slack, Jira, GitHub, memory, and suggested focus |
+| `/xgh-command-center` | Cross-project briefing, triage, and dispatch view |
 | `/xgh-doctor` | Validate pipeline health |
 | `/xgh-track` | Add a project to monitoring |
 | `/xgh-analyze` | Classify inbox, extract memories, generate digest |
@@ -72,25 +71,14 @@ The hard problem — as always — is **drift**. Platform skill files go stale, 
 
 | Command | What it does |
 |---------|-------------|
-| `/xgh-setup` | Audit and configure MCP integrations |
 | `/xgh-help` | Contextual guide and command reference |
-| `/xgh-curate` | Store knowledge in memory and context tree |
-| `/xgh-collab` | Multi-agent collaboration |
-| `/xgh-dispatch` | Auto-route tasks to the best agent + model based on task type |
-| `/xgh-codex` | Dispatch to Codex CLI |
-| `/xgh-gemini` | Dispatch to Gemini CLI |
-| `/xgh-opencode` | Dispatch to OpenCode |
-| `/xgh-glm` | Dispatch to Z.AI GLM models via OpenCode |
-| `/xgh-watch-prs` | Passively monitor PRs — surfaces review changes and merge-readiness |
-| `/xgh-ship-prs` | Shepherd PRs through review cycles and auto-merge when ready |
-| `/xgh-design` | Figma to implementation |
-| `/xgh-index` | Index a codebase into memory |
-| `/xgh-profile` | Engineer throughput analysis |
-| `/xgh-schedule` | Manage background scheduler |
+| `/xgh-config` | Show, set, validate, and edit the xgh ingest manifest |
+| `/xgh-init-providers` | Generate provider scripts from ingest config |
+| `/xgh-status` | Memory stats and context tree health |
+| `/xgh-calibrate` | Tune dedup similarity threshold |
+| `/xgh-schedule` | Manage background scheduler and per-skill execution modes |
+| `/xgh-token-window` | Check token budget state |
 | `/xgh-trigger` | Manage trigger engine |
-| `/xgh-calibrate` | Calibrate dedup threshold |
-| `/xgh-status` | Memory stats and system health |
-| `/xgh-command-center` | Cross-project triage and dispatch |
 
 </details>
 

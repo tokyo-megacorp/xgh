@@ -27,4 +27,4 @@ No arguments needed. Run it at the start of any work session to get oriented.
 ## Tips
 
 - The briefing is always available. Run `/xgh-brief` at the start of any session to get oriented.
-- Run `/xgh-setup` first if you haven't configured Slack, Jira, or GitHub integrations yet.
+- Run `/xgh-init` first if you have not configured Slack, Jira, or GitHub integrations yet.

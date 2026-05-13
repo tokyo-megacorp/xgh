@@ -27,7 +27,7 @@ If the manifest does not exist:
 
 Context tree: **NOT FOUND**
 
-*Run the xgh installer or `/xgh-curate` to initialize.*
+*Run `/xgh-init` or `/xgh-seed` to initialize.*
 ```
 
 ### Step 2: Compute Health Metrics
@@ -47,7 +47,7 @@ From the manifest, calculate:
 ### Step 3: Test Memory Connectivity
 
 Check whether a configured/native memory search tool is present in the available tool list:
-- Tool absent → memory backend not registered. Fix: run `/xgh-setup` or use the host agent's native memory mechanism
+- Tool absent → memory backend not registered. Fix: run `/xgh-init` or use the host agent's native memory mechanism
 - Tool present but call returns error → selected memory backend is unavailable. Fix: start or reconfigure that backend
 
 Run a read-only memory search for `"xgh health check"` to verify connectivity.

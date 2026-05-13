@@ -25,18 +25,18 @@ No arguments. The skill walks you through everything interactively.
 2. **Profile setup** — name, role, squad, platforms
 3. **Add first project** — invokes `/xgh-track` for full project onboarding
 4. **Initial retrieval** — backfills recent Slack messages and linked resources
-5. **Team profiling** (optional) — runs `/xgh-profile` for each team member
-6. **Index codebase** (optional) — runs `/xgh-index` in quick mode
-7. **Initial curation** (optional) — asks if you want to capture initial knowledge (architecture decisions, team conventions, known gotchas). If yes, invokes `/xgh-curate` interactively.
+5. **Provider initialization** (optional) — runs `/xgh-init-providers` after project setup
+6. **Seed secondary agents** (optional) — runs `/xgh-seed` to refresh cross-tool context
+7. **Initial retrieval** (optional) — runs `/xgh-retrieve` to backfill current project context.
 
 ## Prerequisites
 
 - xgh must be installed (`~/.xgh/ingest.yaml` must exist — created by `/xgh-init`)
-- Memory and Slack integrations should be configured for the full experience (run `/xgh-setup` if not)
+- Memory and Slack integrations should be configured for the full experience (run `/xgh-init` if not)
 
 ## Related Skills
 
 - `xgh:init` — the full workflow skill this command triggers
-- `xgh:mcp-setup` — standalone MCP configuration audit
+- `xgh:doctor` — standalone configuration and connectivity audit
 - `xgh:track` — add additional projects after initial setup
 - `xgh:brief` — your first command after init completes

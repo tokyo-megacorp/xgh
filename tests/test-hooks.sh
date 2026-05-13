@@ -13,6 +13,15 @@ assert_file_exists() {
   fi
 }
 
+assert_file_not_exists() {
+  if [[ ! -e "$1" ]]; then
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL: obsolete file still exists $1"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
 assert_not_contains() {
   if ! grep -qi "$2" "$1" 2>/dev/null; then
     PASS=$((PASS + 1))
@@ -58,6 +67,28 @@ assert_output_contains() {
     FAIL=$((FAIL + 1))
   fi
 }
+
+
+# ── Obsolete hook surfaces (#237) ──────────────────────────
+# xgh delegates memory routing to MAGI and context-mode enforcement to context-mode.
+# It must not ship duplicate UserPromptSubmit/pre-read hooks with dead tool names.
+assert_file_not_exists ".claude/hooks/xgh-prompt-submit.sh"
+assert_not_contains ".claude-plugin/plugin.json" "UserPromptSubmit"
+assert_not_contains ".claude-plugin/plugin.json" "xgh-prompt-submit"
+assert_not_contains ".claude-plugin/plugin.json" "xgh-pre-read"
+assert_not_contains ".claude-plugin/plugin.json" "ctx_execute_file"
+
+HOOK_STALE_REFS=$(grep -R "cipher_memory_search\|cipher_extract_and_operate_memory\|lcm_search\|lcm_store\|ctx_execute_file" hooks .claude-plugin .claude/hooks 2>/dev/null || true)
+if [[ -z "$HOOK_STALE_REFS" ]]; then
+  PASS=$((PASS + 1))
+else
+  echo "FAIL: shipped hook surface contains stale tool refs"
+  echo "$HOOK_STALE_REFS"
+  FAIL=$((FAIL + 1))
+fi
+
+SS_NO_UNKNOWN_PROMPT=$(bash hooks/session-start.sh | python3 -c 'import json,sys; d=json.loads(sys.stdin.read()); blob=json.dumps(d); print("yes" if "Prompt: (unknown question)" not in blob and "Question answered: user input" not in blob else "no")')
+assert_eq "session-start filters unknown learned-insights prompts" "$SS_NO_UNKNOWN_PROMPT" "yes"
 
 # ── Basic file existence ──────────────────────────────────
 assert_file_exists "hooks/session-start.sh"

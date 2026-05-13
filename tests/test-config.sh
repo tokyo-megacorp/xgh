@@ -174,5 +174,14 @@ else
   echo "SKIP: pyyaml not installed — skipping generator fixture tests"
 fi
 
+
+# ── Migration gate document (#236) ─────────────────────────
+assert_file_exists "docs/MIGRATION_GATE.md"
+assert_contains "docs/MIGRATION_GATE.md" "# xgh → katsuragi-corp Migration Gate"
+assert_contains "docs/MIGRATION_GATE.md" "## Status: PENDING"
+assert_contains "docs/MIGRATION_GATE.md" "xgh has had no major architectural change for 30 consecutive days"
+assert_contains "docs/MIGRATION_GATE.md" "xgh:transfer-repo skill is built and tested"
+assert_contains "docs/MIGRATION_GATE.md" "Merge = migration begins"
+
 echo ""; echo "Results: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ] || exit 1

@@ -450,5 +450,73 @@ OUT=$(run_hook_mocked "main" '{"tool_name": "Bash", "tool_input": {"command": "G
 assert_contains "#228 env-prefix: GH_TOKEN=abc gh pr merge 42 --squash — must warn (true positive)" "$OUT" "mismatch"
 
 echo ""
+
+# ── AR Finding 1: quoted separators must NOT split segments ─────────────
+# Codex AR Finding 1 (HIGH): `_command_segments` must not split on separators
+# that appear inside quoted argument values.
+# `gh issue create --body "note; gh pr merge 999 --squash"` — the `;` is
+# inside a double-quoted string; only ONE segment must be produced, and it
+# must NOT look like a `gh pr merge` invocation at the shell level.
+
+echo "--- AR Finding 1: separators inside quoted strings ---"
+
+# False-positive guard: the `;` inside the --body value must NOT split the
+# command into two segments.  The hook should see only one segment whose
+# first real token is `gh issue create`, not `gh pr merge`.
+# Sentinel gh: if trigger fires, the sentinel file is written.
+OUT=$(run_hook_sentinel '{"tool_name": "Bash", "tool_input": {"command": "gh issue create --body \"note; gh pr merge 999 --squash\""}}')
+assert_empty "AR-F1: semicolon inside --body quoted string — output must be empty (no false positive)" "$OUT"
+assert_gh_not_called "AR-F1: semicolon inside --body quoted string — trigger must NOT call gh"
+
+# True-positive: `gh pr merge 42 --squash && echo done` — the `&&` is OUTSIDE
+# any quotes; the second segment IS a real `gh pr merge`.  Trigger must fire.
+OUT=$(run_hook_sentinel '{"tool_name": "Bash", "tool_input": {"command": "gh pr merge 42 --squash && echo done"}}')
+if [ -s "$SENTINEL_FILE" ]; then
+  PASS=$((PASS + 1))
+  echo "  PASS: AR-F1: real gh pr merge before && — trigger correctly entered (gh called)"
+else
+  FAIL=$((FAIL + 1))
+  echo "  FAIL: AR-F1: real gh pr merge before && — trigger did NOT enter (gh never called)"
+fi
+> "$SENTINEL_FILE"
+
+echo ""
+
+# ── AR Finding 2: lowercase env-var prefixes must not suppress trigger ───
+# Codex AR Finding 2 (MEDIUM): `_strip_env_prefix` previously only matched
+# UPPERCASE identifiers; shell allows lowercase too.
+# `foo=1 gh pr merge 42 --squash` — `foo=1` is a lowercase env assignment;
+# after stripping it, the real command is `gh pr merge`.
+
+echo "--- AR Finding 2: lowercase env-var prefix ---"
+
+OUT=$(run_hook_mocked "main" '{"tool_name": "Bash", "tool_input": {"command": "foo=1 gh pr merge 42 --squash"}}')
+assert_contains "AR-F2: foo=1 gh pr merge 42 --squash — must warn (lowercase env stripped)" "$OUT" "mismatch"
+
+echo ""
+
+# ── AR Finding 3: quoted heredoc markers must NOT suppress real commands ─
+# Codex AR Finding 3 (MEDIUM): `_strip_heredocs` must not treat `<<EOF`
+# inside a quoted string as a heredoc opener.
+# `printf "<<EOF"; gh pr merge 42 --squash` — the `<<EOF` is inside quotes;
+# the real merge command on the second segment must NOT be suppressed.
+
+echo "--- AR Finding 3: quoted heredoc marker does not suppress real command ---"
+
+OUT=$(run_hook_sentinel '{"tool_name": "Bash", "tool_input": {"command": "printf \"<<EOF\"; gh pr merge 42 --squash"}}')
+if [ -s "$SENTINEL_FILE" ]; then
+  PASS=$((PASS + 1))
+  echo "  PASS: AR-F3: quoted <<EOF does not suppress real gh pr merge — trigger entered (gh called)"
+else
+  FAIL=$((FAIL + 1))
+  echo "  FAIL: AR-F3: quoted <<EOF suppressed real gh pr merge — trigger did NOT enter"
+fi
+> "$SENTINEL_FILE"
+
+# Mocked gh confirms warning is produced (trigger fires and evaluates branch)
+OUT=$(run_hook_mocked "main" '{"tool_name": "Bash", "tool_input": {"command": "printf \"<<EOF\"; gh pr merge 42 --squash"}}')
+assert_contains "AR-F3: quoted <<EOF — real gh pr merge warns for main (true positive)" "$OUT" "mismatch"
+
+echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 [ "$FAIL" -eq 0 ] && exit 0 || exit 1
